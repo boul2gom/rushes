@@ -1,0 +1,6 @@
+id: squeezie
+language: fr
+youtube_channel: "UC..."
+authorized: false                   # true seulement avec campagne ou accord direct (R22)
+credit_template: "🎥 {mention}"
+hashtags_anchor: ["#squeezie", "#bestof"]   # amorce facultative : rushes déduit les hashtags des tendances

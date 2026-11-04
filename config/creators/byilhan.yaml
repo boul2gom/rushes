@@ -1,0 +1,6 @@
+id: byilhan
+language: fr
+youtube_channel: "UC..."
+authorized: false
+credit_template: "🎥 {mention}"
+hashtags_anchor: ["#byilhan", "#bestof"]

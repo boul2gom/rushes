@@ -1,0 +1,19 @@
+# Chemins : RUSHES_CONFIG_DIR et RUSHES_DATA_DIR (jamais dans ce fichier).
+rate_limit_s: 2
+approval_threshold: {cartoons: 0.7, creators: 0.7}   # à calibrer
+registry: {overlap_tolerance_s: 2, phash_max_distance: 10}
+llm:
+  enabled: false
+  model: "<3B Q4 gguf>"
+  fallback: "<1.7B Q4 gguf>"
+  threads: 4
+manual_posts_notice: 10             # notification quand un compte a publié 10 posts à la main
+postiz:
+  enabled: false                    # interrupteur général ; chaque compte doit aussi être en publish_mode: postiz
+  base_url: "https://postiz.<domaine>/api/public/v1"
+  api_key_env: POSTIZ_API_KEY       # nom de la variable ; jamais la clé
+  max_requests_per_hour: 25
+  tiktok_mode: upload_only          # upload_only | direct (après audit)
+ntfy:
+  url: "https://ntfy.<domaine>"
+  topic_env: NTFY_TOPIC
