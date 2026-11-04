@@ -3,29 +3,34 @@ brands:
   - {id: toon_tape,      vertical: cartoons, language: en, timezone: America/New_York}
   - {id: instant_culte,  vertical: creators, language: fr, timezone: Europe/Paris}
   - {id: peak_moments,   vertical: creators, language: en, timezone: America/New_York}
-accounts:                           # publish_mode : manual au départ, postiz ensuite (R48)
-  - {id: st_tt, brand: saturday_toons, platform: tiktok,    handle: "@saturdaytoons", publish_mode: manual, postiz_integration: null}
-  - {id: st_ig, brand: saturday_toons, platform: instagram, handle: "@saturdaytoons", publish_mode: manual}
-  - {id: tt_tt, brand: toon_tape,      platform: tiktok,    handle: "@toontape",      publish_mode: manual}
-  - {id: tt_ig, brand: toon_tape,      platform: instagram, handle: "@toontape",      publish_mode: manual}
-  - {id: ic_tt, brand: instant_culte,  platform: tiktok,    handle: "@instantculte",  publish_mode: manual}
-  - {id: ic_ig, brand: instant_culte,  platform: instagram, handle: "@instantculte",  publish_mode: manual}
-  - {id: pm_tt, brand: peak_moments,   platform: tiktok,    handle: "@peakmoments",   publish_mode: manual}
-  - {id: pm_ig, brand: peak_moments,   platform: instagram, handle: "@peakmoments",   publish_mode: manual}
-rotation:                           # cartoons : séries par marque et par période (nouveaux épisodes seulement, R4)
+accounts:                           # originality : base (défaut) ou advanced, par compte
+  - {id: st_tt, brand: saturday_toons, platform: tiktok,    handle: "@saturdaytoons"}
+  - {id: st_ig, brand: saturday_toons, platform: instagram, handle: "@saturdaytoons"}
+  - {id: tt_tt, brand: toon_tape,      platform: tiktok,    handle: "@toontape", originality: advanced}
+  - {id: tt_ig, brand: toon_tape,      platform: instagram, handle: "@toontape"}
+  - {id: ic_tt, brand: instant_culte,  platform: tiktok,    handle: "@instantculte"}
+  - {id: ic_ig, brand: instant_culte,  platform: instagram, handle: "@instantculte"}
+  - {id: pm_tt, brand: peak_moments,   platform: tiktok,    handle: "@peakmoments"}
+  - {id: pm_ig, brand: peak_moments,   platform: instagram, handle: "@peakmoments"}
+rotation:                           # facultatif : rushes génère le plan croisé ; une rotation écrite ici l'emporte (R4)
   - {from: 2026-11-16, to: 2026-12-06, saturday_toons: [tom_and_jerry], toon_tape: [oggy]}
   - {from: 2026-12-07, to: 2026-12-27, saturday_toons: [oggy], toon_tape: [tom_and_jerry]}
 creators_by_brand:                  # créateurs : répartition par langue
   instant_culte: [squeezie, byilhan]
-  peak_moments: []
-families:                           # toutes > 60 s : potentiel de monétisation
-  monetizable: {min_s: 65,  max_s: 100, share: {tiktok: 1.0, instagram: 1.0}}
-  long:        {min_s: 120, max_s: 180, share: {tiktok: 0.0, instagram: 0.0}}
-platform_hashtags: {tiktok: ["#fyp"]}
+  peak_moments: [beta_squad, caseoh, dude_perfect]   # L31 ; publication seulement après authorized: true
+families:                           # bornes : décision de Louis (R6) ; share facultatif (recalé par rushes, écrit = forcé)
+  monetizable: {min_s: 65,  max_s: 100}   # part de départ : 1.0 sur chaque plateforme
+  long:        {min_s: 120, max_s: 180}   # part de départ : 0.0 (ponctuel)
+required_hashtags:                  # décision de Louis (R13) ; {series} et {creator} remplacés au rendu
+  cartoons:  {tiktok: ["#fyp", "#nostalgiatok", "#cartoons", "{series}"], instagram: ["#cartoons", "{nostalgia}"]}
+  creators:  {tiktok: ["#fyp", "{creator}"], instagram: ["{creator}"]}
+layouts:                            # amorce ; rushes ajuste les parts d'après les résultats
+  preference: [square, portrait, full]   # ordre de repli quand le recadrage échoue
+  # vertical_share: 0.15                 # part de 9:16 tentée en test ; décommenter pour forcer
 posts_per_day: {tiktok: 1, instagram: 0.6}
-slots:                              # amorce, heure locale de la marque ; rushes la recale sur l'activité réelle
-  tiktok: ["15:00", "18:00"]
-  instagram: ["17:00"]
+# slots:                            # heure locale de la marque ; sans cette clé, rushes part de ces valeurs et les
+#   tiktok: ["15:00", "18:00"]      # recale sur l'activité réelle ; décommenter pour forcer
+#   instagram: ["17:00"]
 upload_defaults:                    # recopiés dans upload.json
   tiktok: {visibility: public, allow_comments: true, allow_duet: false, allow_stitch: false, ai_generated_label: false}
   instagram: {share_to_feed: true}

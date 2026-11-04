@@ -408,3 +408,15 @@ ainsi :
 | L37 | Export Instagram réel | Louis fournit un export Meta Business Suite avant la tâche 17 ; le repli sur les en-têtes documentés (C10) ne sert que si Meta n'en produit aucun | Tâche 17 |
 | L38 | Choix techniques C12 à C25 | Validés en bloc ; famille des compilations thématiques fixée par leur YAML (C19) confirmée | Toutes phases |
 | L39 | « Accroche 2/3 » pendant un run | Le run cède la main entre deux posts ; une demande qui attend plus de 2 h est abandonnée avec une alerte et refaite au run suivant | Tâches 20, 36 |
+
+## 2026-11-04 — Exécution de la tâche 33 : arbitrages du coordinateur
+
+Écarts constatés pendant l'implémentation et relecture à froid ; ils ne changent pas le produit.
+
+| # | Sujet | Choix | Touche |
+| --- | --- | --- | --- |
+| C26 | Statut des droits | La config est la seule source de `rights.status` (« repris de la config », spec) : un statut modifié seulement en base est écrasé à la synchro suivante ; `priority` et `showcase_posts` ne le sont jamais. Aucune tâche n'écrit ce statut en base | Tâche 33, 38 |
+| C27 | `TIKTOK_HANDLE` | Resserré à la source : `^@(?=[\w.]*\w)[\w.]+$` (un caractère de mot au moins), pour que `@...` soit refusé partout, y compris par la tâche 27 | Tâches 33, 27 |
+| C28 | Test R48 | « postiz » n'est toléré que dans `db/migrations/versions/` (colonnes de 0001) et sur les lignes de clés héritées de `config.py` (message D1, table des clés) ; les marqueurs réseau s'appliquent partout ; trois auto-contrôles prouvent que le balayage voit un client ajouté | Tâche 33 |
+| C29 | Migration 0002 | `downgrade()` lève `NotImplementedError` (les colonnes Postiz supprimées ne reviennent pas) ; le retour arrière se fait par restauration de la sauvegarde (C24). `rotation` reste active dans l'`accounts.yaml` d'exemple | Tâche 33 |
+| C30 | Liste de hashtags obligatoires vide | La spec est muette ; une liste vide désactiverait R13 sans bruit (faute de frappe) : refusée au chargement (« au moins un hashtag obligatoire est requis (R13) », à `required_hashtags.<verticale>.<plateforme>`). Réversible si Louis veut une plateforme sans hashtag obligatoire | Tâche 33 |

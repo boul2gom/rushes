@@ -76,7 +76,7 @@ Toutes celles de `00-master.md` §2 s'appliquent. En plus, pour cette phase :
   HASHTAG_TOKENS: frozenset[str] = frozenset({"{series}", "{creator}", "{nostalgia}"})
   FORBIDDEN_HASHTAGS: frozenset[str] = frozenset({"#viral", "#foryou"})
   CHANNEL_ID: re.Pattern[str] = re.compile(r"^UC[\w-]{22}$")        # réutilisé par la tâche 27
-  TIKTOK_HANDLE: re.Pattern[str] = re.compile(r"^@[\w.]+$")
+  TIKTOK_HANDLE: re.Pattern[str] = re.compile(r"^@(?=[\w.]*\w)[\w.]+$")   # « @... » refusé (C27)
 
   class ModelSettings(_Model): whisper: Literal["base", "small"] = "small"; clip_pretrained: str = "datacomp_xl_s13b_b90k"
   class NtfySettings(_Model):
@@ -178,9 +178,13 @@ def test_sync_writes_origin_status_and_rights(tmp_path, config_dir):
 PUBLICATION_MARKERS = ("postiz", "open.tiktokapis.com", "graph.facebook.com", "graph.instagram.com",
                        "content_publishing", "video.publish", "/publish/video")
 def test_r48_no_publication_client_in_code():
-    hits = [(p, m) for p in Path("src/rushes").rglob("*.py")
-            for m in PUBLICATION_MARKERS if m in p.read_text(encoding="utf-8").lower()]
+    # balaie src/rushes/**/*.py (chemin construit depuis __file__) ; « postiz » n'est toléré que dans
+    # db/migrations/versions/ (colonnes postiz_* de 0001) et, dans config.py, sur les lignes de clés héritées
+    # (_D1_MESSAGE et table _LEGACY_KEYS) ; les marqueurs réseau s'appliquent partout (C28)
     assert hits == []
+def test_r48_waiver_does_not_cover_a_client_in_config(): ...     # auto-contrôles du balayage : un client « postiz »
+def test_r48_waiver_keeps_the_legacy_key_table_in_config(): ...  # ajouté dans config.py ou sync.py est vu ; la table
+def test_r48_waiver_still_covers_past_migrations(): ...          # héritée et les migrations sont seules exemptées
 ```
 
   Remplacer dans `tests/test_config.py` : `test_r48_default_publish_mode_manual`, `test_r48_postiz_mode_requires_integration`,
@@ -203,7 +207,8 @@ Expected : FAIL (champs inconnus, `effective_originality` absent, révision 0002
     Postiz : « Postiz a été abandonné (décision D1 du 2026-11-01) : retirer cette clé » ; message des ancres :
     « remplacé par required_hashtags (R13) et hashtag du créateur : retirer cette clé ». La clé fautive est retirée
     avant validation pour ne pas produire un second message « champ inconnu ».
-  - Validation de `required_hashtags` (validateur de `AccountsConfig`) : au plus 5 éléments par plateforme ;
+  - Validation de `required_hashtags` (validateur de `AccountsConfig`) : un constat par problème, à l'emplacement
+    `required_hashtags.<verticale>.<plateforme>[.<indice>]` ; doublon refusé (« doublon : #x », seulement entre éléments au format valide) ; liste vide refusée (C30) ; au plus 5 éléments par plateforme ;
     chaque élément est un jeton de `HASHTAG_TOKENS` ou un hashtag `^#[a-z0-9_]+$` ; jamais `FORBIDDEN_HASHTAGS` ;
     pas de `#fyp` sous `instagram`. Contrôle croisé : chaque verticale portée par une marque a une entrée pour les
     deux plateformes.
@@ -232,11 +237,17 @@ Expected : FAIL (champs inconnus, `effective_originality` absent, révision 0002
   `status TEXT NOT NULL DEFAULT 'active' CHECK IN ('candidate','active','dropped')` ; `posts` gagne
   `layout TEXT CHECK IN ('square','vertical','portrait','full')` et `originality TEXT CHECK IN ('base','advanced')` ;
   tables `rights`, `derived_values` (§5.10) et `derived_values_history` (`id` autoincrément + colonnes de
-  `derived_values`). Modèles ORM alignés (`PUBLISH_MODES` supprimé, `POST_STATUSES` à 6 valeurs).
+  `derived_values`). Modèles ORM alignés (`PUBLISH_MODES` supprimé, `POST_STATUSES` à 6 valeurs). `downgrade()` lève
+  `NotImplementedError` (les données Postiz supprimées ne reviennent pas ; le retour arrière restaure la sauvegarde, C24).
+  `migrate.upgrade` est atomique (moteur de migration dédié : `isolation_level=None`, `BEGIN` explicite,
+  `foreign_keys=OFF` hors transaction, `PRAGMA foreign_key_check` dans la transaction, seulement si une migration a été appliquée) : un échec ne laisse ni
+  table `_alembic_tmp_*` ni révision changée (`test_migration_failure_rolls_back_ddl`).
 
 - [ ] **Step 6 : `db/sync.py`** — `accounts.originality` (valeur du compte, NULL sinon) ; `series`/`creators` avec
   `origin='config'`, `status='active'` ; `rights` : upsert depuis `rights` de la config, sinon `granted` si
-  `licensed`/`authorized`, sinon `to_request` ; `priority` et `showcase_posts` jamais écrasés.
+  `licensed`/`authorized`, sinon `to_request` ; `priority` et `showcase_posts` jamais écrasés. La config reste
+  la seule source de `rights.status` : un statut modifié seulement en base est écrasé à la synchro suivante (C26 ;
+  tests `test_sync_rights_status_follows_config`).
 
 - [ ] **Step 7 : Config d'exemple et CLI** — fichiers YAML de la spec (section Configuration), sauf
   `tom_and_jerry.yaml` qui reste minimal (`id`, `title`, `audio`, `licensed`, `rights`), l'exemple complet en
@@ -245,7 +256,8 @@ Expected : FAIL (champs inconnus, `effective_originality` absent, révision 0002
   `caseoh.yaml`, `dude_perfect.yaml` (`language: en`, `authorized: false`, `youtube_channel: "UC..."` comme les
   autres jusqu'à la tâche 27, qui le rend facultatif et le déduit), et `creators_by_brand.peak_moments: [beta_squad, caseoh, dude_perfect]` dans `accounts.yaml` ; `settings.yaml`
   sans `postiz` ni `manual_posts_notice`, avec `originality`, `youtube`, `showcase`, `serve`, `ntfy.token_env` ;
-  `cli.py` : groupes `publish` et `vendor` retirés, commandes `serve`, `models fetch`, `models check`,
+  `rotation` reste active dans `accounts.yaml` d'exemple (des tests existants la mutent ; rushes la génère si elle
+  est absente) ; `cli.py` : groupes `publish` et `vendor` retirés, commandes `serve`, `models fetch`, `models check`,
   `discover series`, `rights list` ajoutées en attente.
 
 - [ ] **Step 8 : Lancer toute la suite**

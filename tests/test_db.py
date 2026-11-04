@@ -1,5 +1,7 @@
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 from alembic.autogenerate import compare_metadata
@@ -27,8 +29,12 @@ def _seed(engine: Engine) -> None:
         c.execute(
             text("INSERT INTO accounts(id,brand_id,platform,handle) VALUES ('a','b','tiktok','@a')")
         )
-        c.execute(text("INSERT INTO series VALUES ('s','S','nonverbal',0)"))
-        c.execute(text("INSERT INTO creators VALUES ('c','fr','UC',0)"))
+        c.execute(
+            text("INSERT INTO series(id,title,audio,licensed) VALUES ('s','S','nonverbal',0)")
+        )
+        c.execute(
+            text("INSERT INTO creators(id,language,channel_id,authorized) VALUES ('c','fr','UC',0)")
+        )
 
 
 def _episode(sha: str = "x", **overrides: object) -> dict[str, object]:
@@ -77,13 +83,6 @@ def test_connection_pragmas(engine: Engine) -> None:
     with engine.connect() as c:
         assert c.execute(text("PRAGMA foreign_keys")).scalar() == 1
         assert c.execute(text("PRAGMA journal_mode")).scalar() == "wal"
-
-
-def test_publish_mode_defaults_to_manual_r48(engine: Engine) -> None:
-    _seed(engine)
-    with engine.connect() as c:
-        mode = c.execute(text("SELECT publish_mode FROM accounts WHERE id='a'")).scalar()
-    assert mode == "manual"
 
 
 def test_r44_episode_requires_single_owner(engine: Engine) -> None:
@@ -173,12 +172,13 @@ def test_sync_config_is_idempotent(tmp_path: Path, config_dir: Path) -> None:
     with engine.connect() as c:
         assert c.execute(text("SELECT count(*) FROM brands")).scalar() == 4
         assert c.execute(text("SELECT count(*) FROM accounts")).scalar() == 8
-        assert c.execute(text("SELECT count(*) FROM series")).scalar() == 3
-        assert c.execute(text("SELECT count(*) FROM creators")).scalar() == 2
+        assert c.execute(text("SELECT count(*) FROM series")).scalar() == 2
+        assert c.execute(text("SELECT count(*) FROM creators")).scalar() == 5
+        assert c.execute(text("SELECT count(*) FROM rights")).scalar() == 7
 
 
 def test_sync_config_never_deletes_and_warns(
-    tmp_path: Path, config_dir: Path, edit_yaml: object
+    tmp_path: Path, config_dir: Path, edit_yaml: Callable[[Path, Callable[[Any], Any]], None]
 ) -> None:
     db = tmp_path / "rushes.db"
     upgrade(db)
@@ -188,14 +188,59 @@ def test_sync_config_never_deletes_and_warns(
         c.execute(
             text(
                 "INSERT INTO episodes(series_id,provenance,owner_account_id,file_path,sha256,"
-                "duration_ms,status) VALUES ('grizzy','local','st_tt','p.mp4','h',1000,'imported')"
+                "duration_ms,status) VALUES ('oggy','local','st_tt','p.mp4','h',1000,'imported')"
             )
         )
-    (config_dir / "series" / "grizzy.yaml").unlink()
+    (config_dir / "series" / "oggy.yaml").unlink()
+    edit_yaml(config_dir / "accounts.yaml", lambda d: d.pop("rotation"))  # oggy was rotated
     warnings = sync_config(engine, load_config(config_dir))
-    assert any("grizzy" in w for w in warnings)
+    assert any("oggy" in w for w in warnings)
     with engine.connect() as c:
-        assert c.execute(text("SELECT count(*) FROM series WHERE id='grizzy'")).scalar() == 1
+        assert c.execute(text("SELECT count(*) FROM series WHERE id='oggy'")).scalar() == 1
+
+
+def test_sync_rights_status_follows_config(
+    tmp_path: Path, config_dir: Path, edit_yaml: Callable[[Path, Callable[[Any], Any]], None]
+) -> None:
+    """The config is the single source of truth for rights.status; priority/showcase are not."""
+    db = tmp_path / "rushes.db"
+    upgrade(db)
+    engine = make_engine(db)
+    edit_yaml(config_dir / "series" / "oggy.yaml", lambda d: d.update(licensed=True))
+    sync_config(engine, load_config(config_dir))
+
+    def hand_edit(sql: str) -> None:
+        with engine.begin() as c:
+            c.execute(text(sql))
+
+    def read(subject_id: str) -> tuple[str, float | None, int]:
+        with engine.connect() as c:
+            row = c.execute(
+                text("SELECT status, priority, showcase_posts FROM rights WHERE subject_id=:i"),
+                {"i": subject_id},
+            ).one()
+        return row[0], row[1], row[2]
+
+    # no rights block: a status written only in the DB is overwritten ('granted' since licensed)
+    hand_edit("UPDATE rights SET status='requested' WHERE subject_id='oggy'")
+    hand_edit("UPDATE rights SET priority=0.8, showcase_posts=3 WHERE subject_id='oggy'")
+    sync_config(engine, load_config(config_dir))
+    assert read("oggy") == ("granted", 0.8, 3)
+
+    # same for an unlicensed subject without a block: back to 'to_request'
+    hand_edit("UPDATE rights SET status='requested' WHERE subject_id='byilhan'")
+    sync_config(engine, load_config(config_dir))
+    assert read("byilhan")[0] == "to_request"
+
+    # a rights block in the config wins and stays
+    edit_yaml(
+        config_dir / "series" / "tom_and_jerry.yaml",
+        lambda d: d["rights"].update(status="requested"),
+    )
+    hand_edit("UPDATE rights SET priority=0.5, showcase_posts=2 WHERE subject_id='tom_and_jerry'")
+    sync_config(engine, load_config(config_dir))
+    sync_config(engine, load_config(config_dir))
+    assert read("tom_and_jerry") == ("requested", 0.5, 2)
 
 
 def test_sqlite_module_is_available() -> None:

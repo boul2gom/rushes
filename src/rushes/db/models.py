@@ -32,7 +32,12 @@ def _in(column: str, values: tuple[str, ...]) -> str:
 
 VERTICALS = ("cartoons", "creators")
 PLATFORMS = ("tiktok", "instagram")
-PUBLISH_MODES = ("manual", "postiz")
+ORIGINALITIES = ("base", "advanced")
+LAYOUTS = ("square", "vertical", "portrait", "full")
+ORIGINS = ("config", "prospect")
+SUBJECT_STATUSES = ("candidate", "active", "dropped")
+SUBJECT_KINDS = ("series", "creator")
+RIGHTS_STATUSES = ("to_request", "requested", "granted", "refused")
 AUDIO = ("nonverbal", "dialogue_en")
 SOURCE_KINDS = ("official", "community")
 PROVENANCES = ("official", "community", "local")
@@ -41,16 +46,7 @@ SEGMENT_KINDS = ("part", "bestof_item", "compilation_item")
 SEGMENT_STATUSES = ("proposed", "approved", "needs_review", "rejected")
 COMPILATION_KINDS = ("bestof", "theme")
 HOOK_ENGINES = ("rules", "llm")
-POST_STATUSES = (
-    "planned",
-    "rendered",
-    "ready",
-    "drafted",
-    "scheduled",
-    "published",
-    "discarded",
-    "expired",
-)
+POST_STATUSES = ("planned", "rendered", "ready", "published", "discarded", "expired")
 
 
 class Brand(Base):
@@ -67,7 +63,7 @@ class Account(Base):
     __tablename__ = "accounts"
     __table_args__ = (
         CheckConstraint(_in("platform", PLATFORMS), name="platform"),
-        CheckConstraint(_in("publish_mode", PUBLISH_MODES), name="publish_mode"),
+        CheckConstraint(_in("originality", ORIGINALITIES), name="originality"),
         UniqueConstraint("brand_id", "platform", name="uq_accounts_brand_id_platform"),
     )
 
@@ -75,27 +71,38 @@ class Account(Base):
     brand_id: Mapped[str] = mapped_column(ForeignKey("brands.id"))
     platform: Mapped[str] = mapped_column(Text)
     handle: Mapped[str] = mapped_column(Text)
-    publish_mode: Mapped[str] = mapped_column(Text, server_default="manual")
-    postiz_integration: Mapped[str | None] = mapped_column(Text)
+    originality: Mapped[str | None] = mapped_column(Text)  # NULL: settings default (R50)
 
 
 class Series(Base):
     __tablename__ = "series"
-    __table_args__ = (CheckConstraint(_in("audio", AUDIO), name="audio"),)
+    __table_args__ = (
+        CheckConstraint(_in("audio", AUDIO), name="audio"),
+        CheckConstraint(_in("origin", ORIGINS), name="origin"),
+        CheckConstraint(_in("status", SUBJECT_STATUSES), name="status"),
+    )
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     title: Mapped[str] = mapped_column(Text)
     audio: Mapped[str] = mapped_column(Text)
     licensed: Mapped[bool] = mapped_column(Boolean)
+    origin: Mapped[str] = mapped_column(Text, server_default="config")
+    status: Mapped[str] = mapped_column(Text, server_default="active")
 
 
 class Creator(Base):
     __tablename__ = "creators"
+    __table_args__ = (
+        CheckConstraint(_in("origin", ORIGINS), name="origin"),
+        CheckConstraint(_in("status", SUBJECT_STATUSES), name="status"),
+    )
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     language: Mapped[str] = mapped_column(Text)
     channel_id: Mapped[str] = mapped_column(Text)
     authorized: Mapped[bool] = mapped_column(Boolean)
+    origin: Mapped[str] = mapped_column(Text, server_default="config")
+    status: Mapped[str] = mapped_column(Text, server_default="active")
 
 
 class SourceVideo(Base):
@@ -239,6 +246,8 @@ class Post(Base):
     __tablename__ = "posts"
     __table_args__ = (
         CheckConstraint(_in("status", POST_STATUSES), name="status"),
+        CheckConstraint(_in("layout", LAYOUTS), name="layout"),
+        CheckConstraint(_in("originality", ORIGINALITIES), name="originality"),
         {"sqlite_autoincrement": True},
     )
 
@@ -248,6 +257,8 @@ class Post(Base):
     compilation_id: Mapped[int | None] = mapped_column(ForeignKey("compilations.id"))
     part_number: Mapped[int | None] = mapped_column(Integer)
     family: Mapped[str | None] = mapped_column(Text)
+    layout: Mapped[str | None] = mapped_column(Text)
+    originality: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
     is_test: Mapped[bool] = mapped_column(Boolean, server_default=sql_text("0"))
     rank_score: Mapped[float | None] = mapped_column(Float)
@@ -259,9 +270,6 @@ class Post(Base):
     planned_at: Mapped[str | None] = mapped_column(Text)
     published_at: Mapped[str | None] = mapped_column(Text)
     platform_url: Mapped[str | None] = mapped_column(Text)
-    postiz_post_id: Mapped[str | None] = mapped_column(Text)
-    postiz_status: Mapped[str | None] = mapped_column(Text)
-    postiz_synced_at: Mapped[str | None] = mapped_column(Text)
 
 
 class Run(Base):
@@ -274,3 +282,44 @@ class Run(Base):
     ended_at: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
     summary_json: Mapped[str | None] = mapped_column(Text)
+
+
+class Right(Base):
+    __tablename__ = "rights"
+    __table_args__ = (
+        CheckConstraint(_in("subject_kind", SUBJECT_KINDS), name="subject_kind"),
+        CheckConstraint(_in("status", RIGHTS_STATUSES), name="status"),
+    )
+
+    subject_kind: Mapped[str] = mapped_column(Text, primary_key=True)
+    subject_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    holder: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text)
+    requested_at: Mapped[str | None] = mapped_column(Text)
+    priority: Mapped[float | None] = mapped_column(Float)  # computed potential (task 38)
+    showcase_posts: Mapped[int] = mapped_column(Integer, server_default=sql_text("0"))
+    updated_at: Mapped[str] = mapped_column(Text)
+
+
+class DerivedValue(Base):
+    __tablename__ = "derived_values"
+
+    key: Mapped[str] = mapped_column(Text, primary_key=True)
+    scope: Mapped[str] = mapped_column(Text, primary_key=True)
+    value_json: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(Text)
+    confidence: Mapped[float] = mapped_column(Float)
+    computed_at: Mapped[str] = mapped_column(Text)
+
+
+class DerivedValueHistory(Base):
+    __tablename__ = "derived_values_history"
+    __table_args__ = ({"sqlite_autoincrement": True},)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(Text)
+    scope: Mapped[str] = mapped_column(Text)
+    value_json: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(Text)
+    confidence: Mapped[float] = mapped_column(Float)
+    computed_at: Mapped[str] = mapped_column(Text)

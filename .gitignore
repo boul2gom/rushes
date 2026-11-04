@@ -8,3 +8,6 @@ __pycache__/
 dist/
 data/
 .DS_Store
+
+# Agent scratch (subagent-driven development)
+.superpowers/

@@ -217,7 +217,7 @@ relatifs à `clean.mp4`, préset `ultrafast` en test, fin de tâche) s'appliquen
     `StepReport.unavailable` le compte et `exit_code_for` sort en 5 si `unavailable > 0` sans élément `failed` ni
     autre erreur (§5.3, §5.4). Une exception non attrapée reste `failed` (code 4).
   - Amorces de la config (tâche 33) : un identifiant de chaîne hors `^UC[\w-]{22}$`, un compte TikTok hors
-    `^@[\w.]+$` ou un fichier `refs/…` absent est refusé au chargement (`ConfigError`) ; l'étape ne voit donc
+    `TIKTOK_HANDLE` (`^@(?=[\w.]*\w)[\w.]+$`, C27) ou un fichier `refs/…` absent est refusé au chargement (`ConfigError`) ; l'étape ne voit donc
     jamais de valeur fictive (`UC...`, `@...`).
   - `scripts/record_cassette.py URL [--flat] [--platform] [--comments N] [--playlist-items X]` : appelle le vrai
     client sans cookies, applique `sanitize`, écrit `tests/fixtures/cassettes/<cassette_key>.json`. Cassettes à

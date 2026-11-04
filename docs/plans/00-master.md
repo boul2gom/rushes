@@ -604,7 +604,7 @@ class Family(_Model): min_s: float; max_s: float; share: Share | None = None   #
 DEFAULT_SLOTS = {"tiktok": ["15:00", "18:00"], "instagram": ["17:00"]}   # fuseau America/New_York (et tout autre)
 # fuseau de marque Europe/Paris (Instant Culte, en soirée) : {"tiktok": ["18:00", "20:00"], "instagram": ["19:00"]}
 # Config.slots_for(account_id) -> list[str] : config, sinon défaut selon la plateforme et le fuseau de la marque
-CHANNEL_ID = re.compile(r"^UC[\w-]{22}$"); TIKTOK_HANDLE = re.compile(r"^@[\w.]+$")   # réutilisés par la tâche 27
+CHANNEL_ID = re.compile(r"^UC[\w-]{22}$"); TIKTOK_HANDLE = re.compile(r"^@(?=[\w.]*\w)[\w.]+$")   # réutilisés par la tâche 27 ; « @... » refusé (C27)
 DEFAULT_SHARE = {"monetizable": {"tiktok": 1.0, "instagram": 1.0}, "long": {"tiktok": 0.0, "instagram": 0.0}}
 # Settings.approval_threshold : Threshold | None = None → 0,7 par verticale, recalé (tâche 37)
 

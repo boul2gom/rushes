@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 from typer.testing import CliRunner
@@ -11,7 +13,10 @@ runner = CliRunner()
 COMMANDS: dict[str, tuple[str, ...]] = {
     "run": (),
     "status": (),
-    "discover": ("youtube",),
+    "discover": ("youtube", "series"),
+    "models": ("fetch", "check"),
+    "rights": ("list",),
+    "serve": (),
     "market": ("collect", "analyze"),
     "ingest": (),
     "clean": (),
@@ -25,12 +30,10 @@ COMMANDS: dict[str, tuple[str, ...]] = {
     "render": (),
     "meta": (),
     "package": (),
-    "publish": ("push", "sync"),
     "stats": ("collect",),
     "posts": ("detect-published",),
     "creators": ("prospect", "snapshot", "backfill", "watch", "express", "revisit"),
     "review": ("build", "apply"),
-    "vendor": ("check",),
 }
 
 
@@ -76,6 +79,22 @@ def test_help_works_without_config_or_secret(
 
 
 def test_config_check_accepts_the_example_config(config_dir: Path, data_dir: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["config", "check"],
+        env={"RUSHES_CONFIG_DIR": str(config_dir), "RUSHES_DATA_DIR": str(data_dir)},
+    )
+    assert result.exit_code == 0
+    assert "5 créateurs" in result.output
+
+
+def test_config_check_warns_about_a_brand_without_creators(
+    config_dir: Path, data_dir: Path, edit_yaml: Callable[[Path, Callable[[Any], Any]], None]
+) -> None:
+    edit_yaml(
+        config_dir / "accounts.yaml",
+        lambda d: d["creators_by_brand"].update(peak_moments=[]),
+    )
     result = runner.invoke(
         app,
         ["config", "check"],

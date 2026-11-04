@@ -1,5 +1,25 @@
-# Minimum : identité + autorisation. Chaînes, requêtes et hashtags sont déduits par rushes.
+# Minimum : identité + autorisation (+ suivi de la licence). Chaînes, comptes TikTok, requêtes,
+# personnages et hashtags sont déduits par rushes. Amorces facultatives, jamais en valeurs ici :
+#
+# sources:
+#   youtube_channels: [{id: "UC...", kind: official}]   # identifiant réel : UC + 22 caractères
+#   tiktok_accounts: ["@..."]                           # compte réel : @nom
+#   search_queries: ["tom and jerry classic"]
+# intro_outro:
+#   reference_frames: ["refs/tom_and_jerry_intro.png"]  # le fichier doit exister sous config/
+#   theme_audio: "refs/tom_and_jerry_theme.wav"
+# characters:
+#   - {id: tom, refs: ["refs/tom_1.png"]}
+#   - {id: jerry, refs: ["refs/jerry_1.png"]}
+# branding:
+#   display_name: "Tom and Jerry"
+#   hashtags_pool: ["#slapstick", "#classiccartoons"]
 id: tom_and_jerry
-title: "Tom and Jerry"
-audio: nonverbal
-licensed: false
+title: "Tom and Jerry"              # titre anglais : donne aussi le hashtag obligatoire #tomandjerry
+audio: nonverbal                    # nonverbal | dialogue_en
+licensed: false                     # true = publiable (R14) ; false = vitrine
+rights:                             # facultatif : suivi de la demande de licence
+  holder: "Warner Bros. Discovery"
+  status: to_request                # to_request | requested | granted | refused
+  requested_at: null
+  notes: ""

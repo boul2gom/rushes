@@ -19,11 +19,23 @@ def test_repository_example_config_is_valid(config_dir: Path) -> None:
         "peak_moments",
     }
     assert len(config.accounts.accounts) == 8
-    assert {s.id for s in config.series} == {"grizzy", "tom_and_jerry", "oggy"}
-    assert {c.id for c in config.creators} == {"squeezie", "byilhan"}
+    assert {s.id for s in config.series} == {"tom_and_jerry", "oggy"}
+    assert {c.id for c in config.creators} == {
+        "squeezie",
+        "byilhan",
+        "beta_squad",
+        "caseoh",
+        "dude_perfect",
+    }
 
 
-def test_empty_creators_for_a_brand_is_a_warning_not_an_error(config_dir: Path) -> None:
+def test_empty_creators_for_a_brand_is_a_warning_not_an_error(
+    config_dir: Path, edit_yaml: Edit
+) -> None:
+    edit_yaml(
+        config_dir / "accounts.yaml",
+        lambda d: d["creators_by_brand"].update(peak_moments=[]),
+    )
     config = load_config(config_dir)
     assert any("peak_moments" in w for w in config.warnings)
 
@@ -103,7 +115,7 @@ def test_family_share_outside_unit_interval_rejected(
 ) -> None:
     edit_yaml(
         config_dir / "accounts.yaml",
-        lambda d: d["families"]["monetizable"]["share"].update(tiktok=share),
+        lambda d: d["families"]["monetizable"].update(share={"tiktok": share, "instagram": 1.0}),
     )
     with pytest.raises(ConfigError):
         load_config(config_dir)
@@ -199,33 +211,9 @@ def test_series_id_must_match_file_name(config_dir: Path, edit_yaml: Edit) -> No
     assert "oggy" in str(exc.value)
 
 
-def test_r48_default_publish_mode_manual(config_dir: Path, edit_yaml: Edit) -> None:
-    edit_yaml(config_dir / "accounts.yaml", lambda d: d["accounts"][1].pop("publish_mode"))
-    config = load_config(config_dir)
-    assert all(a.publish_mode == "manual" for a in config.accounts.accounts)
-
-
-def test_r48_postiz_mode_requires_integration(config_dir: Path, edit_yaml: Edit) -> None:
-    edit_yaml(
-        config_dir / "accounts.yaml",
-        lambda d: d["accounts"][0].update(publish_mode="postiz", postiz_integration=None),
-    )
-    with pytest.raises(ConfigError) as exc:
-        load_config(config_dir)
-    assert "postiz_integration" in str(exc.value)
-
-
 def test_placeholder_tolerated_when_feature_disabled(config_dir: Path) -> None:
     config = load_config(config_dir)  # example config has <...> placeholders, features disabled
-    assert config.settings.postiz.enabled is False
     assert config.settings.llm.enabled is False
-
-
-def test_placeholder_refused_when_postiz_enabled(config_dir: Path, edit_yaml: Edit) -> None:
-    edit_yaml(config_dir / "settings.yaml", lambda d: d["postiz"].update(enabled=True))
-    with pytest.raises(ConfigError) as exc:
-        load_config(config_dir)
-    assert "base_url" in str(exc.value)
 
 
 def test_placeholder_refused_when_llm_enabled(config_dir: Path, edit_yaml: Edit) -> None:
@@ -239,13 +227,16 @@ def test_r47_secret_never_in_repr_or_error(
     config_dir: Path, edit_yaml: Edit, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     secret = "tok_SUPERSECRET_123"
-    monkeypatch.setenv("POSTIZ_API_KEY", secret)
+    monkeypatch.setenv("NTFY_TOKEN", secret)
     config = load_config(config_dir)
+    assert config.settings.ntfy is not None
     assert secret not in repr(config)
     assert secret not in str(config.settings)
     # secrets are read on use, from the env var named in the config
-    assert config.settings.postiz.api_key().get_secret_value() == secret
-    assert secret not in repr(config.settings.postiz.api_key())
+    token = config.settings.ntfy.token()
+    assert token is not None
+    assert token.get_secret_value() == secret
+    assert secret not in repr(token)
 
     edit_yaml(config_dir / "settings.yaml", lambda d: d.update(rate_limit_s="vite"))
     with pytest.raises(ConfigError) as exc:
@@ -256,11 +247,12 @@ def test_r47_secret_never_in_repr_or_error(
 def test_missing_secret_is_not_a_load_error(
     config_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("POSTIZ_API_KEY", raising=False)
+    monkeypatch.delenv("NTFY_TOKEN", raising=False)
     config = load_config(config_dir)  # F7: loading never requires a secret
+    assert config.settings.ntfy is not None
     with pytest.raises(ConfigError) as exc:
-        config.settings.postiz.api_key()
-    assert "POSTIZ_API_KEY" in str(exc.value)
+        config.settings.ntfy.token()
+    assert "NTFY_TOKEN" in str(exc.value)
 
 
 def test_series_needs_only_identity_and_legal_flag(config_dir: Path, edit_yaml: Edit) -> None:
@@ -271,14 +263,13 @@ def test_series_needs_only_identity_and_legal_flag(config_dir: Path, edit_yaml: 
     config = load_config(config_dir)
     oggy = next(s for s in config.series if s.id == "oggy")
     assert oggy.sources.youtube_channels == []
-    assert oggy.branding.hashtags_anchor == []
+    assert oggy.branding.hashtags_pool == []
     assert oggy.branding.display_name is None
 
 
-def test_creator_hashtags_are_optional(config_dir: Path, edit_yaml: Edit) -> None:
-    edit_yaml(config_dir / "creators" / "squeezie.yaml", lambda d: d.pop("hashtags_anchor"))
+def test_creator_hashtag_is_optional(config_dir: Path) -> None:
     config = load_config(config_dir)
-    assert next(c for c in config.creators if c.id == "squeezie").hashtags_anchor == []
+    assert next(c for c in config.creators if c.id == "squeezie").hashtag is None
 
 
 def test_legal_flags_stay_mandatory(config_dir: Path, edit_yaml: Edit) -> None:

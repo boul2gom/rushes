@@ -111,11 +111,20 @@ app.command("render", help="Rend les posts (9:16, bandeau, sous-titres, loudnorm
 )
 app.command("meta", help="Légendes, hashtags et couvertures.")(_pipeline_stub(8))
 app.command("package", help="Prépare outbox/ et INDEX.html.")(_pipeline_stub(8))
+app.command("serve", help="Sert la page de suivi et le tableau de bord.")(_plain_stub(36))
 
 # --- groups ---------------------------------------------------------------------------------
 
 discover = _group("discover", "Découverte de vidéos sources.")
 discover.command("youtube", help="Métadonnées, heatmap, commentaires et score.")(_pipeline_stub(10))
+discover.command("series", help="Séries en tendance et chaînes officielles.")(_plain_stub(38))
+
+models = _group("models", "Modèles locaux.")
+models.command("fetch", help="Télécharge les modèles une fois.")(_plain_stub(9))
+models.command("check", help="Vérifie la présence des modèles.")(_plain_stub(9))
+
+rights = _group("rights", "Suivi des licences.")
+rights.command("list", help="Tableau des licences et de leur priorité.")(_plain_stub(38))
 
 market = _group("market", "Étude de marché TikTok.")
 market.command("collect", help="Collecte le panel de comptes.")(_pipeline_stub(31))
@@ -129,10 +138,6 @@ hooks.command("propose", help="Propose 3 accroches par passage.")(_pipeline_stub
 
 queue = _group("queue", "File de publication.")
 queue.command("rank", help="Classe les posts par compte.")(_pipeline_stub(16))
-
-publish = _group("publish", "Publication (Postiz).")
-publish.command("push", help="Crée les brouillons Postiz.")(_pipeline_stub(19))
-publish.command("sync", help="Synchronise les statuts depuis Postiz.")(_pipeline_stub(19))
 
 stats = _group("stats", "Statistiques des comptes.")
 stats.command("collect", help="Collecte les statistiques publiques.")(_pipeline_stub(17))
@@ -151,9 +156,6 @@ creators.command("revisit", help="Second passage à 24 h et 72 h.")(_pipeline_st
 review = _group("review", "Revue facultative.")
 review.command("build", help="Génère la page de revue.")(_pipeline_stub(32))
 review.command("apply", help="Applique les décisions exportées.")(_pipeline_stub(32))
-
-vendor = _group("vendor", "Code tiers.")
-vendor.command("check", help="Signale les évolutions des projets suivis.")(_plain_stub(21))
 
 # --- tooling (not in the spec's command list) -----------------------------------------------
 

@@ -1,0 +1,5 @@
+id: dude_perfect
+language: en
+youtube_channel: "UC..."            # placeholder toléré jusqu'à la tâche 27
+authorized: false                   # vitrine jusqu'à l'accord de Louis (L31)
+credit_template: "🎥 {mention}"
