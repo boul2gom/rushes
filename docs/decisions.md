@@ -420,3 +420,61 @@ ainsi :
 | C28 | Test R48 | « postiz » n'est toléré que dans `db/migrations/versions/` (colonnes de 0001) et sur les lignes de clés héritées de `config.py` (message D1, table des clés) ; les marqueurs réseau s'appliquent partout ; trois auto-contrôles prouvent que le balayage voit un client ajouté | Tâche 33 |
 | C29 | Migration 0002 | `downgrade()` lève `NotImplementedError` (les colonnes Postiz supprimées ne reviennent pas) ; le retour arrière se fait par restauration de la sauvegarde (C24). `rotation` reste active dans l'`accounts.yaml` d'exemple | Tâche 33 |
 | C30 | Liste de hashtags obligatoires vide | La spec est muette ; une liste vide désactiverait R13 sans bruit (faute de frappe) : refusée au chargement (« au moins un hashtag obligatoire est requis (R13) », à `required_hashtags.<verticale>.<plateforme>`). Réversible si Louis veut une plateforme sans hashtag obligatoire | Tâche 33 |
+
+## 2026-11-xx — Essai Python 3.15 sur le serveur
+
+Statut : **partiel**. La partie Mac (verrouillage, imports, script) est faite le 2026-11-04 ; la construction de l'image et le lancement sur le serveur restent à faire par Louis (tâche 42, étapes 5 et 6). Aucun repli en 3.14 n'est envisagé sans son accord.
+
+### Résultat sur le Mac (macOS arm64, Python 3.15.2)
+
+- `uv add` (commande de l'étape 1) : résolution et installation sans erreur, `uv lock` puis `uv sync` verts (100 paquets, 99 après la correction ci-dessous). L'override `onnxruntime; python_version < '3.15'` fonctionne : `uv tree | grep onnxruntime` ne renvoie rien.
+- **Un seul fournisseur de `cv2`** : `scenedetect-headless` exige `opencv-python-headless`, qui écrase les fichiers de `opencv-contrib-python-headless` dans `cv2/` (désinstaller l'un casse l'autre : après suppression, `cv2` perdait ses constantes). Second override `"opencv-python-headless; python_version < '3.15'"` dans `[tool.uv]` : seul `opencv-contrib-python-headless` reste (lock à 99 paquets, `uv tree | grep opencv-python-headless` vide, `scenedetect` s'importe et `AdaptiveDetector` aussi). Le spike `yunet` vérifie `hasattr(cv2, "saliency")` (module contrib d'OpenCV 5, vérifié sur le Mac). Un venv existant doit être resynchronisé avec `uv sync --reinstall-package opencv-contrib-python-headless` ; une image neuve n'est pas concernée.
+- Import de toute la pile (`import torch, open_clip, faster_whisper, sherpa_onnx, llama_cpp, cv2, scenedetect, silero_vad, imagehash, scipy, PIL, fontTools, jinja2, rapidfuzz, yt_dlp, curl_cffi`) : `ok`.
+- Wheels et sources (lues dans `uv.lock`) : tous les paquets lourds ont un wheel cp315 ou abi3 pour linux x86_64 et macOS arm64 (torch 2.15.0 : `+cpu` depuis l'index PyTorch sous Linux, wheel PyPI sous macOS ; sherpa-onnx 2.0.1 ; opencv 5.0.0.93 ; ctranslate2 4.8.5 ; curl-cffi 0.17.0). **Sans wheel, donc compilés à l'installation : `llama-cpp-python` 0.3.36 (cmake, compilé sans erreur sur le Mac) et `pyyaml` 6.0.3 (sdist, repli pur Python).** Pas de paquet `nvidia-*` ni `triton` dans le verrou.
+- Versions résolues : numpy 2.5.4, scipy 1.18.1, pillow 13.0.0, fonttools 4.68.0, imagehash 4.3.2, jinja2 3.1.6, rapidfuzz 3.14.6, opencv-contrib-python-headless 5.0.0.93, scenedetect-headless 0.7.2, torch 2.15.0, open-clip-torch 3.3.0, silero-vad 6.2.3, faster-whisper 1.2.1, sherpa-onnx 2.0.1, llama-cpp-python 0.3.36, yt-dlp 2026.10.26, yt-dlp-ejs 0.8.0, curl-cffi 0.17.0. Bornes `>=x.y,<x+1` dans `pyproject.toml` (`<0.4` pour llama-cpp-python, `<0.9` pour yt-dlp-ejs, `<2028` pour yt-dlp). **À signaler à Louis** : yt-dlp suit un calendrier (2026.10.26) et casse souvent avec les sites ; la borne `<2028` laisse la mise à jour libre pendant plus d'un an, mais yt-dlp doit rester mis à jour régulièrement (`uv lock --upgrade-package yt-dlp`).
+- Constats : (1) voir plus haut pour OpenCV ; (2) sur macOS, `av` et `cv2` embarquent chacun `libavdevice` (avertissement Objective-C, propre au Mac, sans effet sur Linux) ; (3) `torchvision` (dépendance d'open-clip) reste sur PyPI sous Linux : `[tool.uv.sources]` ne s'applique qu'aux dépendances directes, l'entrée `torchvision = [{ index = "pytorch-cpu", ... }]` essayée n'a pas changé le verrou (retirée) ; pas de paquet `nvidia-*` dans le verrou. L'étape 5 doit vérifier `import torchvision; torchvision.ops.nms(...)` : le spike `clip` le fait désormais ; (4) `torch.jit.load` (Silero) émet un `FutureWarning` « not supported in Python 3.14+ » mais fonctionne.
+- Le script `scripts/spike_models.py` a aussi été lancé sur le Mac (hors serveur, simple validation du script) : les 10 modèles passent. Deux corrections issues de ce test : le modèle Kokoro `en-v0_19` ne fonctionne plus avec sherpa-onnx 2.x (lexique exigé) → `kokoro-int8-multi-lang-v1_0` avec `lexicon-us-en.txt` ; un schéma JSON sans bornes laisse Qwen3-1.7B divaguer jusqu'à `max_tokens` → `minItems`/`maxItems`/`maxLength` dans le schéma.
+- Écart au texte de l'étape 4 : le pic mémoire est lu par le parent avec `os.wait4()` (l'`ru_maxrss` propre à chaque enfant), pas avec `getrusage(RUSAGE_CHILDREN)` qui est un maximum cumulé sur tous les enfants et ne distingue pas les modèles ; mêmes unités (octets sur macOS, Kio sur Linux, gérées). Chaque enfant a un délai de 1800 s (`"error": "timeout"` au dépassement).
+- **Pour la tâche 9** : les étiquettes de release de sherpa-onnx (`tts-models`, `audio-tagging-models`) sont mobiles (des fichiers peuvent être ajoutés ou remplacés) ; l'épinglage réel est le sha256 du manifeste, à vérifier après téléchargement et avant extraction.
+
+### Modèles et révisions épinglées (sha256 relevés sur le Mac, à confirmer sur le serveur)
+
+| Nom | Source (révision figée) | Octets | sha256 |
+| --- | --- | --- | --- |
+| `silero` | poids `silero_vad.jit` du paquet silero-vad 6.2.3 | 2 272 526 | `e1122837f4154c511485fe0b9c64455f7b929c96fbb8d79fbdb336383ebd3720` |
+| `whisper_small` | `Systran/faster-whisper-small` @ `536b0662742c` (`model.bin`) | 483 546 902 | `3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671` |
+| `whisper_base` | `Systran/faster-whisper-base` @ `ebe41f70d5b6` (`model.bin`) | 145 217 532 | `d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9` |
+| `clip` | `laion/CLIP-ViT-B-32-DataComp.XL-s13B-b90K` @ `f0e2ffa09cbadab3db6a261ec1ec56407ce42912` (`open_clip_model.safetensors`) | 605 143 284 | `3c00043509d2e3f35ec62bd85a643a393883dcda624d8208d034cc390c708297` |
+| `ced` | sherpa-onnx, release `audio-tagging-models`, `sherpa-onnx-ced-mini-audio-tagging-2024-04-19.tar.bz2` | 47 658 399 | `bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c` |
+| `yunet` | opencv_zoo @ `eb9f4f2d4b79`, `face_detection_yunet_2026may.onnx` | 229 738 | `ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0` |
+| `qwen4b` | `unsloth/Qwen3-4B-Instruct-2507-GGUF` @ `a06e946bb6b6` (`Q4_K_M`) | 2 497 281 120 | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` |
+| `qwen1_7b` | `unsloth/Qwen3-1.7B-GGUF` @ `d7f544eead69` (`Q4_K_M`) | 1 107 409 472 | `b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897` |
+| `supertonic` | sherpa-onnx, release `tts-models`, `sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2` | 128 774 318 | `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427` |
+| `kokoro` | sherpa-onnx, release `tts-models`, `kokoro-int8-multi-lang-v1_0.tar.bz2` | 132 353 410 | `72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653` |
+
+Écart à signaler : le dépôt officiel `Qwen/Qwen3-4B-Instruct-2507-GGUF` n'est pas accessible, et `Qwen/Qwen3-1.7B-GGUF` n'offre que du Q8_0 ; les GGUF Q4_K_M viennent de `unsloth` (Apache-2.0).
+
+### À remplir après l'exécution serveur (tâche 42, étapes 5 et 6) — EN ATTENTE
+
+Contrôle CPU (`grep -o -w 'avx2\|fma\|f16c\|bmi2\|avx512f' /proc/cpuinfo | sort -u`) : _à remplir_ (attendu : `avx2 bmi2 f16c fma`, pas d'`avx512f`).
+
+| Nom | ok | load_s | infer_s | pic RSS (Mo) | sha256 identique à celui du Mac | erreur |
+| --- | --- | --- | --- | --- | --- | --- |
+| `silero` | _à remplir_ | | | | | |
+| `whisper_small` | _à remplir_ | | | | | |
+| `whisper_base` | _à remplir_ | | | | | |
+| `clip` | _à remplir_ | | | | | |
+| `ced` | _à remplir_ | | | | | |
+| `yunet` | _à remplir_ | | | | | |
+| `qwen4b` | _à remplir_ | | | | | |
+| `qwen1_7b` | _à remplir_ | | | | | |
+| `supertonic` | _à remplir_ | | | | | |
+| `kokoro` | _à remplir_ | | | | | |
+
+| Mesure | Valeur |
+| --- | --- |
+| Taille de l'image `rushes:spike` | _à remplir_ |
+| Durée de `docker build` (sans cache) | _à remplir_ |
+| Verdict go / no-go | _à remplir_ |
+
+Si un modèle échoue : s'arrêter et proposer à Louis un contournement (autre version épinglée, compilation, repli prévu par la spec : PANNs réécrit pour les sons, Whisper base, Qwen3-1.7B). Les sha256 servent au manifeste de la tâche 9.
