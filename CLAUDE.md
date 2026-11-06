@@ -13,6 +13,8 @@ amorces et les décisions de Louis. Rien n'est publié par le logiciel : Louis p
 - When working with Python, invoke the relevant `/astral:<skill>` for `uv`, `ty`, and `ruff` to ensure best practices are followed."
 - UI : composants shadcn, Tailwind v4, `frontend-design` pour toute nouvelle page ; lancer `break-ui` et `web-design-guidelines` avant de livrer."
 - Pour explorer le code, utiliser l'outil CodeGraph avant de lire des fichiers.
+- Utiliser CodeGraph spontanément (explore, callers, impact) pour éviter de relire des fichiers entiers, y compris dans les sous-agents.
+- `codegraph sync` régulièrement : début de session, après une série d'éditions, avant toute exploration si le code a changé.
 - Code et identifiants en anglais, commentaires courts.
 - Une étape = un module sous src/rushes/ ; idempotente ; état dans SQLite.
 - Jamais de chemin en dur : rushes.paths et la config.

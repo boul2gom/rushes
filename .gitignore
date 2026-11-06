@@ -11,3 +11,6 @@ data/
 
 # Agent scratch (subagent-driven development)
 .superpowers/
+
+# CodeGraph
+.codegraph/
