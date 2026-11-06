@@ -44,6 +44,7 @@ PROVENANCES = ("official", "community", "local")
 EPISODE_STATUSES = ("imported", "cleaned", "analyzed")
 SEGMENT_KINDS = ("part", "bestof_item", "compilation_item")
 SEGMENT_STATUSES = ("proposed", "approved", "needs_review", "rejected")
+RUN_STATUSES = ("running", "ok", "partial", "failed")
 COMPILATION_KINDS = ("bestof", "theme")
 HOOK_ENGINES = ("rules", "llm")
 POST_STATUSES = ("planned", "rendered", "ready", "published", "discarded", "expired")
@@ -274,7 +275,10 @@ class Post(Base):
 
 class Run(Base):
     __tablename__ = "runs"
-    __table_args__ = ({"sqlite_autoincrement": True},)
+    __table_args__ = (
+        CheckConstraint(_in("status", RUN_STATUSES), name="status"),
+        {"sqlite_autoincrement": True},
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     command: Mapped[str] = mapped_column(Text)
@@ -282,6 +286,7 @@ class Run(Base):
     ended_at: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
     summary_json: Mapped[str | None] = mapped_column(Text)
+    exit_code: Mapped[int | None] = mapped_column(Integer)
 
 
 class Right(Base):

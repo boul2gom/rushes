@@ -75,6 +75,22 @@ class Paths:
     def reports(self) -> Path:
         return self.data_dir / "reports"
 
+    @property
+    def logs(self) -> Path:
+        return self.data_dir / "logs"
+
+    @property
+    def locks(self) -> Path:
+        return self.data_dir / "locks"
+
+    @property
+    def imports(self) -> Path:
+        return self.data_dir / "import"
+
+    @property
+    def tmp(self) -> Path:
+        return self.data_dir / "tmp"
+
     def episode_dir(self, episode_id: str) -> Path:
         return self.episodes / _ident(episode_id)
 

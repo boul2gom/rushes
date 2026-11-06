@@ -431,7 +431,7 @@ def test_express_handover_does_not_close_night_run(ctx, tmp_path):
 
 - [ ] **Step 2 : Lancer** → FAIL. **Step 3 : Implémenter** (`pair_verdict` d'abord, sans changer le comportement
   de `can_assign` : les tests de la tâche 3 restent verts ; runbook complété). **Step 4 : Lancer** → PASS ;
-  `test_runbook_covers_every_alert_kind` vert ; R14 retirée de `tests/rules_pending.toml`, qui est maintenant vide ;
+  `test_runbook_covers_every_alert_kind` vert ; R14 retirée de `tests/rules_pending.toml` (il ne reste que R44, tâche 41) ;
   `test_rules_coverage` vert ; suite rapide, ruff, mypy verts ; test « ORM identique aux migrations » vert.
 
 - [ ] **Step 5 : Sur le serveur** — `scripts/deploy.sh "$RUSHES_HOME"` ; `scripts/rushes audit` sur la vraie base → aucune
@@ -590,7 +590,7 @@ def test_burnin_weekly_section_disappears_when_all_ok(ctx):
 ```
 
 - [ ] **Step 2 : Lancer** → FAIL. **Step 3 : Implémenter.** **Step 4 : Lancer** → PASS ; suite rapide, ruff, mypy
-  verts ; `tests/rules_pending.toml` vide et `test_rules_coverage` vert. `scripts/deploy.sh` sur le serveur.
+  verts ; R44 retirée : `tests/rules_pending.toml` vide et `test_rules_coverage` vert. `scripts/deploy.sh` sur le serveur.
 
 - [ ] **Step 5 : Checklist de lancement (Louis et serveur)** — chaque case de `00-master.md` §10 « Avant le
   lancement » cochée, avec en plus :

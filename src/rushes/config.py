@@ -23,6 +23,7 @@ from pydantic import (
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from rushes.core.text import hashtag_from_name, normalize_hashtag
+from rushes.ui import register_secret
 
 PLACEHOLDER = re.compile(r"<[^>]*>")
 MIN_MONETIZABLE_S = 60  # R6: every family lasts more than one minute
@@ -77,6 +78,7 @@ def _env_secret(name: str) -> SecretStr:
     value = os.environ.get(name)
     if not value:
         raise ConfigError([Issue("environnement", name, "variable absente ou vide")])
+    register_secret(value)  # R47: no output may ever show it
     return SecretStr(value)
 
 

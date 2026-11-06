@@ -55,7 +55,7 @@ def test_migration_0002_keeps_rows_and_maps_statuses(tmp_path: Path) -> None:
         c.execute(text("INSERT INTO posts(account_id,status) VALUES ('a','published')"))
     engine.dispose()
 
-    upgrade(db)
+    upgrade(db, "0002")
     assert current_revision(db) == "0002"
 
     engine = make_engine(db)
@@ -227,7 +227,7 @@ def test_migration_failure_rolls_back_ddl(tmp_path: Path) -> None:
     raw.close()
 
     with pytest.raises(RuntimeError, match="clés étrangères"):
-        upgrade(db)
+        upgrade(db, "0002")
 
     # nothing of 0002 survived: no leftover temp table, same revision, same columns and data
     assert current_revision(db) == "0001"
@@ -247,7 +247,7 @@ def test_migration_failure_rolls_back_ddl(tmp_path: Path) -> None:
     )
     check.commit()
     check.close()
-    upgrade(db)
+    upgrade(db, "0002")
     assert current_revision(db) == "0002"
     final = sqlite3.connect(db)
     assert final.execute("SELECT status FROM posts ORDER BY id").fetchall() == [
@@ -259,14 +259,14 @@ def test_migration_failure_rolls_back_ddl(tmp_path: Path) -> None:
 
 def test_upgrade_on_current_db_is_a_noop_even_with_existing_violations(tmp_path: Path) -> None:
     db = tmp_path / "r.db"
-    upgrade(db)
+    upgrade(db, "0002")
     raw = sqlite3.connect(db)
     raw.execute("PRAGMA foreign_keys=OFF")
     raw.execute("INSERT INTO posts(account_id,status) VALUES ('ghost','planned')")  # dangling FK
     raw.commit()
     raw.close()
 
-    upgrade(db)  # nothing pending: no foreign-key audit, no failure
+    upgrade(db, "0002")  # nothing pending: no foreign-key audit, no failure
 
     assert current_revision(db) == "0002"
     check = sqlite3.connect(db)

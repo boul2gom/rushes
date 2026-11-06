@@ -17,6 +17,10 @@ def test_paths_derive_from_data_dir(tmp_path: Path) -> None:
         paths.outbox,
         paths.outbox_test,
         paths.reports,
+        paths.logs,
+        paths.locks,
+        paths.imports,
+        paths.tmp,
     ):
         assert paths.data_dir in p.parents
 
@@ -64,3 +68,11 @@ def test_outbox_post_dir_uses_identifiers_only(tmp_path: Path) -> None:
     assert paths.post_dir("st_tt", "p_000123", test=True) == (
         paths.outbox_test / "st_tt" / "p_000123"
     )
+
+
+def test_paths_runtime_folders(tmp_path: Path) -> None:
+    paths = Paths(config_dir=tmp_path / "c", data_dir=tmp_path / "d")
+    assert paths.logs == paths.data_dir / "logs"
+    assert paths.locks == paths.data_dir / "locks"
+    assert paths.imports == paths.data_dir / "import"
+    assert paths.tmp == paths.data_dir / "tmp"

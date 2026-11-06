@@ -819,8 +819,8 @@ média, aucun jeton), versionnées dans `tests/fixtures/cassettes/`. Aucune vid�
 **Test de couverture des règles** (`tests/test_rules_coverage.py`, tâche 2) : lit la liste des règles actives de
 `docs/spec.md` et échoue si une règle n'a aucun test dont le nom commence par `test_rN_` et n'est pas en attente.
 Une règle couverte en partie (déjà un test, d'autres tâches à venir) peut rester dans `rules_pending.toml` jusqu'à
-sa dernière tâche (§7) ; la liste diminue à chaque tâche et doit être vide à la fin de la tâche 40a (R14 se termine
-là ; vérifié à la tâche 41).
+sa dernière tâche (§7) ; la liste diminue à chaque tâche et doit être vide à la fin de la dernière tâche qui
+termine une règle (la tâche 41 pour R44, qui suit 40a dans l'ordre d'exécution du §3 ; R14 se termine en 40a).
 
 **Commandes non implémentées** (`tests/test_cli.py`, tâche 2) : `PENDING: dict[str, str]` (commande → tâche qui
 l'implémente, en texte car les tâches ont des suffixes, ex. `"8a"`) et `IMPLEMENTED: tuple[str, ...]`. Chaque tâche
@@ -968,7 +968,7 @@ la tâche 9 (pipeline) ; si un poste déborde : Whisper base, Qwen3-1.7B, preset
 
 Les cases marquées « (39-8) » sont exécutées par l'étape 8 de la tâche 39 (contrôles d'installation).
 
-- [ ] Toutes les tâches des phases 1 à 6 terminées ; `tests/rules_pending.toml` vide depuis la fin de la tâche 40a.
+- [ ] Toutes les tâches des phases 1 à 6 terminées ; `tests/rules_pending.toml` vide depuis la fin de la tâche 41.
 - [ ] `uv run pytest -m "not slow"` vert sur le Mac ; `pytest -m slow` vert dans l'image sur le serveur
   (`docker compose --profile test run --rm -T rushes-test pytest -m slow`, 39-8) ; ruff et mypy propres.
 - [ ] Image déployée sur l'EliteDesk ; limites vérifiées par `docker inspect` (`HostConfig.Memory`, `NanoCpus`) (39-8).
@@ -1057,7 +1057,7 @@ unités systemd avec `SuccessExitStatus=4 5` ; `--force` qui épargne tout élé
 `approve --dry-run` ; cookies YouTube réservés à la découverte ; `tts` léger ; créneaux par défaut selon le fuseau
 de la marque ; compilations `needs_review` ; numérotation dans `queue/numbering.py` ; alertes envoyées par
 `send_pending_alerts` ; verrou de run contre les faux « interrompu » ; mémoire jugée sur la mémoire anonyme ;
-`rules_pending.toml` vide à la fin de la tâche 40a. Décisions de Louis : R19 précisée (L23), vitrine expirée
+`rules_pending.toml` vide à la fin de la tâche 41. Décisions de Louis : R19 précisée (L23), vitrine expirée
 réattribuée (L24), une compilation thématique par sujet (L25), créneau express en plus (L27), dépôt de l'export
 Instagram sur la page (L28), durées toujours au-dessus d'une minute (L29), Peak Moments alimenté par Beta Squad,
 CaseOh et Dude Perfect après étude de marché (L26, L30, L31 ; `docs/research/2026-11-peak-moments-etude-marche.md`).

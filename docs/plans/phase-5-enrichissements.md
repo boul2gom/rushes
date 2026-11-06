@@ -568,7 +568,7 @@ def test_r16_discover_series_rerun_same_week_changes_nothing(ctx):
   recherche de chaînes « Pink Panther » et « The Flintstones », les UULP (`1:30`) des chaînes trouvées.
 
 - [ ] **Step 3 : Lancer** → FAIL. **Step 4 : Implémenter.** **Step 5 : Lancer** → PASS ; `tests/rules_pending.toml`
-  ne contient plus que des règles terminées en phase 6 (R14 → 40a, §7) ; il est vide à la fin de la tâche 40a.
+  ne contient plus que des règles terminées en phase 6 (R14 → 40a, §7) ; il est vide à la fin de la tâche 41.
   Suite rapide, ruff, mypy verts.
 
 - [ ] **Step 6 : Commit proposé** — `feat(discover,rights): trending series discovery with showcase budget and licence tracking table (R14, R32)`
@@ -588,5 +588,5 @@ def test_r16_discover_series_rerun_same_week_changes_nothing(ctx):
   d'une seule série ; une suggestion de thème écrite dans `data/proposals/themes/`.
 - [ ] Louis ouvre une page de revue sur son Mac (fichier copié depuis le serveur), exporte deux décisions,
   `rushes review apply` les applique.
-- [ ] `tests/rules_pending.toml` ne contient que des règles terminées en phase 6 ; `test_rules_coverage` vert ;
+- [ ] `tests/rules_pending.toml` ne contient que des règles terminées en phase 6 (R14 en 40a, R44 en 41) ; `test_rules_coverage` vert ;
   suite rapide, ruff, mypy, lint, build du front et `web/tests/review.spec.ts` verts.
