@@ -7,13 +7,13 @@
 **But :** un épisode déposé en local devient des parties rendues, conformes et empaquetées dans `outbox/`, sans
 aucun modèle lourd, avec une console soignée, un runner idempotent, une image Docker mesurée sur le serveur.
 
-**Architecture :** la tâche 33 nettoie la config (Postiz retiré), la tâche 42 prouve que la pile Python 3.15 tourne
+**Architecture :** la tâche 33 nettoie la config (Postiz retiré), la tâche 42 prouve que la pile Python 3.14 tourne
 sur le serveur, puis on construit dans l'ordre du pipeline : runner et console (2), registre (3), ingestion et
 nettoyage (4), analyse sans modèle lourd (5), découpage (6), rendu (7a, 7b), métadonnées et paquet (8a, 8b), image
 et mesures (9).
 
 **Pile :** uv, Typer, Rich, Pydantic v2, SQLAlchemy 2.1 + Alembic, FFmpeg 7.1, PySceneDetect 0.7.2, OpenCV
-contrib headless, imagehash, Silero VAD (torch), Pillow, fontTools, Jinja2.
+contrib headless, imagehash, Silero VAD (ONNX), Pillow, fontTools, Jinja2.
 
 **Spec :** `docs/spec.md`, `docs/decisions.md`, `docs/plans/00-master.md`.
 
@@ -269,12 +269,12 @@ Expected : tout vert ; `test_orm_models_match_migration` vert.
 
 ---
 
-### Task 42 : Essai de faisabilité Python 3.15 sur le serveur
+### Task 42 : Essai de faisabilité Python 3.14 sur le serveur (d'abord essayé en 3.15)
 
 **Files :**
 - Modify : `pyproject.toml`, `uv.lock`, `.gitignore`
 - Create : `docker/Dockerfile` (v0), `.dockerignore`, `scripts/spike_models.py`
-- Modify : `docs/decisions.md` (entrée « Essai 3.15 »)
+- Modify : `docs/decisions.md` (entrées « Essai 3.15 » puis « Repli en Python 3.14 »)
 
 **Interfaces :**
 - Produit : l'environnement verrouillé de tout le projet (toutes les dépendances lourdes et légères de la pile),
@@ -284,15 +284,16 @@ Expected : tout vert ; `test_orm_models_match_migration` vert.
 
 ```bash
 uv add numpy scipy pillow fonttools imagehash jinja2 rapidfuzz "opencv-contrib-python-headless>=5" \
-  "scenedetect-headless==0.7.2" torch open-clip-torch silero-vad faster-whisper sherpa-onnx \
-  llama-cpp-python "yt-dlp[default,curl-cffi]" yt-dlp-ejs
+  "scenedetect-headless==0.7.2" torch open-clip-torch silero-vad faster-whisper sherpa-onnx sherpa-onnx-core \
+  llama-cpp-python "yt-dlp[default,curl-cffi]" yt-dlp-ejs torchvision
 ```
 
   Puis dans `pyproject.toml` : bornes `>=x.y,<x+1` sur la version résolue de chaque paquet ; et
 
 ```toml
 [tool.uv]
-override-dependencies = ["onnxruntime; python_version < '3.15'"]
+# scenedetect-headless tire opencv-python-headless, qui écraserait cv2/ d'opencv-contrib ; marqueur jamais vrai
+override-dependencies = ["opencv-python-headless; python_version < '3'"]
 required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'",
                          "sys_platform == 'darwin' and platform_machine == 'arm64'"]
 
@@ -303,18 +304,20 @@ explicit = true
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+# direct pour que la source s'applique : le wheel PyPI Linux est construit pour CUDA
+torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
 ```
 
 - [ ] **Step 2 : Vérifier sur le Mac**
 
 Run : `uv lock && uv sync && uv run python -I -c "import torch, open_clip, faster_whisper, sherpa_onnx, llama_cpp, cv2, scenedetect, silero_vad, imagehash, scipy, PIL, fontTools, jinja2, rapidfuzz, yt_dlp, curl_cffi; print('ok')"`
-Expected : `ok`, et `uv tree | grep onnxruntime` ne renvoie rien.
+Expected : `ok` ; `uv tree | grep onnxruntime` montre onnxruntime (via `silero-vad`) et `uv tree | grep opencv-python-headless` ne renvoie rien.
 
 - [ ] **Step 3 : Écrire `docker/Dockerfile` v0**
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
-ARG PY_IMAGE=python:3.15-slim-trixie@sha256:<digest relevé le jour de la tâche>
+ARG PY_IMAGE=python:3.14-slim-trixie@sha256:<digest relevé le jour de la tâche>
 FROM ${PY_IMAGE} AS builder
 COPY --from=ghcr.io/astral-sh/uv:<version exacte> /uv /uvx /bin/
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential cmake git && rm -rf /var/lib/apt/lists/*
@@ -346,7 +349,7 @@ ENV PATH="/app/.venv/bin:$PATH" OMP_NUM_THREADS=4 PYTHONUNBUFFERED=1
 
   | Nom | Fichier | Inférence | Succès si |
   | --- | --- | --- | --- |
-  | `silero` | poids du paquet `silero-vad` | `get_speech_timestamps` sur 10 s de bruit 16 kHz | pas d'exception |
+  | `silero` | poids ONNX du paquet `silero-vad` (`load_silero_vad(onnx=True)`) | `get_speech_timestamps` sur 10 s de bruit 16 kHz | pas d'exception |
   | `whisper_small`, `whisper_base` | `Systran/faster-whisper-small` / `-base` (révision figée) | 10 s de sinus, `vad_filter=False`, `word_timestamps=True` | pas d'exception |
   | `clip` | open_clip `ViT-B-32` / `datacomp_xl_s13b_b90k` | 2 images + 2 phrases | vecteurs de dimension 512, norme 1 ± 1e-3 |
   | `ced` | modèle sherpa-onnx CED-mini AudioSet | 10 s de bruit | au moins une étiquette |
@@ -366,15 +369,15 @@ docker run --rm --memory 6g --cpus 4 -e RUSHES_DATA_DIR=/data -v rushes-spike:/d
 
 Expected : `avx2 bmi2 f16c fma` présents, `avx512f` absent ; une ligne `"ok": true` par modèle.
 
-- [ ] **Step 6 : Décider** — entrée « 2026-11-xx — Essai Python 3.15 sur le serveur » dans `docs/decisions.md` :
+- [ ] **Step 6 : Décider** — entrée « 2026-11-xx — Essai Python 3.15 sur le serveur » puis « 2026-11-05 — Repli en Python 3.14 (décision de Louis) » dans `docs/decisions.md` :
   tableau des lignes JSON, taille de l'image, durée de construction. **Si un modèle échoue** : s'arrêter, proposer à
   Louis un contournement (autre version épinglée, compilation, repli prévu par la spec : PANNs réécrit pour les
-  sons, Whisper base, Qwen3-1.7B) ; le repli en Python 3.14 n'est envisagé qu'avec son accord (décision du cadre).
+  sons, Whisper base, Qwen3-1.7B) ; le repli en Python 3.14, décidé par Louis le 2026-11-05, est appliqué (l'essai d'origine était en 3.15).
   Les sha256 relevés servent au manifeste de la tâche 9.
 
 - [ ] **Step 7 : Suite rapide** — `uv run pytest -m "not slow"` et lint verts.
 
-- [ ] **Step 8 : Commit proposé** — `build: lock the full python 3.15 stack and add feasibility spike image`
+- [ ] **Step 8 : Commit proposé** — `build: lock the full python 3.14 stack and add feasibility spike image`
 
 ---
 

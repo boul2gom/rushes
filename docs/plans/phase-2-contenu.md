@@ -607,7 +607,7 @@ def test_r24_cut_waits_for_transcription(ctx, synth):
     # créateur, FakeTranscriber qui lève → cut ne sélectionne pas l'épisode, aucun segment ; run suivant réussi → découpé
 def test_r16_transcribe_rerun_changes_nothing(ctx, synth):
 @pytest.mark.slow
-def test_whisper_runs_without_onnxruntime(tmp_path):                  # vrai modèle sur du bruit ; "onnxruntime" ∉ sys.modules
+def test_whisper_runs_without_onnxruntime(tmp_path):                  # vrai modèle sur du bruit ; "onnxruntime" ∉ sys.modules (installé pour Silero, mais le VAD interne de faster-whisper est désactivé)
 ```
 
 - [ ] **Step 2 : Lancer** → FAIL. **Step 3 : Implémenter.** **Step 4 : Lancer** → PASS. Suite rapide, ruff, mypy verts.

@@ -7,7 +7,7 @@
 **But :** amener rushes de la tâche 1 (faite) à un logiciel prêt pour la production, entièrement terminé avant le
 premier post.
 
-**Architecture :** un paquet Python 3.15 unique, des étapes idempotentes qui lisent SQLite et des fichiers, écrivent
+**Architecture :** un paquet Python 3.14 unique, des étapes idempotentes qui lisent SQLite et des fichiers, écrivent
 leurs fichiers puis la base dans une transaction ; FFmpeg pour toute la vidéo ; modèles locaux derrière des
 interfaces, chargés un à la fois ; une image Docker qui sert à la fois aux minuteurs et à `rushes serve`.
 
@@ -45,11 +45,12 @@ llama-cpp-python, FastAPI + uvicorn, React + shadcn/ui + Tailwind v4 (page de `s
 
 Chaque tâche les inclut implicitement. Valeurs copiées de la spec et de `decisions.md`.
 
-- Python `>=3.15,<3.16` ; **uv uniquement** (`uv add`, `uv run`), jamais `pip` ni `python` nus.
-- `onnxruntime` est écarté par `[tool.uv] override-dependencies = ["onnxruntime; python_version < '3.15'"]` ; aucun
-  module n'importe `onnxruntime`. faster-whisper : `vad_filter=False`, segments Silero passés par `clip_timestamps`,
-  jamais `BatchedInferencePipeline`.
-- torch depuis l'index CPU sous Linux (`[[tool.uv.index]] name = "pytorch-cpu"`, marqueur `sys_platform == 'linux'`) ;
+- Python `>=3.14,<3.15` ; **uv uniquement** (`uv add`, `uv run`), jamais `pip` ni `python` nus.
+- `onnxruntime` s'installe normalement (dépendance de `silero-vad`) ; Silero se charge par son chemin ONNX
+  (`load_silero_vad(onnx=True)`). `[tool.uv] override-dependencies = ["opencv-python-headless; python_version < '3'"]`
+  (marqueur jamais vrai) écarte le doublon `cv2` tiré par `scenedetect-headless`. faster-whisper : `vad_filter=False`,
+  segments Silero passés par `clip_timestamps`, jamais `BatchedInferencePipeline`.
+- torch **et torchvision** (dépendance directe) depuis l'index CPU sous Linux (`[[tool.uv.index]] name = "pytorch-cpu"`, marqueur `sys_platform == 'linux'` ; le wheel PyPI Linux de torchvision est construit pour CUDA) ;
   `required-environments` : linux x86\_64 et macOS arm64.
 - Avant chaque fin de tâche : `uv run pytest -m "not slow"`, `uv run ruff check .`, `uv run ruff format --check .`,
   `uv run mypy src/rushes/core src/rushes/db`, et le résultat est rapporté tel quel.
@@ -91,7 +92,7 @@ Phase 6 : 39 → 40a → 40b → (lancement) → 41
 | Tâche | Dépend de | Fournit surtout |
 | --- | --- | --- |
 | 33 Config v2 | 1 | Config sans Postiz, `required_hashtags`, `layouts`, `originality`, `rights`, `youtube.cookies`, `showcase`, `serve` ; migration 0002 |
-| 42 Essai de faisabilité 3.15 | 33 | `docker/Dockerfile` v0 avec toutes les dépendances lourdes, `scripts/spike_models.py`, rapport go/no-go par bibliothèque (une inférence et le pic mémoire de chaque modèle, sur le serveur) |
+| 42 Essai de faisabilité 3.14 | 33 | `docker/Dockerfile` v0 avec toutes les dépendances lourdes, `scripts/spike_models.py`, rapport go/no-go par bibliothèque (une inférence et le pic mémoire de chaque modèle, sur le serveur) |
 | 2 ui, status, runner | 33 | `Emitter`, `Context`, `run_step`, `run_pipeline` (`lock`, `yield_to_express`), codes de sortie et `combine_exit_codes`, verrou, `status`, `PENDING`/`IMPLEMENTED` de `tests/test_cli.py` |
 | 3 core, registry | 2 | Intervalles, timecodes, tirages, `can_assign` |
 | 4 ingest, clean v1 | 3 | `media.probe`, `media.ffmpeg`, générateur de vidéos synthétiques, propriétaire simple |
@@ -453,7 +454,7 @@ class ModelHub:
     def release(self) -> None: ...               # décharge le modèle lourd (avant de céder le verrou)
 ```
 
-Implémentations réelles (imports lourds à l'intérieur des fonctions) : `vad_silero.py` (`load_silero_vad(onnx=False)`),
+Implémentations réelles (imports lourds à l'intérieur des fonctions) : `vad_silero.py` (`load_silero_vad(onnx=True)`),
 `whisper.py` (faster-whisper int8, `vad_filter=False`, `clip_timestamps`), `ced.py` (sherpa-onnx CED-mini),
 `clip.py` (open\_clip ViT-B-32 `datacomp_xl_s13b_b90k`, safetensors), `yunet.py`
 (`face_detection_yunet_2026may.onnx`), `llm.py` (llama-cpp-python, Qwen3-4B Q4\_K\_M, repli 1.7B,

@@ -37,7 +37,7 @@ Ces choix sont tranchés. Ne pas les remettre en cause dans le code ; si l'un d'
 
 | Sujet | Décision |
 | --- | --- |
-| Langage et outillage | Python 3.15, un seul paquet, uv, CLI Typer, config YAML validée par Pydantic v2, état dans SQLite |
+| Langage et outillage | Python 3.14, un seul paquet, uv, CLI Typer, config YAML validée par Pydantic v2, état dans SQLite |
 | Machine | Serveur HP EliteDesk 800 G4 mini sous Debian, sans carte graphique, qui héberge d'autres services ; tout tourne sur CPU, en conteneur. Louis travaille depuis un Mac et un téléphone |
 | IA | Aucune API payante ni service distant. Petits modèles locaux uniquement. Un seul modèle de langage (Qwen3-4B-Instruct Q4, repli Qwen3-1.7B), pour les accroches et le commentaire de la voix off, désactivable |
 | Récupération | yt-dlp utilisé comme bibliothèque, sans cookies par défaut ; les cookies d'un compte Google (idéalement dédié) ne servent qu'en secours, si YouTube exige une connexion, avec alerte ; aucune API |
@@ -156,7 +156,7 @@ rushes est un seul paquet Python dans une seule image, avec SQLite comme unique 
 
 | Domaine | Choix |
 | --- | --- |
-| Projet | uv (dépendances, lockfile), Python 3.15 |
+| Projet | uv (dépendances, lockfile), Python 3.14 |
 | CLI et console | Typer ; Rich pour l'affichage (seul le module `ui` l'importe) |
 | Config | YAML validé par Pydantic v2 |
 | Base | SQLite via SQLAlchemy 2.1 et Alembic ; migrations versionnées ; vecteurs en BLOB, recherche en numpy |
@@ -165,14 +165,14 @@ rushes est un seul paquet Python dans une seule image, avec SQLite comme unique 
 | Téléchargement | yt-dlp comme bibliothèque, avec `yt-dlp-ejs`, Deno (exigé par YouTube) et curl-cffi (exigé par TikTok) |
 | Images | Pillow (incrustations, couvertures), OpenCV contrib headless (netteté, mouvement, flux optique, saillance, visages YuNet), imagehash (pHash) |
 | Vision | open\_clip, CLIP ViT-B/32 (`datacomp_xl_s13b_b90k`) |
-| Audio | Silero VAD (torch, sans onnxruntime), faster-whisper (base ou small, int8, VAD interne désactivé), sherpa-onnx avec CED pour les événements sonores |
+| Audio | Silero VAD (chemin ONNX, onnxruntime), faster-whisper (base ou small, int8, VAD interne désactivé), sherpa-onnx avec CED pour les événements sonores |
 | Voix off | sherpa-onnx avec Supertonic 3 (français et anglais), repli Kokoro (anglais) |
 | Modèle de langage | llama-cpp-python dans le même processus, Qwen3-4B-Instruct-2507 Q4\_K\_M, repli Qwen3-1.7B |
 | Serveur web | Petit serveur (`rushes serve`, FastAPI, page React + shadcn/ui) pour la page des posts prêts et ses boutons, derrière le reverse proxy GoDoxy et le SSO PocketID de Louis |
 | Textes | Jinja2, rapidfuzz |
 | Qualité | pytest, ruff, mypy strict sur `core/` et `db/`, pre-commit |
 
-onnxruntime n'existe pas pour Python 3.15 : il est écarté par `override-dependencies` dans `pyproject.toml` ; aucune brique n'en dépend réellement (voir `docs/decisions.md`).
+onnxruntime est installé normalement (dépendance de `silero-vad`, chemin ONNX). `override-dependencies` dans `pyproject.toml` n'écarte plus que `opencv-python-headless` (tiré par `scenedetect-headless`, il écraserait `cv2/` d'OpenCV contrib) ; torch et torchvision viennent de l'index CPU de PyTorch sous Linux (voir `docs/decisions.md`).
 
 **Règles d'architecture**
 
@@ -842,8 +842,8 @@ Valeurs relevées en octobre 2026, à garder dans la config.
 | SponsorBlock | API publique directe (`/api/skipSegments`), `actionTypes` avec `poi` pour obtenir `poi_highlight` |
 | FFmpeg | `loudnorm` en deux passes (`linear=true`, lire `input_i`, `input_tp`, `input_lra`, `input_thresh`, `target_offset`) ; `blackdetect`, `silencedetect`, `ebur128` ; fond flou calculé à un quart de la résolution ; sous-titres ASS via `ass` (libass), un événement par mot pour le surlignage ; progression par `-progress pipe:1` |
 | open\_clip | ViT-B-32 `datacomp_xl_s13b_b90k` (safetensors) ; vecteurs normalisés ; images par lots ; zéro-shot avec des phrases du type « a cartoon character falling down » |
-| faster-whisper | CPU : base ou small, `compute_type="int8"`, langue forcée à celle de la marque, horodatage par mot ; `vad_filter=False` et segments de parole de Silero passés par `clip_timestamps` (onnxruntime absent en 3.15) ; jamais `BatchedInferencePipeline` |
-| Silero VAD | Paquet `silero-vad`, `load_silero_vad(onnx=False)`, entrée mono 16 kHz décodée par FFmpeg |
+| faster-whisper | CPU : base ou small, `compute_type="int8"`, langue forcée à celle de la marque, horodatage par mot ; `vad_filter=False` et segments de parole de Silero passés par `clip_timestamps` (le VAD interne de faster-whisper reste désactivé : le VAD du projet est celui de Silero) ; jamais `BatchedInferencePipeline` |
+| Silero VAD | Paquet `silero-vad`, `load_silero_vad(onnx=True)` (chemin ONNX, sans `torch.jit.load`), entrée mono 16 kHz décodée par FFmpeg |
 | Sons | sherpa-onnx avec un modèle CED (AudioSet) ; étiquettes regroupées en événements du projet ; repli PANNs CNN14 réécrit |
 | Visages | OpenCV YuNet (`face_detection_yunet_2026may.onnx`), léger sur CPU |
 | Recadrage | Flux optique Farneback et saillance (OpenCV contrib), lissage de trajectoire par `scipy` ; CLIP sur images clés pour départager |
@@ -877,7 +877,7 @@ Six phases ; on ne passe à la suivante que si sa porte est franchie. Tout est t
 | 8 | 1 | `meta`, `package`, `INDEX.html`, `assign` simple, `run` | `outbox/` complet ; posts non autorisés dans `outbox_test/` (R14) ; hashtags obligatoires présents (R13) |
 | 9 | 1 | Image Docker et mesure des temps sur le serveur | Image construite (Deno, FFmpeg, llama-cpp compilé) ; rapport : temps d'analyse, de rendu et de transcription par minute de vidéo, mémoire de pointe |
 | 33 | 1 | Config v2 : Postiz retiré, hashtags obligatoires, mises en page, module d'originalité par compte, suivi des licences, cookies de secours, vitrine, `serve` | Config d'exemple valide ; ancienne clé `postiz` refusée avec un message clair ; migration de la base sans perte |
-| 42 | 1 | Essai de faisabilité Python 3.15, juste après la tâche 33 : image avec toutes les dépendances lourdes, une inférence par modèle sur le serveur | Rapport go/no-go par bibliothèque (llama-cpp-python, open_clip, faster-whisper, sherpa-onnx, Silero, OpenCV) avec le pic mémoire de chaque modèle ; contournement décidé pour tout échec avant la tâche 2 |
+| 42 | 1 | Essai de faisabilité Python 3.14 (d'abord essayé en 3.15), juste après la tâche 33 : image avec toutes les dépendances lourdes, une inférence par modèle sur le serveur | Rapport go/no-go par bibliothèque (llama-cpp-python, open_clip, faster-whisper, sherpa-onnx, Silero, OpenCV) avec le pic mémoire de chaque modèle ; contournement décidé pour tout échec avant la tâche 2 |
 | 10 | 2 | `discover youtube` : chaîne officielle trouvée seule, vidéos les plus vues, métadonnées, heatmap, commentaires, score | Classement reproductible sur des métadonnées enregistrées ; chaîne officielle identifiée sur des résultats de recherche enregistrés |
 | 11 | 2 | Nettoyage v2 : empreinte audio du générique, découpe des compilations officielles, logos | Une compilation de test est redécoupée en ses épisodes ; un logo simulé est détecté |
 | 12 | 2 | `analyze` v2 : CLIP, événements sonores, transcription, index | Recherche en texte libre qui retrouve un gag connu dans le top 5 |
@@ -963,7 +963,7 @@ le schéma initial de la base et la liste des tests. N'écris aucun code avant q
 - [x] yt-dlp : vidéos les plus vues par la playlist `UULP…` ; chaîne officielle par la recherche de chaînes (badge et abonnés en une requête).
 - [x] Source des tendances de hashtags : descriptions du panel lues avec yt-dlp ; pages de hashtag TikTok et Creative Center inutilisables sans connexion.
 - [x] Table des valeurs déduites : `derived_values` (clé, portée, valeur, source, confiance, date).
-- [x] Python 3.15 : onnxruntime écarté par `override-dependencies` ; toute la pile s'installe ; image `python:3.15-slim-trixie`.
+- [x] Python 3.14 (décision de Louis du 2026-11-05, après un essai en 3.15) : toute la pile s'installe, onnxruntime inclus ; image `python:3.14-slim-trixie` ; essai de faisabilité sur le serveur : 10 modèles sur 10 passent (GO, `decisions.md`).
 - [ ] TikTok Studio : programmation disponible ou non sur un compte personnel (test de Louis sur un compte).
 - [ ] Imitation de navigateur pour TikTok (curl-cffi) : non documentée, peut casser ; surveillée par les alertes de collecte.
 - [ ] Vitesses réelles sur le Coffee Lake : modèle de langage, CLIP, synthèse vocale, recadrage (tâche 9, puis tâches 12, 14, 34, 35).

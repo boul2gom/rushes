@@ -73,6 +73,7 @@ Demande (Louis) : passer à Python 3.15 (installé via Homebrew au besoin). Pyth
 Réponse : `requires-python = ">=3.15,<3.16"`, `.python-version` = 3.15, cibles ruff `py315` et mypy `3.15`. Remplace la décision Q8 (3.12) et la ligne « Langage et outillage » de la spec.
 Vérifié sur PyPI le 1er novembre 2026 : wheels cp315 présents pour pydantic-core, SQLAlchemy, numpy, Pillow, torch, ctranslate2, rapidfuzz (OpenCV en abi3). pyyaml et llama-cpp-python se compilent à l'installation. **onnxruntime n'a aucun wheel pour 3.15** : faster-whisper en dépend, ce qui peut bloquer la tâche 12 ; à revérifier avant elle (repli possible : environnement 3.14 pour la transcription, à décider alors).
 Mise à jour du jour même : contourné, voir « Recherche technique » ci-dessous ; Python 3.15 est conservé (choix de Louis : contourner plutôt que revenir en 3.14).
+**Remplacé par la décision du 2026-11-05 : retour en Python 3.14** (voir « Repli en Python 3.14 (décision de Louis) » en fin de fichier).
 
 ## 2026-11-01 — Cadre de l'implementation plan complet
 
@@ -133,6 +134,7 @@ Quatre recherches menées le 2026-11-01, dont des sondes réelles avec yt-dlp (s
 et un `uv lock` universel suivi d'un `uv sync` réel sous Python 3.15.2. Ce sont des constats datés : à revérifier si un comportement change.
 
 ### Pile Python 3.15
+_Constats datés du 2026-11-01 sous 3.15 ; le projet est revenu en 3.14 le 2026-11-05 (voir en fin de fichier) : l'override onnxruntime ci-dessous n'existe plus._
 - **Seul paquet bloquant : onnxruntime** (ni wheel cp315 ni sdist). Contournement vérifié : `[tool.uv] override-dependencies =
   ["onnxruntime; python_version < '3.15'"]` (uv : https://github.com/astral-sh/uv/blob/main/docs/concepts/resolution.md).
   faster-whisper n'importe onnxruntime que pour son VAD : `vad_filter=False` et segments de parole passés par `clip_timestamps` ;
@@ -423,6 +425,8 @@ ainsi :
 
 ## 2026-11-xx — Essai Python 3.15 sur le serveur
 
+> **Remplacé par la décision du 2026-11-05** (« Repli en Python 3.14 (décision de Louis) », en fin de fichier). Entrée conservée comme trace datée de l'essai en 3.15 ; ses résultats serveur sont l'historique « Essai 3.15 ».
+
 Statut : **partiel**. La partie Mac (verrouillage, imports, script) est faite le 2026-11-04 ; la construction de l'image et le lancement sur le serveur restent à faire par Louis (tâche 42, étapes 5 et 6). Aucun repli en 3.14 n'est envisagé sans son accord.
 
 ### Résultat sur le Mac (macOS arm64, Python 3.15.2)
@@ -432,7 +436,7 @@ Statut : **partiel**. La partie Mac (verrouillage, imports, script) est faite le
 - Import de toute la pile (`import torch, open_clip, faster_whisper, sherpa_onnx, llama_cpp, cv2, scenedetect, silero_vad, imagehash, scipy, PIL, fontTools, jinja2, rapidfuzz, yt_dlp, curl_cffi`) : `ok`.
 - Wheels et sources (lues dans `uv.lock`) : tous les paquets lourds ont un wheel cp315 ou abi3 pour linux x86_64 et macOS arm64 (torch 2.15.0 : `+cpu` depuis l'index PyTorch sous Linux, wheel PyPI sous macOS ; sherpa-onnx 2.0.1 ; opencv 5.0.0.93 ; ctranslate2 4.8.5 ; curl-cffi 0.17.0). **Sans wheel, donc compilés à l'installation : `llama-cpp-python` 0.3.36 (cmake, compilé sans erreur sur le Mac) et `pyyaml` 6.0.3 (sdist, repli pur Python).** Pas de paquet `nvidia-*` ni `triton` dans le verrou.
 - Versions résolues : numpy 2.5.4, scipy 1.18.1, pillow 13.0.0, fonttools 4.68.0, imagehash 4.3.2, jinja2 3.1.6, rapidfuzz 3.14.6, opencv-contrib-python-headless 5.0.0.93, scenedetect-headless 0.7.2, torch 2.15.0, open-clip-torch 3.3.0, silero-vad 6.2.3, faster-whisper 1.2.1, sherpa-onnx 2.0.1, llama-cpp-python 0.3.36, yt-dlp 2026.10.26, yt-dlp-ejs 0.8.0, curl-cffi 0.17.0. Bornes `>=x.y,<x+1` dans `pyproject.toml` (`<0.4` pour llama-cpp-python, `<0.9` pour yt-dlp-ejs, `<2028` pour yt-dlp). **À signaler à Louis** : yt-dlp suit un calendrier (2026.10.26) et casse souvent avec les sites ; la borne `<2028` laisse la mise à jour libre pendant plus d'un an, mais yt-dlp doit rester mis à jour régulièrement (`uv lock --upgrade-package yt-dlp`).
-- Constats : (1) voir plus haut pour OpenCV ; (2) sur macOS, `av` et `cv2` embarquent chacun `libavdevice` (avertissement Objective-C, propre au Mac, sans effet sur Linux) ; (3) `torchvision` (dépendance d'open-clip) reste sur PyPI sous Linux : `[tool.uv.sources]` ne s'applique qu'aux dépendances directes, l'entrée `torchvision = [{ index = "pytorch-cpu", ... }]` essayée n'a pas changé le verrou (retirée) ; pas de paquet `nvidia-*` dans le verrou. L'étape 5 doit vérifier `import torchvision; torchvision.ops.nms(...)` : le spike `clip` le fait désormais ; (4) `torch.jit.load` (Silero) émet un `FutureWarning` « not supported in Python 3.14+ » mais fonctionne.
+- Constats : (1) voir plus haut pour OpenCV ; (2) sur macOS, `av` et `cv2` embarquent chacun `libavdevice` (avertissement Objective-C, propre au Mac, sans effet sur Linux) ; (3) **torch / torchvision (corrigé après le premier essai serveur)** : torchvision est une dépendance transitive d'open-clip ; `[tool.uv.sources]` ne s'applique qu'aux dépendances directes, donc torch venait de l'index CPU et torchvision de PyPI. Le wheel PyPI Linux de torchvision 0.29.2 est construit pour CUDA (il embarque `libcudart`) : sur le serveur, `import open_clip` échouait avec `RuntimeError: operator torchvision::nms does not exist` (bibliothèque d'opérateurs non chargée). Correctif : `torchvision>=0.29.2,<0.30` devient une dépendance **directe**, avec la même source que torch (`pytorch-cpu`, marqueur `sys_platform == 'linux'`) ; le verrou résout alors `torch 2.15.0+cpu` et `torchvision 0.29.2+cpu` sous Linux (wheel `py3-none` sans `libcudart`, `torch>=2.14.0` exigé), PyPI sous macOS ; aucun paquet `nvidia-*` ni `triton`. **Pourquoi pas torch 2.14.x** (piste évoquée) : l'index CPU a bien un torchvision 0.29.2+cpu compatible avec torch 2.15 (les métadonnées des wheels 0.29.x exigent seulement `torch>=2.14.0`, et ils embarquent `_C_stable.so`, bibliothèque à ABI stable), donc aucun retour en arrière n'est nécessaire ; de plus torch 2.14.1 n'a pas de wheel cp315 pour macOS sur PyPI (la résolution échoue). Vérifié sur le Mac (`torch 2.15.0`, `torchvision 0.29.2`, `from torchvision.ops import nms`, spikes `clip` et `silero` verts) ; **non vérifié sur Linux** : à confirmer en relançant `clip` sur le serveur (décision réversible ; en cas de souci, essayer `torchvision 0.29.1+cpu`, aussi présent sur l'index CPU) ; (4) `torch.jit.load` (Silero) émet un `FutureWarning` « not supported in Python 3.14+ » mais fonctionne.
 - Le script `scripts/spike_models.py` a aussi été lancé sur le Mac (hors serveur, simple validation du script) : les 10 modèles passent. Deux corrections issues de ce test : le modèle Kokoro `en-v0_19` ne fonctionne plus avec sherpa-onnx 2.x (lexique exigé) → `kokoro-int8-multi-lang-v1_0` avec `lexicon-us-en.txt` ; un schéma JSON sans bornes laisse Qwen3-1.7B divaguer jusqu'à `max_tokens` → `minItems`/`maxItems`/`maxLength` dans le schéma.
 - Écart au texte de l'étape 4 : le pic mémoire est lu par le parent avec `os.wait4()` (l'`ru_maxrss` propre à chaque enfant), pas avec `getrusage(RUSAGE_CHILDREN)` qui est un maximum cumulé sur tous les enfants et ne distingue pas les modèles ; mêmes unités (octets sur macOS, Kio sur Linux, gérées). Chaque enfant a un délai de 1800 s (`"error": "timeout"` au dépassement).
 - **Pour la tâche 9** : les étiquettes de release de sherpa-onnx (`tts-models`, `audio-tagging-models`) sont mobiles (des fichiers peuvent être ajoutés ou remplacés) ; l'épinglage réel est le sha256 du manifeste, à vérifier après téléchargement et avant extraction.
@@ -454,27 +458,103 @@ Statut : **partiel**. La partie Mac (verrouillage, imports, script) est faite le
 
 Écart à signaler : le dépôt officiel `Qwen/Qwen3-4B-Instruct-2507-GGUF` n'est pas accessible, et `Qwen/Qwen3-1.7B-GGUF` n'offre que du Q8_0 ; les GGUF Q4_K_M viennent de `unsloth` (Apache-2.0).
 
-### À remplir après l'exécution serveur (tâche 42, étapes 5 et 6) — EN ATTENTE
+### Essai 3.15 (historique) : résultat du serveur (tâche 42, étape 5, lancé par Louis)
 
-Contrôle CPU (`grep -o -w 'avx2\|fma\|f16c\|bmi2\|avx512f' /proc/cpuinfo | sort -u`) : _à remplir_ (attendu : `avx2 bmi2 f16c fma`, pas d'`avx512f`).
+Contrôle CPU : `avx2 bmi2 f16c fma` présents, `avx512f` absent (comme attendu pour le CPU Coffee Lake « T »). Image `python:3.15-slim-trixie`, `llama-cpp-python` compilé avec AVX2/FMA/F16C/BMI2.
 
-| Nom | ok | load_s | infer_s | pic RSS (Mo) | sha256 identique à celui du Mac | erreur |
-| --- | --- | --- | --- | --- | --- | --- |
-| `silero` | _à remplir_ | | | | | |
-| `whisper_small` | _à remplir_ | | | | | |
-| `whisper_base` | _à remplir_ | | | | | |
-| `clip` | _à remplir_ | | | | | |
-| `ced` | _à remplir_ | | | | | |
-| `yunet` | _à remplir_ | | | | | |
-| `qwen4b` | _à remplir_ | | | | | |
-| `qwen1_7b` | _à remplir_ | | | | | |
-| `supertonic` | _à remplir_ | | | | | |
-| `kokoro` | _à remplir_ | | | | | |
+| Nom | ok | load_s | infer_s | pic RSS (Mo) | octets | sha256 (identique au Mac) | erreur |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `silero` | oui | 0.058 | 0.165 | 268.1 | 2 272 526 | `e1122837f4154c511485fe0b9c64455f7b929c96fbb8d79fbdb336383ebd3720` | — |
+| `whisper_small` | oui | 0.836 | 1.443 | 976.8 | 483 546 902 | `3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671` | — |
+| `whisper_base` | oui | 0.321 | 0.493 | 428.0 | 145 217 532 | `d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9` | — |
+| `clip` | **ÉCHEC** (corrigé, à relancer sur le serveur) | — | — | 537.1 | 605 143 284 | `3c00043509d2e3f35ec62bd85a643a393883dcda624d8208d034cc390c708297` | RuntimeError: operator torchvision::nms does not exist |
+| `ced` | oui | 0.094 | 0.055 | 92.9 | 47 658 399 | `bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c` | — |
+| `yunet` | oui | 0.156 | 0.019 | 85.8 | 229 738 | `ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0` | — |
+| `qwen4b` | oui | 2.013 | 9.514 | 4594.5 | 2 497 281 120 | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` | — |
+| `qwen1_7b` | oui | 0.969 | 5.812 | 2204.3 | 1 107 409 472 | `b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897` | — |
+| `supertonic` | oui | 0.707 | 1.371 | 293.0 | 128 774 318 | `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427` | — |
+| `kokoro` | oui | 1.396 | 2.78 | 426.1 | 132 353 410 | `72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653` | — |
+
+Les 10 sha256 sont identiques à ceux relevés sur le Mac. Données brutes : `.superpowers/sdd/phase-1-squelette/task-42-server-spike.jsonl`.
 
 | Mesure | Valeur |
 | --- | --- |
-| Taille de l'image `rushes:spike` | _à remplir_ |
-| Durée de `docker build` (sans cache) | _à remplir_ |
-| Verdict go / no-go | _à remplir_ |
+| Taille de l'image `rushes:spike` | 3,71 Go sur disque (890 Mo de contenu) |
+| Durée de `docker build` (sans cache) | à communiquer par Louis |
+| Statut de `clip` | ÉCHEC au premier essai, correctif appliqué (voir le constat torch / torchvision plus haut) ; **CORRIGÉ, À RELANCER** : non vérifié sur le serveur |
+| Verdict go / no-go | **EN ATTENTE** : 9 modèles sur 10 passent ; pas de verdict final tant que `clip` n'a pas passé sur le serveur après reconstruction de l'image |
 
-Si un modèle échoue : s'arrêter et proposer à Louis un contournement (autre version épinglée, compilation, repli prévu par la spec : PANNs réécrit pour les sons, Whisper base, Qwen3-1.7B). Les sha256 servent au manifeste de la tâche 9.
+Observations sur la mémoire (pic RSS mesuré sur le serveur, un modèle à la fois) : `qwen4b` est le plus lourd avec 4,6 Go (4 594,5 Mo), puis `qwen1_7b` 2,2 Go, `whisper_small` 1,0 Go, `whisper_base` 0,43 Go, `silero` 0,27 Go, `kokoro` 0,43 Go, `supertonic` 0,29 Go, `ced` 0,09 Go, `yunet` 0,09 Go ; le pic de `clip` n'est pas significatif (échec à l'import). Avec `qwen4b` chargé, la pile Postiz et le reste du serveur de 16 Go, la marge mémoire est faible ; le conteneur limité à 6 Go (étape 5) a suffi pour chaque modèle pris isolément.
+
+Si un modèle échoue ensuite : s'arrêter et proposer à Louis un contournement (autre version épinglée, compilation, repli prévu par la spec : PANNs réécrit pour les sons, Whisper base, Qwen3-1.7B). Les sha256 servent au manifeste de la tâche 9.
+
+## 2026-11-05 — Repli en Python 3.14 (décision de Louis)
+
+Décision (Louis, 2026-11-05) : « 3.15 n'apporte pas grand chose au vu de toutes les implications ». Le projet passe de Python 3.15 à **Python 3.14** (`requires-python = ">=3.14,<3.15"`, `.python-version` = 3.14, ruff `py314`, mypy `3.14`, image `python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81bd8a91ebd87711dd5b0f48ed71090949dd7cb1d`). Cette décision lève la règle « pas de 3.14 sans l'accord de Louis » de la tâche 42 et remplace « Python 3.15 au lieu de 3.12 » (2026-11-01). Aucune règle R1 à R50 n'est touchée.
+
+| # | Sujet | Décision | Touche |
+| --- | --- | --- | --- |
+| C31 | Version de Python | 3.14 (voir ci-dessus) ; l'essai 3.15 reste documenté, daté, plus haut | Spec, plans, `pyproject.toml`, Dockerfile, tâches 42 et 9 |
+
+### Ce que l'essai en 3.15 a montré
+
+- Sur le serveur, 9 modèles sur 10 passaient en 3.15 (sha256 identiques à ceux du Mac). Seul `clip` échouait (`operator torchvision::nms does not exist`).
+- Cause : le wheel PyPI Linux de torchvision est construit pour CUDA (il embarque `libcudart`) et ne se charge pas à côté de torch `+cpu`. C'est **indépendant de la version de Python** ; le correctif (torchvision en dépendance directe, source `pytorch-cpu` sous Linux) reste nécessaire en 3.14.
+
+### Compromis propres à 3.15 (abandonnés) et compromis qui restent
+
+| Sujet | En 3.15 | En 3.14 |
+| --- | --- | --- |
+| onnxruntime | aucun wheel ; écarté par `override-dependencies` | override **supprimé** ; installé normalement (1.31.1) comme dépendance de `silero-vad` |
+| Silero VAD | `load_silero_vad(onnx=False)` (TorchScript, `torch.jit.load` avertit « not supported in Python 3.14+ ») | `load_silero_vad(onnx=True)` : chemin ONNX, sans avertissement (vérifié sur le Mac) ; poids `silero_vad.onnx`, sha256 `1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3` (2 327 524 octets) |
+| faster-whisper | `vad_filter=False` faute d'onnxruntime | `vad_filter=False` conservé par choix de conception (le VAD du projet est Silero, segments passés par `clip_timestamps`) ; onnxruntime n'est plus un obstacle |
+| OpenCV en double | override `opencv-python-headless; python_version < '3.15'` | **reste nécessaire** (ne dépend pas de Python) ; marqueur changé en `python_version < '3'` (jamais vrai : l'ancien marqueur serait devenu vrai en 3.14 et aurait forcé l'installation) |
+| torch / torchvision | index `pytorch-cpu` sous Linux | inchangé ; torch 2.15.0(+cpu), torchvision 0.29.2(+cpu) |
+| llama-cpp-python | compilé (sdist) | compilé (sdist), seul paquet sans wheel du verrou (PyYAML a maintenant un wheel cp314) |
+
+Nouveau constat propre à 3.14 : le verrou d'`uv` n'enregistrait pas la dépendance `sherpa-onnx-core` du wheel cp314 de `sherpa-onnx` 2.0.1 (le wheel Mac sans `libonnxruntime.dylib` échouait à l'import : `Library not loaded: @rpath/libonnxruntime.dylib`, ce qui aurait aussi cassé le serveur). Correctif : `sherpa-onnx-core>=2.0.1,<3` ajouté en dépendance directe de `pyproject.toml`. À retirer si une version ultérieure de sherpa-onnx corrige ses métadonnées.
+
+Autres constats : `uv pip check` signale que `scenedetect-headless` « requiert » `opencv-python-headless` non installé : c'est l'effet voulu de l'override. Python 3.14.1 est exclu par torchvision (`!=3.14.1`) ; 3.14.10 est utilisé. Les paquets TTS qui déclaraient `requires-python < 3.15` (kokoro, pocket-tts, coqui-tts) redeviennent installables en 3.14 ; non utilisés (sherpa-onnx reste le moteur retenu).
+
+Résultats sur le Mac en 3.14 (macOS arm64, Python 3.14.10), les 10 modèles du spike passent : silero (ONNX) 262 Mo, whisper_small 914, whisper_base 490, clip 1 535, ced 95, yunet 90, qwen4b 4 947, qwen1_7b 2 595, supertonic 360, kokoro 512 (pic RSS en Mo, Mac). Les sha256 de tous les modèles sont inchangés, sauf `silero` (poids ONNX au lieu de TorchScript). 103 paquets au verrou ; wheels cp314 ou abi3 pour linux x86_64 et macOS arm64 pour tous les paquets lourds.
+
+### Conséquences pour les tâches suivantes
+
+Tout texte qui disait « Silero via torch » dit désormais « chemin ONNX (`load_silero_vad(onnx=True)`) » : corrigé dans `docs/spec.md` (lignes sur la pile Audio, la fiche faster-whisper, la fiche Silero VAD), `docs/plans/00-master.md` (règle transverse onnxruntime, ligne `vad_silero.py`) et `docs/plans/phase-1-squelette.md` (pile, ligne `silero` du spike). Les mesures mémoire Silero de la tâche 9 (0,24 Go, chemin TorchScript) sont à refaire avec le chemin ONNX (≈ 0,26 Go mesuré dans le spike). Le test `test_whisper_runs_without_onnxruntime` (phase 2) garde son sens (faster-whisper n'importe pas onnxruntime avec `vad_filter=False`) mais onnxruntime est maintenant installé pour Silero.
+
+### Essai 3.14 : résultat du serveur (tâche 42, étape 5, lancé par Louis le 2026-11-05/06) — GO
+
+Image `rushes:spike` (id `e19bb9c97d72`) construite sur `python:3.14-slim-trixie`, une instance par modèle, limites du conteneur de l'étape 5. Contrôle CPU du serveur (même hôte que l'essai 3.15) : `avx2 bmi2 f16c fma` présents, `avx512f` absent.
+
+| Nom | ok | load_s | infer_s | pic RSS (Mo) | octets | sha256 | erreur |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `silero` (ONNX) | oui | 0.112 | 0.072 | 289.4 | 2 327 524 | `1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3` | — |
+| `whisper_small` | oui | 0.907 | 1.644 | 758.5 | 483 546 902 | `3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671` | — |
+| `whisper_base` | oui | 0.374 | 0.672 | 351.8 | 145 217 532 | `d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9` | — |
+| `clip` | oui | 3.949 | 0.143 | 1555.4 | 605 143 284 | `3c00043509d2e3f35ec62bd85a643a393883dcda624d8208d034cc390c708297` | — |
+| `ced` | oui | 0.115 | 0.05 | 90.5 | 47 658 399 | `bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c` | — |
+| `yunet` | oui | 0.032 | 0.014 | 83.9 | 229 738 | `ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0` | — |
+| `qwen4b` | oui | 2.109 | 11.23 | 4543.6 | 2 497 281 120 | `3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597` | — |
+| `qwen1_7b` | oui | 1.113 | 6.876 | 2121.3 | 1 107 409 472 | `b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897` | — |
+| `supertonic` | oui | 0.756 | 1.638 | 287.4 | 128 774 318 | `82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427` | — |
+| `kokoro` | oui | 1.734 | 3.154 | 421.7 | 132 353 410 | `72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653` | — |
+
+Données brutes : `.superpowers/sdd/phase-1-squelette/task-42-server-spike314.jsonl`. Le message OpenCV « setPreferableTarget Targets are not supported by the new graph engine for now » est un avertissement sans effet ; Silero (chemin ONNX) n'émet plus de `FutureWarning`.
+
+| Mesure | Valeur |
+| --- | --- |
+| Taille de l'image `rushes:spike` (3.14) | 3,78 Go sur disque (911 Mo de contenu) |
+| Durée de `docker build` | 2 min 48,95 s (`time docker build`) ; **le cache de construction Docker des essais 3.15 a pu être en partie réutilisé** : chiffre à lire comme un build à cache chaud ; un build à froid n'a pas été mesuré |
+| Verdict go / no-go | **GO pour Python 3.14** : 10 modèles sur 10 passent sur le serveur |
+
+Comparaison :
+- Avec le Mac (3.14) : les 10 sha256 sont identiques, y compris `silero` (poids ONNX, `1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3`). Les pics mémoire du serveur sont du même ordre que ceux du Mac (sauf `qwen4b` 4,5 Go contre 4,9 Go sur le Mac).
+- Avec l'essai 3.15 du serveur : tous les sha256 sont identiques sauf `silero` (TorchScript puis ONNX). `clip` est corrigé (échec à l'import en 3.15, cause : torchvision PyPI construit pour CUDA ; ici ok, pic 1 555 Mo, le pic de 537 Mo de l'ancien échec n'avait aucun sens). `ced`, `supertonic` et `kokoro` passent comme en 3.15. Pics : `whisper_small` 0,76 Go (0,98 Go en 3.15), `whisper_base` 0,35 Go (0,43), `qwen1_7b` 2,1 Go (2,2), `qwen4b` 4,5 Go (4,6, quasi inchangé), `silero` 0,29 Go (ONNX ; 0,27 Go en TorchScript).
+- Le modèle le plus lourd est `qwen4b` (4,5 Go de pic), puis `qwen1_7b` (2,1 Go) ; avec `qwen4b` chargé et le reste de la pile du serveur de 16 Go, la marge mémoire reste faible (constat factuel, déjà noté pour l'essai 3.15).
+
+### Points restants pour les tâches suivantes
+
+- **Tâche 9** : mettre à jour le tableau mémoire du plan maître (Silero ≈ 0,29 Go sur le chemin ONNX, mesuré sur le serveur, contre 0,24 Go ; le plan maître garde l'ancienne valeur) ; construire le manifeste des modèles avec les sha256 de ce tableau ; mesurer la durée d'un **build à froid** (sans cache) ; finaliser le Dockerfile v0.
+- `sherpa-onnx-core>=2.0.1,<3` est une dépendance directe de contournement (le verrou ne recopie pas la dépendance du wheel cp314 de sherpa-onnx) : à retirer quand sherpa-onnx corrigera ses métadonnées (tâche 9 : retester s'il est encore nécessaire ; le verrou actuel enregistre déjà cette arête, la relecture n'a pas pu reproduire le défaut hors du cache d'`uv`).
+- torch et torchvision restent sur l'index `pytorch-cpu` sous Linux (le wheel PyPI Linux de torchvision est construit pour CUDA) ; l'override `opencv-python-headless; python_version < '3'` reste nécessaire.
+- La mémoire de pointe et les temps réels du serveur (inférences sur le Coffee Lake) restent à confirmer en conditions réelles par la tâche 9 (ligne correspondante de « Points à vérifier » de la spec).

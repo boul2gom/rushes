@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # v0: feasibility spike image (task 42). Task 9 finalises it.
-# Versions and digests read on 2026-11-04; never `latest`.
-ARG PY_IMAGE=python:3.15-slim-trixie@sha256:8c13a3f37a6a5b71498228e902c4b9f51c1f7900d49fabf71f9a650c6120e0d0
+# Versions and digests read on 2026-11-04 (Python image digest: 2026-11-05, Python 3.14); never `latest`.
+ARG PY_IMAGE=python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81bd8a91ebd87711dd5b0f48ed71090949dd7cb1d
 FROM ${PY_IMAGE} AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /uvx /bin/
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential cmake git && rm -rf /var/lib/apt/lists/*

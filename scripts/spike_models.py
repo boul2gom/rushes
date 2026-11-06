@@ -207,7 +207,7 @@ def fetch_hf_model_dir(repo: str, revision: str, weights: str) -> Callable[[Path
 def fetch_silero(models: Path) -> Fetched:
     import silero_vad
 
-    weights = Path(silero_vad.__file__).parent / "data" / "silero_vad.jit"
+    weights = Path(silero_vad.__file__).parent / "data" / "silero_vad.onnx"
     return Fetched(weights, weights)
 
 
@@ -232,7 +232,7 @@ def sine(seconds: float = 10.0, hz: float = 440.0) -> np.ndarray:
 def load_silero(root: Path) -> Any:
     from silero_vad import load_silero_vad
 
-    return load_silero_vad(onnx=False)
+    return load_silero_vad(onnx=True)
 
 
 def infer_silero(model: Any) -> None:
