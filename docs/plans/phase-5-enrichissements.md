@@ -156,7 +156,7 @@ Toutes celles de `00-master.md` §2 et des phases 1 à 4 s'appliquent. En plus, 
   - **Collecte** (`market_collect`, hebdomadaire) : `collect_tiktok(ytdlp, handle, n=videos_per_account)` pour chaque
     ligne `market_accounts.status = 'panel'` → `market_videos` (upsert par `video_id` ; hashtags lus dans la
     description, normalisés). Échec d'un compte → `warned` ; jamais `failed`.
-  - **Mots-clés** (spec, étapes 0 et 2 ; décision C35) : dans `market_analyze`, par sujet, `hashtag_lifts` sur
+  - **Mots-clés** (spec, étapes 0 et 2 ; décision C23) : dans `market_analyze`, par sujet, `hashtag_lifts` sur
     `(compte, vues, caption_words(légende, excluded = mots du nom du sujet))`, mots vus dans au moins
     `min_hashtag_videos` vidéos, `lift > 0`, `keywords_size` premiers → `record("market.keywords", sujet, [...],
     source="market:lift")` ; trop peu de vidéos → rien d'enregistré. La tâche 27 (`creators/prospect.py`, étape 3)

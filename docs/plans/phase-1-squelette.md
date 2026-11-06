@@ -714,18 +714,21 @@ def test_assign_inserts_only_when_ok(session):
     élément `warned`). Copie (lien physique si possible) vers `sources/local_<sha256[:16]>.<ext>` ; épisode
     `provenance='local'`, `source_video_id=NULL`, `file_path` relatif ; fichier d'origine déplacé dans
     `import/_done/`. Un sha256 déjà connu → déplacé dans `_done/`, `skipped`. Les dossiers dont le nom commence par
-    `_` (dont `_done/`) sont ignorés, sans avertissement.
+    `_` (dont `_done/`) sont ignorés, sans avertissement ; un sous-dossier ordinaire est signalé (`warned`) ; un
+    fichier modifié depuis moins de 60 s est laissé pour plus tard (C39).
   - Propriétaire (R4, R44) : marques candidates = celles qu'une période de `rotation` de la config couvrant `today`
-    associe à la série ; sans période, toutes les marques de la verticale (cartoons) ou celles dont
-    `creators_by_brand` contient le créateur. Parmi leurs comptes, celui qui possède le moins d'épisodes « en
+    associe à la série ; **sans période couvrant `today`**, toutes les marques de la verticale (cartoons) ; une période
+    couvrante qui ne liste pas la série ne laisse aucun compte candidat : `RushesError`, l'élément échoue et le fichier
+    reste dans `import/` (C37) ; pour un créateur, les marques dont `creators_by_brand` contient le créateur. Parmi leurs comptes, celui qui possède le moins d'épisodes « en
     cours » = sans aucun post, ou avec au moins un post non `published` ; égalité → identifiant le plus petit. Le
     compte est recalculé après chaque épisode inséré (flush), donc deux épisodes d'un même run se répartissent.
     (La rotation générée arrive en tâche 16a ; la tâche 10b remplace ce critère par le plus petit `stock_days`.)
-  - Nettoyage cartoons (R45) : noirs (`blackdetect`) et silences (`silencedetect`) de plus de 2 s **touchant un
-    bord** ; carton de titre = image figée (`freezedetect`, 1,5 s minimum) commençant dans les 20 premières
+  - Nettoyage cartoons (R45) : noirs (`blackdetect`) et silences (`silencedetect`) de plus de 2 s (durée mesurée
+    avant d'être ramenée au bord) **touchant un bord** ; un retrait compte aussi s'il touche une zone déjà retirée
+    depuis un bord, quel que soit l'ordre de détection (répété jusqu'à stabilité, C38) ; carton de titre = image figée (`freezedetect`, 1,5 s minimum) commençant dans les 20 premières
     secondes et touchant le début ou une zone déjà retirée ; génériques = images de référence de la série
     (`intro_outro.reference_frames`, chemins relatifs à `config/`), dans les 90 premières et dernières secondes,
-    zones touchant un bord. Rien n'est retiré à l'intérieur. Pour les créateurs, la tâche 24 complète.
+    zones touchant un bord ou une zone déjà retirée (C38). Rien n'est retiré à l'intérieur. Pour les créateurs, la tâche 24 complète.
   - `clean.mp4` normalisé : `-vf "scale=trunc(iw*sar/2)*2:ih,setsar=1,fps=30"`, `libx264 -preset veryfast
     -crf 16 -pix_fmt yuv420p`, `aac -b:a 192k -ar 48000 -ac 2` ; sans audio, ajout de
     `-f lavfi -i anullsrc=r=48000:cl=stereo -shortest`. Épisode → `cleaned`.
@@ -734,7 +737,7 @@ def test_assign_inserts_only_when_ok(session):
   — niveaux fixés pour que les doublures les reconnaissent : ton de fond `sine` à amplitude 0,1 ; `beeps_ms` :
   sinus 1000 Hz à 0,9 ; `speech_like_ms` : `anoisesrc` rose à 0,5 ; `silence_ms` et `black_ms` exacts ;
   `shots_ms` : couleur de fond différente à chaque plan, `testsrc2` en incrustation mobile pour le mouvement ;
-  `title_card_ms` : `drawtext` « TITLE » sur fond uni. Paramètres supplémentaires : `sar: tuple[int, int] = (1, 1)`,
+  `title_card_ms` : image fixe unie avec un motif `drawbox`, sans texte (`drawtext` absent de beaucoup de builds FFmpeg, C36 ; `freezedetect` n'exige qu'une image statique). Paramètres supplémentaires : `sar: tuple[int, int] = (1, 1)`,
   `vfr: bool = False`, `audio: bool = True`. Fixture `synth(spec) -> Path` en cache par session (`tmp_path_factory`).
 
 - [ ] **Step 2 : Tests qui échouent**

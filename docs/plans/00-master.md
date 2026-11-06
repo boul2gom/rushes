@@ -804,13 +804,13 @@ class SynthSpec:
     tone_hz: int = 440
     beeps_ms: Sequence[Span] = ()                   # pics sonores
     speech_like_ms: Sequence[Span] = ()             # bruit modulé que la doublure VAD reconnaît
-    title_card_ms: Span | None = None               # carton de texte
+    title_card_ms: Span | None = None               # carton de titre : image fixe unie avec un motif drawbox, sans texte (C36)
     logo_corner: Literal["tl", "tr", "bl", "br"] | None = None
     moving_target: Sequence[tuple[int, int]] = ()   # (t_ms, x_px) d'un carré en mouvement, pour le recadrage
     face_image: Path | None = None                  # visage photo CC0 pour YuNet (tests slow)
 
 
-def make_video(spec: SynthSpec, out: Path) -> Path: ...   # ffmpeg lavfi : color, testsrc2, sine, anoisesrc, drawbox, drawtext, overlay
+def make_video(spec: SynthSpec, out: Path) -> Path: ...   # ffmpeg lavfi : color, testsrc2, sine, anoisesrc, drawbox, overlay (jamais drawtext : absent de beaucoup de builds, C36)
 ```
 
 **Cassettes** : métadonnées réelles enregistrées une fois (`scripts/record_cassette.py`), nettoyées (aucune URL de

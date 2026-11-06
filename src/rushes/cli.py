@@ -225,6 +225,41 @@ def _pipeline_stub(task: str) -> Callable[..., None]:
     return command
 
 
+def _pipeline_command(command: str, step_names: Sequence[str]) -> Callable[..., None]:
+    """A top-level command that runs the named steps with the common filter options."""
+
+    @_guarded
+    def run_command(
+        series: Annotated[str | None, typer.Option("--series", help="Limiter à une série.")] = None,
+        creator: Annotated[
+            str | None, typer.Option("--creator", help="Limiter à un créateur.")
+        ] = None,
+        episode: Annotated[
+            str | None, typer.Option("--episode", help="Limiter à un épisode (45 ou e_000045).")
+        ] = None,
+        account: Annotated[
+            str | None, typer.Option("--account", help="Limiter à un compte.")
+        ] = None,
+        limit: Annotated[
+            int | None, typer.Option("--limit", help="Nombre maximum d'éléments.")
+        ] = None,
+        force: Annotated[
+            bool, typer.Option("--force", help="Refaire ce qui est déjà fait.")
+        ] = False,
+    ) -> None:
+        filters = make_filters(
+            series=series,
+            creator=creator,
+            episode=episode,
+            account=account,
+            limit=limit,
+            force=force,
+        )
+        execute(command, step_names, filters)
+
+    return run_command
+
+
 def _group(name: str, help_text: str) -> typer.Typer:
     group = typer.Typer(help=help_text, no_args_is_help=True)
     app.add_typer(group, name=name)
@@ -243,9 +278,11 @@ def status() -> None:
 app.command("status", help="Derniers runs, files, alertes et espace disque.")(status)
 
 app.command("run", help="Enchaîne tout ce qui est prêt.")(_pipeline_stub("9"))
-app.command("ingest", help="Télécharge et enregistre les épisodes.")(_pipeline_stub("4"))
+app.command("ingest", help="Télécharge et enregistre les épisodes.")(
+    _pipeline_command("ingest", ("ingest",))
+)
 app.command("clean", help="Retire génériques, cartons, noirs et silences en bordure.")(
-    _pipeline_stub("4")
+    _pipeline_command("clean", ("clean",))
 )
 app.command("analyze", help="Plans, audio, parole et index des scènes.")(_pipeline_stub("5"))
 app.command("cut", help="Découpe en parties et best-of.")(_pipeline_stub("6"))

@@ -88,8 +88,16 @@ class Paths:
         return self.data_dir / "import"
 
     @property
+    def import_done(self) -> Path:
+        return self.imports / "_done"
+
+    @property
     def tmp(self) -> Path:
         return self.data_dir / "tmp"
+
+    def relative(self, path: Path) -> str:
+        """`path` under data/ as stored in the database (POSIX separators)."""
+        return path.relative_to(self.data_dir).as_posix()
 
     def episode_dir(self, episode_id: str) -> Path:
         return self.episodes / _ident(episode_id)

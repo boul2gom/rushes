@@ -76,3 +76,11 @@ def test_paths_runtime_folders(tmp_path: Path) -> None:
     assert paths.locks == paths.data_dir / "locks"
     assert paths.imports == paths.data_dir / "import"
     assert paths.tmp == paths.data_dir / "tmp"
+
+
+def test_import_done_and_relative_paths(tmp_path: Path) -> None:
+    paths = Paths(config_dir=tmp_path / "c", data_dir=tmp_path / "d")
+    assert paths.import_done == paths.imports / "_done"
+    assert paths.relative(paths.sources / "a b" / "é.mp4") == "sources/a b/é.mp4"
+    with pytest.raises(ValueError):
+        paths.relative(tmp_path / "elsewhere.mp4")

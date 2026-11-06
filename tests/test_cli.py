@@ -1,4 +1,5 @@
 import json
+import os
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
@@ -8,6 +9,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
+from fixtures.generator import Synth, SynthSpec
 from helpers import FakeStep
 from rushes import cli, steps
 from rushes.cli import app
@@ -37,8 +39,6 @@ PENDING: dict[str, str] = {
     "serve": "36",
     "market collect": "31",
     "market analyze": "31",
-    "ingest": "4",
-    "clean": "4",
     "analyze": "5",
     "cut": "6",
     "compile themes": "30",
@@ -60,7 +60,7 @@ PENDING: dict[str, str] = {
     "review build": "32",
     "review apply": "32",
 }
-IMPLEMENTED: tuple[str, ...] = ("status",)
+IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean")
 
 
 def _argv(commands: list[str]) -> list[list[str]]:
@@ -321,3 +321,46 @@ def test_unexpected_error_after_the_log_is_open_points_to_it(
     monkeypatch.setitem(steps.STEPS, "fake", broken)
     result = cli_env.invoke(_probe(("fake",)), [])
     assert "data/logs" in result.output
+
+
+# --- task 4: ingest and clean -------------------------------------------------------------------
+
+
+def test_ingest_then_clean_commands_run_the_steps(
+    cli_env: CliRunner, data_dir: Path, synth: Synth
+) -> None:
+    folder = data_dir / "import" / "tom_and_jerry"
+    folder.mkdir(parents=True)
+    video = synth(SynthSpec(duration_ms=3000, size=(64, 36), black_ms=[(0, 2500)]))
+    (folder / "a.mp4").write_bytes(video.read_bytes())
+    os.utime(folder / "a.mp4", (1_700_000_000, 1_700_000_000))  # not "being copied"
+
+    ingest = cli_env.invoke(app, ["--json", "ingest"])
+    assert ingest.exit_code == 0, ingest.output
+    assert (
+        '"step": "ingest"' in ingest.output and (data_dir / "import" / "_done" / "a.mp4").exists()
+    )
+
+    clean = cli_env.invoke(app, ["--json", "clean", "--limit", "1"])
+    assert clean.exit_code == 0, clean.output
+    assert '"step": "clean"' in ingest.output + clean.output
+    assert list((data_dir / "episodes").glob("e_*/clean.mp4"))
+
+    again = cli_env.invoke(app, ["--json", "clean"])  # R16 through the CLI
+    assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+def test_ingest_command_with_an_unknown_folder_exits_0_with_a_warning(
+    cli_env: CliRunner, data_dir: Path
+) -> None:
+    stray = data_dir / "import" / "nobody" / "a.mp4"
+    stray.parent.mkdir(parents=True)
+    stray.write_bytes(b"x")
+    os.utime(stray, (1_700_000_000, 1_700_000_000))
+    result = cli_env.invoke(app, ["ingest"])
+    assert result.exit_code == 0 and "nobody" in result.output
+
+
+def test_steps_registry_has_ingest_and_clean() -> None:
+    assert {"ingest", "clean"} <= set(steps.STEPS)
+    assert steps.RUN_ORDER[:2] == ("ingest", "clean")

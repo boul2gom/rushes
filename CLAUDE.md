@@ -15,6 +15,7 @@ amorces et les décisions de Louis. Rien n'est publié par le logiciel : Louis p
 - Pour explorer le code, utiliser l'outil CodeGraph avant de lire des fichiers.
 - Utiliser CodeGraph spontanément (explore, callers, impact) pour éviter de relire des fichiers entiers, y compris dans les sous-agents.
 - `codegraph sync` régulièrement : début de session, après une série d'éditions, avant toute exploration si le code a changé.
+- `codegraph sync` après chaque tâche terminée (avant de rendre le résultat et de proposer le commit), y compris dans les sous-agents implémenteurs.
 - Code et identifiants en anglais, commentaires courts.
 - Une étape = un module sous src/rushes/ ; idempotente ; état dans SQLite.
 - Jamais de chemin en dur : rushes.paths et la config.

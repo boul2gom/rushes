@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from fakes.clock import FakeClock
+from fixtures.generator import Synth, SynthSpec, cache_key, make_video
 from helpers import START, make_context
 from rushes import ui
 from rushes.context import Context
@@ -101,3 +102,21 @@ def cli_env(monkeypatch: pytest.MonkeyPatch, config_dir: Path, data_dir: Path) -
     monkeypatch.setenv("RUSHES_CONFIG_DIR", str(config_dir))
     monkeypatch.setenv("RUSHES_DATA_DIR", str(data_dir))
     return CliRunner()
+
+
+@pytest.fixture(scope="session")
+def synth(tmp_path_factory: pytest.TempPathFactory) -> Synth:
+    """`synth(spec) -> Path`: a synthetic video, generated once per session for a given spec.
+
+    The returned file is shared: copy it (helpers.drop_import) before moving or editing it.
+    """
+    folder = tmp_path_factory.mktemp("synth")
+    cache: dict[str, Path] = {}
+
+    def make(spec: SynthSpec) -> Path:
+        key = cache_key(spec)
+        if key not in cache:
+            cache[key] = make_video(spec, folder / f"{key}.mp4")
+        return cache[key]
+
+    return make

@@ -482,7 +482,7 @@ def test_r16_split_rerun_changes_nothing(ctx, synth):
   - Migration `0006_vectors_words.py` : `scene_vectors` (`scene_id` PK FK `scenes.id` ON DELETE CASCADE, `model TEXT`,
     `dim INTEGER`, `embedding BLOB`) ; `words` (`id` PK, `episode_id` FK, `start_ms`, `end_ms`, `word TEXT`,
     `prob REAL`, `sentence_id INTEGER`, index `(episode_id, start_ms)`), remplie en tâche 12c.
-  - Générateur : `shot_labels: Sequence[str]` écrit un mot en gros (`drawtext`, 160 px, centré) sur chaque plan.
+  - Générateur : `shot_labels: Sequence[str]` écrit un mot en gros (160 px, centré) sur chaque plan ; pas de `drawtext` (C36) : à réaliser avec un autre moyen, par exemple un motif `drawbox` distinct par mot que la doublure reconnaît.
 
 - [ ] **Step 1 : Tests qui échouent**
 

@@ -1,13 +1,18 @@
 """Shared test helpers: context factory, state snapshot, a configurable step."""
 
+import dataclasses
 import hashlib
 import io
 import json
+import os
+import shutil
+import tempfile
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
+import numpy as np
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
@@ -21,6 +26,7 @@ from rushes.db.migrate import upgrade
 from rushes.db.models import Assignment, Episode, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
+from rushes.media.ffmpeg import run_ffmpeg
 from rushes.net.base import NetClients
 from rushes.paths import Paths
 from rushes.runner import BaseStep, Outcome
@@ -65,6 +71,38 @@ def make_context(
         models=hub or FakeModelHub(),
         net=net or NetClients(ytdlp=FakeYtDlp(), http=FakeHttp()),
     )
+
+
+def with_config(ctx: Context, config_dir: Path) -> Context:
+    """The same context (same database) with the config re-read from `config_dir`."""
+    return dataclasses.replace(ctx, config=load_config(config_dir))
+
+
+def audio_peak(path: Path, start_s: float = 0.0, length_s: float | None = None) -> float:
+    """Peak amplitude (0 to 1) of the decoded mono audio, read as raw PCM (no log parsing)."""
+    seek = ["-ss", f"{start_s:.3f}"] + ([] if length_s is None else ["-t", f"{length_s:.3f}"])
+    with tempfile.TemporaryDirectory() as folder:
+        raw = Path(folder) / "audio.raw"
+        run_ffmpeg([*seek, "-i", path, "-vn", "-ac", "1", "-ar", "48000", "-f", "s16le", raw])
+        samples = np.frombuffer(raw.read_bytes(), dtype="<i2")
+    return float(np.abs(samples.astype(np.int32)).max() / 32768) if samples.size else 0.0
+
+
+def age_file(ctx: Context, path: Path, age_s: float = 120) -> Path:
+    """Set the mtime `age_s` seconds before the context clock (ingest skips files < 60 s old)."""
+    moment = ctx.clock.now().timestamp() - age_s
+    os.utime(path, (moment, moment))
+    return path
+
+
+def drop_import(
+    ctx: Context, folder: str, video: Path, name: str = "video.mp4", age_s: float = 120
+) -> Path:
+    """Copy a video into data/import/<folder>/<name> (the cached synthetic files stay intact)."""
+    target = ctx.paths.imports / folder / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(video, target)
+    return age_file(ctx, target, age_s)
 
 
 def ctx_output(ctx: Context) -> str:
