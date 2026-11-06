@@ -64,7 +64,7 @@ Chaque tâche les inclut implicitement. Valeurs copiées de la spec et de `decis
 - Unités : positions et durées internes en millisecondes entières (`_ms`) ; statistiques plateformes en secondes
   (`_s`) ; la config est en secondes, convertie au chargement.
 - Seul `rushes.ui` importe Rich (l'aide `--help` de Typer est exemptée). Aucun secret affiché ni journalisé (R47).
-- Toute attribution passe par `db.registry.can_assign` (R1).
+- Toute attribution passe par `db.registry.can_assign` (R1), et `assign` s'exécute dans une `db.engine.write_session` (transaction `BEGIN IMMEDIATE`) ; toutes les autres transactions restent différées et courtes (C32).
 - Aucun LLM distant, aucune API payante (R39). Rien n'est jamais envoyé à une plateforme de publication (R48).
 - yt-dlp toujours en mode métadonnées : `skip_download=True`, `check_formats=False`,
   `ignore_no_formats_error=True`, `sleep_interval_requests=2` (R18) ; TikTok : `impersonate=chrome`.

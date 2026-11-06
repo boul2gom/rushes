@@ -710,7 +710,7 @@ remise dans l'ordre chronologique
     `rule_violations` (v0) utilise la même fonction.
   - Approbation v0 (remplacée en tâche 15) : une compilation est `approved` si chaque passage passe R5 et R1 simulée
     et si la durée totale (transitions déduites) est dans les bornes de la famille (R6). Attribution : tous les
-    passages par `registry.assign` dans une seule transaction ; un refus annule tout (`warned`) ; succès →
+    passages par `registry.assign` dans une seule `write_session` (`BEGIN IMMEDIATE`, une seule transaction) ; un refus annule tout (`warned`) ; succès →
     `Post(compilation_id, part_number=None, status="planned")`. Un `bestof_item` n'est jamais attribué seul :
     `AssignStep` ne prend que les segments `part` (tâche 8a), l'`ApproveStep` v0 aussi (R2).
   - `attach_popularity` : `scenes.popularity` = poids heatmap maximal (temps clean) dans la scène, sinon NULL ;

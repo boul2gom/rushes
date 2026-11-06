@@ -627,7 +627,8 @@ Expected : vert.
   def assign(session: Session, segment_id: int, account_id: str, *, at: datetime, tolerance_ms: int, phash_max: int) -> Verdict: ...
   ```
   `can_assign` n'écrit jamais ; `assign` appelle `can_assign` puis insère `Assignment` dans la même transaction
-  (session de l'appelant). Ordre des contrôles : propriétaire (R44), chevauchement avec un passage du même épisode
+  (session de l'appelant, ouverte par `db.engine.write_session` : `BEGIN IMMEDIATE`, sinon `assign` lève `RegistryRefused` ;
+  `can_assign` reste utilisable sur toute session, R33). Ordre des contrôles : propriétaire (R44), chevauchement avec un passage du même épisode
   attribué à un autre compte de plus de `tolerance_ms` (R1, strictement supérieur), pHash à distance
   `<= phash_max` d'un passage attribué à un autre compte (R1), même compte : deux `part` qui se chevauchent de plus
   de `tolerance_ms` (R2). Un `bestof_item` ou `compilation_item` peut chevaucher une `part` du même compte.
@@ -1183,7 +1184,7 @@ def test_module_for_base_by_default(ctx):
 - Règles fixées :
   - Approbation v0 (remplacée par la tâche 15) : `approved` si `rule_violations` est vide, sinon `needs_review`
     avec les violations dans le message de l'événement ; le score n'est pas encore comparé au seuil.
-  - Attribution : vers `episodes.owner_account_id` uniquement, par `registry.assign` ; refus → `warned` avec le
+  - Attribution : vers `episodes.owner_account_id` uniquement, par `registry.assign` dans une `write_session` (`BEGIN IMMEDIATE`) ; refus → `warned` avec le
     message du verdict (« refus du registre : … ») ; succès → `Post(status="planned", family, layout=preference[0],
     originality=effective_originality, is_test=is_test_post(...))`. `is_test_post` : série non `licensed` ou
     `origin='prospect'`, créateur non `authorized`.

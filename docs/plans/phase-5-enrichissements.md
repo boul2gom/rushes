@@ -241,7 +241,7 @@ def test_r16_market_rerun_same_week_changes_nothing(ctx):
 - Consomme : `search_scenes`, `blob_vector` (12a), `ImageEncoder.encode_texts`, `widen`, `widen_sentences` (24),
   `pick_items`, `dedupe`, `draw_target_ms`, `derive_seed` (13), `cut_point_costs`,
   `render_plate_multi(items: Sequence[tuple[Path, Span]], layout, out, *, s, transition_ms, on_progress, reframes,
-  holes)` (13, 24, 34), `registry.assign`, `Strategy`, `Subject`, `subject_of_episode` (22), `is_test_post` (8a),
+  holes)` (13, 24, 34), `registry.assign` (dans une `write_session`, 3), `Strategy`, `Subject`, `subject_of_episode` (22), `is_test_post` (8a),
   `scenes.popularity`, `TAG_PROMPTS`.
 - Produit :
   ```python

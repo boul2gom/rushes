@@ -474,7 +474,7 @@ def test_r16_refresh_rerun_changes_nothing(ctx, synth):
     en ligne. Un post `ready` ou `expired` reconnu → `mark_published(at=posted_at, source="detected" ou "export",
     url=…, platform_post_id=…)` ; `published` → `platform_post_id`, `platform_url` et `published_at` sont posés
     (aucune nouvelle ligne `post_actions`). Un post `expired` reconnu reprend ses
-    attributions par `registry.assign`. Si son passage a été réattribué entre-temps à un nouveau post (même compte,
+    attributions par `registry.assign` (dans une `write_session`). Si son passage a été réattribué entre-temps à un nouveau post (même compte,
     R44) encore non publié, ce nouveau post est écarté par `discard_post(reason="doublon d'un post publié après
     expiration", origin="system")` (qui journalise lui-même l'écart et laisse le segment `approved`, 16b), puis
     l'ancien reprend l'attribution (R2 : jamais deux posts du même passage) ;

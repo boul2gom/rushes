@@ -6,12 +6,14 @@ from typing import Any
 
 import pytest
 import yaml
+from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from fakes.clock import FakeClock
 from helpers import START, make_context
 from rushes import ui
 from rushes.context import Context
+from rushes.db.engine import write_session
 
 REPO_CONFIG = Path(__file__).resolve().parent.parent / "config"
 
@@ -77,6 +79,20 @@ def ctx(tmp_path: Path, config_dir: Path) -> Iterator[Context]:
     context = make_context(tmp_path, config_dir, clock=FakeClock(START))
     yield context
     context.close()
+
+
+@pytest.fixture
+def session(ctx: Context) -> Iterator[Session]:
+    """ORM session on the synced `ctx` database (brands, accounts, series, creators of config/)."""
+    with Session(ctx.engine) as db_session:
+        yield db_session
+
+
+@pytest.fixture
+def wsession(ctx: Context) -> Iterator[Session]:
+    """Write session (BEGIN IMMEDIATE): the only kind `assign` accepts (R1)."""
+    with write_session(ctx.engine) as db_session:
+        yield db_session
 
 
 @pytest.fixture

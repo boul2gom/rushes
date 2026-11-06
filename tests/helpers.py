@@ -8,7 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
 
-from sqlalchemy import text
+from sqlalchemy import func, select, text
+from sqlalchemy.orm import Session
 
 from fakes.clock import FakeClock
 from fakes.models import FakeModelHub
@@ -17,6 +18,7 @@ from rushes.config import load_config
 from rushes.context import Context, Filters
 from rushes.db.engine import make_engine
 from rushes.db.migrate import upgrade
+from rushes.db.models import Assignment, Episode, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
 from rushes.net.base import NetClients
@@ -25,6 +27,17 @@ from rushes.runner import BaseStep, Outcome
 from rushes.ui import make_emitter
 
 START = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
+
+# Ids taken from the example config (config/): the one place to edit if they change.
+ACCOUNT = "st_tt"  # cartoons brand A, TikTok
+ACCOUNT_SAME_BRAND = "st_ig"  # same brand as ACCOUNT, other platform
+ACCOUNT_OTHER_BRAND = "tt_tt"  # another cartoons brand
+CREATOR_ACCOUNT = "ic_tt"  # creators brand C, TikTok
+CREATOR_ACCOUNT_SAME_BRAND = "ic_ig"
+CREATOR_ACCOUNT_OTHER_BRAND = "pm_tt"  # another creators brand
+SERIES = "tom_and_jerry"
+CREATOR = "squeezie"
+CREATOR_OTHER = "caseoh"
 
 
 def make_context(
@@ -151,3 +164,64 @@ class FakeStep(BaseStep):
 
     def finish(self, ctx: Context) -> None:
         self.finished += 1
+
+
+def make_episode(
+    session: Session,
+    *,
+    owner: str = ACCOUNT,
+    series_id: str | None = None,
+    creator_id: str | None = None,
+) -> Episode:
+    """Episode owned by `owner`; a series episode by default (creator_id set -> creator episode)."""
+    if series_id is None and creator_id is None:
+        series_id = SERIES
+    number = session.scalar(select(func.count()).select_from(Episode)) or 0
+    episode = Episode(
+        series_id=series_id,
+        creator_id=creator_id,
+        provenance="local",
+        owner_account_id=owner,
+        file_path=f"episodes/{number}.mp4",
+        sha256=hashlib.sha256(f"episode-{number}".encode()).hexdigest(),
+        duration_ms=600_000,
+        status="analyzed",
+    )
+    session.add(episode)
+    session.flush()
+    return episode
+
+
+def make_segment(
+    session: Session,
+    episode: Episode,
+    kind: str,
+    start_ms: int,
+    end_ms: int,
+    *,
+    phash: list[str] | None = None,
+) -> Segment:
+    segment = Segment(
+        episode_id=episode.id,
+        kind=kind,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        family="monetizable",
+        status="approved",
+        phash_json=None if phash is None else json.dumps(phash),
+    )
+    session.add(segment)
+    session.flush()
+    return segment
+
+
+def assign_raw(session: Session, segment: Segment, account_id: str) -> Assignment:
+    """Insert an assignment without any check: sets up the state a test starts from."""
+    assignment = Assignment(
+        segment_id=segment.id,
+        account_id=account_id,
+        assigned_at=START.isoformat(timespec="seconds"),
+    )
+    session.add(assignment)
+    session.flush()
+    return assignment
