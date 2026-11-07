@@ -223,5 +223,6 @@ def test_synth_audio_levels_follow_the_contract(synth: Synth) -> None:
     path = synth(spec)
     assert _peak_db(path, 0.5, 2.0) == pytest.approx(-20.0, abs=1.5)  # tone at 0.1
     assert _peak_db(path, 3.2, 0.6) == pytest.approx(-0.9, abs=1.5)  # beep at 0.9
-    assert -14.0 < _peak_db(path, 6.2, 0.6) < -2.0  # pink noise at 0.5: louder than the tone
+    # seeded white noise at 0.5 peaks at -1.06 dB (AAC overshoot included): about 3 dB of margin
+    assert -14.0 < _peak_db(path, 6.2, 0.6) < 2.0
     assert _peak_db(path, 7.7, 0.6) < -70.0  # exact silence

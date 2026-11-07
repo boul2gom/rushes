@@ -735,7 +735,7 @@ def test_assign_inserts_only_when_ok(session):
 
 - [ ] **Step 1 : Générateur de vidéos synthétiques** (`tests/fixtures/generator.py`, contrat §6 de `00-master.md`)
   — niveaux fixés pour que les doublures les reconnaissent : ton de fond `sine` à amplitude 0,1 ; `beeps_ms` :
-  sinus 1000 Hz à 0,9 ; `speech_like_ms` : `anoisesrc` rose à 0,5 ; `silence_ms` et `black_ms` exacts ;
+  sinus 1000 Hz à 0,9 ; `speech_like_ms` : `anoisesrc` blanc à 0,5 (rose abandonné, C41) ; `silence_ms` et `black_ms` exacts ;
   `shots_ms` : couleur de fond différente à chaque plan, `testsrc2` en incrustation mobile pour le mouvement ;
   `title_card_ms` : image fixe unie avec un motif `drawbox`, sans texte (`drawtext` absent de beaucoup de builds FFmpeg, C36 ; `freezedetect` n'exige qu'une image statique). Paramètres supplémentaires : `sar: tuple[int, int] = (1, 1)`,
   `vfr: bool = False`, `audio: bool = True`. Fixture `synth(spec) -> Path` en cache par session (`tmp_path_factory`).

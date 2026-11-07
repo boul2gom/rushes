@@ -39,7 +39,6 @@ PENDING: dict[str, str] = {
     "serve": "36",
     "market collect": "31",
     "market analyze": "31",
-    "analyze": "5",
     "cut": "6",
     "compile themes": "30",
     "hooks propose": "14",
@@ -60,7 +59,7 @@ PENDING: dict[str, str] = {
     "review build": "32",
     "review apply": "32",
 }
-IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean")
+IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze")
 
 
 def _argv(commands: list[str]) -> list[list[str]]:
@@ -364,3 +363,30 @@ def test_ingest_command_with_an_unknown_folder_exits_0_with_a_warning(
 def test_steps_registry_has_ingest_and_clean() -> None:
     assert {"ingest", "clean"} <= set(steps.STEPS)
     assert steps.RUN_ORDER[:2] == ("ingest", "clean")
+
+
+# --- task 5: analyze ----------------------------------------------------------------------------
+
+
+def test_analyze_command_runs_the_step_and_is_idempotent(
+    cli_env: CliRunner, data_dir: Path, synth: Synth, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fakes.models import FakeVad
+    from rushes.models import hub
+
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "vad", FakeVad)  # no real model in tests
+    folder = data_dir / "import" / "tom_and_jerry"
+    folder.mkdir(parents=True)
+    video = synth(SynthSpec(duration_ms=3000, size=(64, 36), fps=10))
+    (folder / "a.mp4").write_bytes(video.read_bytes())
+    os.utime(folder / "a.mp4", (1_700_000_000, 1_700_000_000))
+    assert cli_env.invoke(app, ["--json", "ingest"]).exit_code == 0
+    assert cli_env.invoke(app, ["--json", "clean"]).exit_code == 0
+
+    analyze = cli_env.invoke(app, ["--json", "analyze"])
+    assert analyze.exit_code == 0, analyze.output
+    assert '"step": "analyze"' in analyze.output
+    assert list((data_dir / "episodes").glob("e_*/scenes.json"))
+
+    again = cli_env.invoke(app, ["--json", "analyze"])  # R16 through the CLI
+    assert again.exit_code == 0 and '"event": "step"' not in again.output

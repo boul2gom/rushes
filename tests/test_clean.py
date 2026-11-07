@@ -523,3 +523,15 @@ def test_c38_blacks_chained_within_eps_all_go(
     blacks = [(0, 3000), (3050, 6000), (6120, 9000)]  # gaps of 50 and 120 ms (eps is 134 ms)
     removed = _removed(ctx, monkeypatch, _info(60_000), blacks=blacks)
     assert kept_range(60_000, [(s, e) for s, e, _ in removed]) == (9000, 60_000)
+
+
+def test_clean_force_removes_the_analysis_of_the_old_clean_mp4(ctx: Context, synth: Synth) -> None:
+    episode_id, _ = _run(ctx, synth(SynthSpec(duration_ms=4000, size=SMALL)))
+    folder = _folder(ctx, episode_id)
+    (folder / "keyframes").mkdir()
+    for name in ("scenes.json", "audio.json", "keyframes/0.jpg"):
+        (folder / name).write_bytes(b"old")
+    assert _clean(ctx, force=True).done == 1
+    assert not (folder / "scenes.json").exists() and not (folder / "audio.json").exists()
+    assert not (folder / "keyframes").exists()
+    assert (folder / "clean.mp4").is_file()

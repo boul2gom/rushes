@@ -17,8 +17,9 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from fakes.clock import FakeClock
-from fakes.models import FakeModelHub
+from fakes.models import FakeVad
 from fakes.net import FakeHttp, FakeYtDlp
+from rushes.clean.clean import CleanStep
 from rushes.config import load_config
 from rushes.context import Context, Filters
 from rushes.db.engine import make_engine
@@ -26,10 +27,12 @@ from rushes.db.migrate import upgrade
 from rushes.db.models import Assignment, Episode, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
+from rushes.ingest.ingest import IngestStep
 from rushes.media.ffmpeg import run_ffmpeg
+from rushes.models.hub import ModelHub
 from rushes.net.base import NetClients
 from rushes.paths import Paths
-from rushes.runner import BaseStep, Outcome
+from rushes.runner import BaseStep, Outcome, run_step
 from rushes.ui import make_emitter
 
 START = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
@@ -68,7 +71,7 @@ def make_context(
         engine=engine,
         ui=ui,
         clock=clock,
-        models=hub or FakeModelHub(),
+        models=hub or ModelHub(paths, config.settings, factories={"vad": FakeVad}),
         net=net or NetClients(ytdlp=FakeYtDlp(), http=FakeHttp()),
     )
 
@@ -103,6 +106,17 @@ def drop_import(
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(video, target)
     return age_file(ctx, target, age_s)
+
+
+def cleaned_episode(ctx: Context, video: Path, folder: str = SERIES) -> int:
+    """Ingest then clean `video` (ultrafast encode); returns the episode id."""
+    drop_import(ctx, folder, video)
+    assert run_step(ctx, IngestStep(), Filters()).done == 1
+    report = run_step(ctx, CleanStep(preset="ultrafast"), Filters())
+    failures = [e.get("message") for e in ctx_events(ctx) if e.get("status") == "failed"]
+    assert (report.done, report.failed) == (1, 0), failures
+    with ctx.engine.connect() as conn:
+        return int(conn.execute(text("SELECT max(id) FROM episodes")).scalar_one())
 
 
 def ctx_output(ctx: Context) -> str:

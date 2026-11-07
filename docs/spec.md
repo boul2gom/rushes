@@ -341,7 +341,7 @@ data/                                  # hors dépôt, monté dans le conteneur,
 ├── sources/<source_video_id>.mp4
 ├── episodes/<episode_id>/
 │   ├── clean.mp4  scenes.json  audio.json  words.json
-│   └── keyframes/<scene_id>.jpg
+│   └── keyframes/<shot_id>.jpg
 ├── renders/<post_id>.mp4
 ├── inbox/                             # exports Instagram déposés par Louis
 ├── outbox/

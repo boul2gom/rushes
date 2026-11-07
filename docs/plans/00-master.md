@@ -451,7 +451,7 @@ class ModelHub:
     def llm(self) -> TextGenerator | None: ...   # None si llm.enabled est faux
     def tts(self) -> SpeechSynth | None: ...
     def loads(self) -> Mapping[str, int]: ...    # compteur de chargements, pour R19
-    def release(self) -> None: ...               # décharge le modèle lourd (avant de céder le verrou)
+    def release(self) -> None: ...               # décharge tous les modèles (avant de céder le verrou)
 ```
 
 Implémentations réelles (imports lourds à l'intérieur des fonctions) : `vad_silero.py` (`load_silero_vad(onnx=True)`),

@@ -7,6 +7,7 @@ normalized here (SponsorBlock and autocut come with task 24).
 """
 
 import math
+import shutil
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import ClassVar
@@ -193,6 +194,7 @@ class CleanStep(BaseStep):
         except ValueError as exc:
             raise MediaError(f"{episode_key(item)} : {exc}") from exc
 
+        self._drop_analysis(folder)  # computed on the clean.mp4 about to be replaced
         self._encode(ctx, item, source, info, kept, clean_mp4)
         write_json(
             CleanFile(
@@ -209,6 +211,13 @@ class CleanStep(BaseStep):
         return Outcome(
             "done", f"{(kept[1] - kept[0]) / 1000:.1f} s gardées, {gone / 1000:.1f} s retirées"
         )
+
+    @staticmethod
+    def _drop_analysis(folder: Path) -> None:
+        """Remove what `analyze` made from the old clean.mp4 (C43)."""
+        (folder / "scenes.json").unlink(missing_ok=True)
+        (folder / "audio.json").unlink(missing_ok=True)
+        shutil.rmtree(folder / "keyframes", ignore_errors=True)
 
     @staticmethod
     def _finished(item: int, clean_mp4: Path, clean_json: Path) -> bool:

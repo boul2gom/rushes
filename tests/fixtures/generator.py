@@ -2,7 +2,7 @@
 
 Only filters that every FFmpeg build has: color, testsrc2, sine, anoisesrc, drawbox, overlay,
 volume, amix (no drawtext: C36). Levels, so that the doubles recognize them: background tone
-`sine` at 0.1, beeps = 1000 Hz sine at 0.9, speech-like = pink `anoisesrc` at 0.5; each source is
+`sine` at 0.1, beeps = 1000 Hz sine at 0.9, speech-like = white `anoisesrc` at 0.5; each source is
 muted while a louder one plays, silence and black are exact (to a millisecond / a frame).
 """
 
@@ -190,7 +190,7 @@ def make_video(spec: SynthSpec, out: Path) -> Path:
         if spec.beeps_ms:
             args += ["-f", "lavfi", "-i", f"sine=f=1000:r={_RATE}:d={seconds}"]
         if spec.speech_like_ms:
-            args += ["-f", "lavfi", "-i", f"anoisesrc=c=pink:a=0.5:r={_RATE}:d={seconds}"]
+            args += ["-f", "lavfi", "-i", f"anoisesrc=c=white:a=0.5:seed=1:r={_RATE}:d={seconds}"]
         audio_graph, _ = _audio_graph(spec, first)
         graph += ";" + audio_graph
         maps += ["-map", "[aout]", "-c:a", "aac", "-b:a", "96k", "-ar", str(_RATE)]

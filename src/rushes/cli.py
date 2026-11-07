@@ -284,7 +284,9 @@ app.command("ingest", help="Télécharge et enregistre les épisodes.")(
 app.command("clean", help="Retire génériques, cartons, noirs et silences en bordure.")(
     _pipeline_command("clean", ("clean",))
 )
-app.command("analyze", help="Plans, audio, parole et index des scènes.")(_pipeline_stub("5"))
+app.command("analyze", help="Plans, audio, parole et index des scènes.")(
+    _pipeline_command("analyze", ("analyze",))
+)
 app.command("cut", help="Découpe en parties et best-of.")(_pipeline_stub("6"))
 app.command("approve", help="Approbation automatique des passages.")(_pipeline_stub("8a"))
 app.command("assign", help="Attribue les passages approuvés au compte propriétaire.")(
