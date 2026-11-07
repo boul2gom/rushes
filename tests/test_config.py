@@ -283,3 +283,45 @@ def test_legal_flags_stay_mandatory(config_dir: Path, edit_yaml: Edit) -> None:
     with pytest.raises(ConfigError) as exc2:
         load_config(config_dir)
     assert "authorized" in str(exc2.value)
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "word"),
+    [
+        ("target_weight", -1.0, "target_weight"),
+        ("loud_weight", -0.1, "loud_weight"),
+        ("motion_start_bonus", -0.5, "motion_start_bonus"),
+        ("quiet_point_penalty", -1, "quiet_point_penalty"),
+        ("target_weight", float("nan"), "target_weight"),
+        ("loud_weight", float("inf"), "loud_weight"),
+        ("start_motion_min", 1.5, "start_motion_min"),
+        ("start_motion_min", -0.1, "start_motion_min"),
+        ("speech_margin_ms", -1, "speech_margin_ms"),
+        ("peak_guard_ms", -1, "peak_guard_ms"),
+        ("start_shift_ms", -1, "start_shift_ms"),
+        ("quiet_point_step_ms", 0, "quiet_point_step_ms"),
+    ],
+)
+def test_cut_settings_out_of_range_are_refused_in_french(
+    config_dir: Path, edit_yaml: Edit, key: str, value: float, word: str
+) -> None:
+    edit_yaml(config_dir / "settings.yaml", lambda d: d.update(cut={key: value}))
+    with pytest.raises(ConfigError) as exc:
+        load_config(config_dir)
+    assert word in str(exc.value)
+    assert "doit être" in str(exc.value)
+
+
+def test_cut_settings_default_to_the_brief_values(config_dir: Path) -> None:
+    cut = load_config(config_dir).settings.cut
+    assert cut.model_dump() == {
+        "loud_weight": 1.0,
+        "target_weight": 1.0,
+        "motion_start_bonus": 0.5,
+        "speech_margin_ms": 150,
+        "peak_guard_ms": 1500,
+        "quiet_point_step_ms": 2000,
+        "quiet_point_penalty": 1.0,
+        "start_motion_min": 0.15,
+        "start_shift_ms": 2000,
+    }

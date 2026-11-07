@@ -1,5 +1,6 @@
 """YAML configuration validated by Pydantic. Errors are aggregated and name file + field."""
 
+import math
 import os
 import re
 from collections.abc import Iterator
@@ -151,6 +152,35 @@ class NtfySettings(_Model):
         return _env_secret(self.token_env) if self.token_env else None
 
 
+class CutSettings(_Model):
+    """Part partition weights (spec, Partition en parties); every value is a starting point."""
+
+    loud_weight: float = 1.0  # weight of the loudness z-score at a cut point
+    target_weight: float = 1.0  # per squared second away from the drawn target
+    motion_start_bonus: float = 0.5  # reward when the 2 s after a cut have motion
+    speech_margin_ms: int = 150  # no cut this close to speech (R5)
+    peak_guard_ms: int = 1500  # no cut this long before a "most replayed" peak (R5)
+    quiet_point_step_ms: int = 2000  # spacing of the fallback quiet points
+    quiet_point_penalty: float = 1.0
+    start_motion_min: float = 0.15  # below it a part start is moved to the next shot
+    start_shift_ms: int = 2000
+
+    @model_validator(mode="after")
+    def _ranges(self) -> CutSettings:
+        for name in ("loud_weight", "target_weight", "motion_start_bonus", "quiet_point_penalty"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"{name}: doit être un nombre fini, positif ou nul")
+        if not math.isfinite(self.start_motion_min) or not 0 <= self.start_motion_min <= 1:
+            raise ValueError("start_motion_min: doit être compris entre 0 et 1")
+        for name in ("speech_margin_ms", "peak_guard_ms", "start_shift_ms"):
+            if getattr(self, name) < 0:
+                raise ValueError(f"{name}: doit être positif ou nul")
+        if self.quiet_point_step_ms <= 0:
+            raise ValueError("quiet_point_step_ms: doit être strictement positif")
+        return self
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -161,6 +191,7 @@ class Settings(_Model):
     showcase: ShowcaseSettings = ShowcaseSettings()
     serve: ServeSettings | None = None
     models: ModelSettings = ModelSettings()
+    cut: CutSettings = CutSettings()
     ntfy: NtfySettings | None = None
 
 

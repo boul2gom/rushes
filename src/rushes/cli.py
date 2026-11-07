@@ -287,7 +287,7 @@ app.command("clean", help="Retire génériques, cartons, noirs et silences en bo
 app.command("analyze", help="Plans, audio, parole et index des scènes.")(
     _pipeline_command("analyze", ("analyze",))
 )
-app.command("cut", help="Découpe en parties et best-of.")(_pipeline_stub("6"))
+app.command("cut", help="Découpe en parties et best-of.")(_pipeline_command("cut", ("cut",)))
 app.command("approve", help="Approbation automatique des passages.")(_pipeline_stub("8a"))
 app.command("assign", help="Attribue les passages approuvés au compte propriétaire.")(
     _pipeline_stub("8a")

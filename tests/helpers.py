@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 import tempfile
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar
@@ -27,12 +27,14 @@ from rushes.db.migrate import upgrade
 from rushes.db.models import Assignment, Episode, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
+from rushes.ids import episode_key
 from rushes.ingest.ingest import IngestStep
 from rushes.media.ffmpeg import run_ffmpeg
 from rushes.models.hub import ModelHub
 from rushes.net.base import NetClients
 from rushes.paths import Paths
 from rushes.runner import BaseStep, Outcome, run_step
+from rushes.schemas import AudioFile, LoudPoint, ScenesFile, Shot, write_json
 from rushes.ui import make_emitter
 
 START = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
@@ -277,3 +279,57 @@ def assign_raw(session: Session, segment: Segment, account_id: str) -> Assignmen
     session.add(assignment)
     session.flush()
     return assignment
+
+
+def analyzed_episode(
+    ctx: Context,
+    *,
+    duration_ms: int,
+    shot_starts: Sequence[int] | None = None,
+    motion: float = 0.5,
+    loudness: Sequence[tuple[int, float]] = (),
+    speech: Sequence[tuple[int, int]] = (),
+) -> int:
+    """An 'analyzed' episode with scenes.json and audio.json written directly (no ffmpeg).
+
+    Shots start at `shot_starts` (default: every 5 s); `loudness` is (t_ms, lufs) pairs as
+    stored in audio.json (t_ms = end of the 3 s window). Returns the episode id.
+    """
+    with Session(ctx.engine) as session:
+        episode = make_episode(session)
+        episode.duration_ms = duration_ms
+        session.commit()
+        episode_id = episode.id
+    starts = list(range(0, duration_ms, 5000)) if shot_starts is None else list(shot_starts)
+    ends = [*starts[1:], duration_ms]
+    shots = [
+        Shot(
+            id=i,
+            start_ms=a,
+            end_ms=b,
+            keyframe_ms=(a + b) // 2,
+            motion=motion,
+            loudness_lufs=None,
+            speech_ratio=0.0,
+            phash=f"{i:016x}",
+        )
+        for i, (a, b) in enumerate(zip(starts, ends, strict=True))
+    ]
+    folder = ctx.paths.episode_dir(episode_key(episode_id))
+    write_json(
+        ScenesFile(
+            version=1, episode_id=episode_id, duration_ms=duration_ms, detector={}, shots=shots
+        ),
+        folder / "scenes.json",
+    )
+    write_json(
+        AudioFile(
+            version=1,
+            episode_id=episode_id,
+            integrated_lufs=-20.0,
+            loudness=[LoudPoint(t_ms=t, lufs=lufs) for t, lufs in loudness],
+            speech=list(speech),
+        ),
+        folder / "audio.json",
+    )
+    return episode_id

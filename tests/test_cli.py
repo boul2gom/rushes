@@ -7,13 +7,14 @@ from typing import Any
 
 import pytest
 import typer
+from sqlalchemy import text
 from typer.testing import CliRunner
 
 from fixtures.generator import Synth, SynthSpec
-from helpers import FakeStep
+from helpers import FakeStep, analyzed_episode
 from rushes import cli, steps
 from rushes.cli import app
-from rushes.context import Filters, app_version
+from rushes.context import Context, Filters, app_version
 from rushes.errors import LockBusy
 from rushes.ui import Message
 
@@ -39,7 +40,6 @@ PENDING: dict[str, str] = {
     "serve": "36",
     "market collect": "31",
     "market analyze": "31",
-    "cut": "6",
     "compile themes": "30",
     "hooks propose": "14",
     "approve": "8a",
@@ -59,7 +59,7 @@ PENDING: dict[str, str] = {
     "review build": "32",
     "review apply": "32",
 }
-IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze")
+IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze", "cut")
 
 
 def _argv(commands: list[str]) -> list[list[str]]:
@@ -389,4 +389,19 @@ def test_analyze_command_runs_the_step_and_is_idempotent(
     assert list((data_dir / "episodes").glob("e_*/scenes.json"))
 
     again = cli_env.invoke(app, ["--json", "analyze"])  # R16 through the CLI
+    assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+# --- task 6: cut --------------------------------------------------------------------------------
+
+
+def test_cut_command_runs_the_step_and_is_idempotent(cli_env: CliRunner, ctx: Context) -> None:
+    analyzed_episode(ctx, duration_ms=240_000)
+    first = cli_env.invoke(app, ["--json", "cut"])
+    assert first.exit_code == 0, first.output
+    assert '"step": "cut"' in first.output
+    with ctx.engine.connect() as conn:
+        count = conn.execute(text("SELECT count(*) FROM segments WHERE kind='part'")).scalar_one()
+    assert count >= 2
+    again = cli_env.invoke(app, ["--json", "cut"])  # R16 through the CLI
     assert again.exit_code == 0 and '"event": "step"' not in again.output
