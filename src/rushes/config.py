@@ -33,6 +33,8 @@ MAX_HASHTAGS = 5  # R13
 Originality = Literal["base", "advanced"]
 Layout = Literal["square", "vertical", "portrait", "full"]
 Vertical = Literal["cartoons", "creators"]
+RenderPreset = Literal["ultrafast", "veryfast", "fast", "medium", "slow"]
+RENDER_PRESETS: tuple[str, ...] = get_args(RenderPreset)
 Platform = Literal["tiktok", "instagram"]
 
 HASHTAG_TOKENS: frozenset[str] = frozenset({"{series}", "{creator}", "{nostalgia}"})
@@ -181,6 +183,27 @@ class CutSettings(_Model):
         return self
 
 
+class RenderSettings(_Model):
+    """Encoding of the rendered videos (spec section 12); both are starting points."""
+
+    preset: RenderPreset = "medium"
+    crf: int = Field(19, ge=0, le=51)
+
+    @field_validator("preset", mode="before")
+    @classmethod
+    def _preset_in_french(cls, value: Any) -> Any:
+        if value not in RENDER_PRESETS:
+            raise ValueError(f"preset: doit être l'un de {', '.join(RENDER_PRESETS)}")
+        return value
+
+    @field_validator("crf", mode="before")
+    @classmethod
+    def _crf_in_french(cls, value: Any) -> Any:
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 51:
+            raise ValueError("crf: doit être un entier compris entre 0 et 51")
+        return value
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -192,6 +215,7 @@ class Settings(_Model):
     serve: ServeSettings | None = None
     models: ModelSettings = ModelSettings()
     cut: CutSettings = CutSettings()
+    render: RenderSettings = RenderSettings()
     ntfy: NtfySettings | None = None
 
 

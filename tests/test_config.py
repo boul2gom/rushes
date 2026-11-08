@@ -325,3 +325,33 @@ def test_cut_settings_default_to_the_brief_values(config_dir: Path) -> None:
         "start_motion_min": 0.15,
         "start_shift_ms": 2000,
     }
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "word"),
+    [("crf", 52, "crf"), ("crf", -1, "crf"), ("crf", 19.5, "crf"), ("preset", "turbo", "preset")],
+)
+def test_render_settings_out_of_range_are_refused_in_french(
+    config_dir: Path, edit_yaml: Edit, key: str, value: object, word: str
+) -> None:
+    edit_yaml(config_dir / "settings.yaml", lambda d: d.update(render={key: value}))
+    with pytest.raises(ConfigError) as exc:
+        load_config(config_dir)
+    assert word in str(exc.value)
+    assert "doit être" in str(exc.value)
+
+
+def test_render_settings_default_to_the_brief_values(config_dir: Path) -> None:
+    render = load_config(config_dir).settings.render
+    assert render.model_dump() == {"preset": "medium", "crf": 19}
+
+
+def test_render_settings_can_be_overridden(config_dir: Path, edit_yaml: Edit) -> None:
+    edit_yaml(
+        config_dir / "settings.yaml",
+        lambda d: d.update(render={"preset": "ultrafast", "crf": 30}),
+    )
+    assert load_config(config_dir).settings.render.model_dump() == {
+        "preset": "ultrafast",
+        "crf": 30,
+    }

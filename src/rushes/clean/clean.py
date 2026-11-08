@@ -26,6 +26,7 @@ from rushes.ids import episode_key
 from rushes.media.detect import detect_black, detect_freeze, detect_silence
 from rushes.media.ffmpeg import run_ffmpeg
 from rushes.media.probe import ProbeInfo, probe
+from rushes.media.verify import SAMPLE_RATE, SILENT_TRACK
 from rushes.runner import BaseStep, Outcome
 from rushes.schemas import CleanFile, RemovedKind, read_json, write_json
 from rushes.ui import Progress
@@ -38,7 +39,6 @@ EPS_MS = 100  # "touching" an edge or a removed zone
 REFERENCE_EPS_MS = 500  # one sample of the reference-frame search (2 fps)
 MAX_PASSES = 5  # chaining stops when nothing changes; this only bounds a pathological loop
 VIDEO_FILTER = "scale=trunc(iw*sar/2)*2:ih,setsar=1,fps=30"
-SILENT_TRACK = "anullsrc=r=48000:cl=stereo"
 
 type Removed = list[tuple[int, int, RemovedKind]]
 
@@ -241,7 +241,18 @@ class CleanStep(BaseStep):
             args += ["-f", "lavfi", "-i", SILENT_TRACK]
         args += ["-map", "0:v:0", "-map", "0:a:0" if info.has_audio else "1:a:0"]
         args += ["-vf", VIDEO_FILTER, "-c:v", "libx264", "-preset", self.preset, "-crf", "16"]
-        args += ["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+        args += [
+            "-pix_fmt",
+            "yuv420p",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-ac",
+            "2",
+        ]
         if not info.has_audio:
             args.append("-shortest")
         task = f"clean {episode_key(item)}"

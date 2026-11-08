@@ -7,6 +7,7 @@ from rushes.analyze.analyze import AnalyzeStep
 from rushes.clean.clean import CleanStep
 from rushes.cut.parts import CutStep
 from rushes.ingest.ingest import IngestStep
+from rushes.render.render import RenderStep
 from rushes.runner import Step
 
 STEPS: dict[str, Callable[[], Step[Any]]] = {
@@ -14,5 +15,6 @@ STEPS: dict[str, Callable[[], Step[Any]]] = {
     "clean": CleanStep,
     "analyze": AnalyzeStep,
     "cut": CutStep,
+    "render": RenderStep,
 }
-RUN_ORDER: tuple[str, ...] = ("ingest", "clean", "analyze", "cut")
+RUN_ORDER: tuple[str, ...] = ("ingest", "clean", "analyze", "cut", "render")

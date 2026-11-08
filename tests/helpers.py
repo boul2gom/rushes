@@ -24,12 +24,13 @@ from rushes.config import load_config
 from rushes.context import Context, Filters
 from rushes.db.engine import make_engine
 from rushes.db.migrate import upgrade
-from rushes.db.models import Assignment, Episode, Segment
+from rushes.db.models import Assignment, Episode, Post, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
 from rushes.ids import episode_key
 from rushes.ingest.ingest import IngestStep
 from rushes.media.ffmpeg import run_ffmpeg
+from rushes.media.probe import probe
 from rushes.models.hub import ModelHub
 from rushes.net.base import NetClients
 from rushes.paths import Paths
@@ -333,3 +334,68 @@ def analyzed_episode(
         folder / "audio.json",
     )
     return episode_id
+
+
+def make_post(
+    session: Session,
+    segment: Segment,
+    account: str = ACCOUNT,
+    *,
+    status: str = "planned",
+    layout: str | None = None,
+    render_version: str | None = None,
+) -> Post:
+    """A post of `segment` for `account` (no assignment row: the render step does not read it)."""
+    post = Post(
+        account_id=account,
+        segment_id=segment.id,
+        family=segment.family,
+        layout=layout,
+        status=status,
+        render_version=render_version,
+    )
+    session.add(post)
+    session.flush()
+    return post
+
+
+def put_clean(ctx: Context, episode: Episode, video: Path) -> Path:
+    """Install `video` as the episode's clean.mp4 (a copy: the cached synth file stays intact)."""
+    target = ctx.paths.episode_dir(episode_key(episode.id)) / "clean.mp4"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(video, target)
+    episode.duration_ms = probe(target).duration_ms
+    return target
+
+
+def post_on_video(
+    ctx: Context,
+    video: Path,
+    *,
+    span: tuple[int, int] = (0, 2000),
+    status: str = "planned",
+    layout: str | None = None,
+    render_version: str | None = None,
+    segment_status: str = "approved",
+    episode: int | None = None,
+    owner: str = ACCOUNT,
+    creator_id: str | None = None,
+) -> int:
+    """A post whose segment `span` lies in `video` (the episode's clean.mp4); returns the post id.
+
+    `episode`: reuse that episode (its clean.mp4 is kept) and only add a segment and a post.
+    `owner`, `creator_id`: a new episode of that account (a creator episode when `creator_id`).
+    """
+    with Session(ctx.engine) as session:
+        if episode is None:
+            parent = make_episode(session, owner=owner, creator_id=creator_id)
+            put_clean(ctx, parent, video)
+        else:
+            parent = session.get_one(Episode, episode)
+        segment = make_segment(session, parent, "part", *span)
+        segment.status = segment_status
+        post = make_post(
+            session, segment, owner, status=status, layout=layout, render_version=render_version
+        )
+        session.commit()
+        return post.id

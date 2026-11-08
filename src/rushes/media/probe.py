@@ -53,7 +53,8 @@ def _sar(value: object) -> Fraction:
     return Fraction(1)
 
 
-def _run_ffprobe(path: Path) -> dict[str, Any]:
+def ffprobe_json(path: Path) -> dict[str, Any]:
+    """ffprobe's JSON (format and streams); MediaError when the file cannot be read."""
     binary = shutil.which("ffprobe")
     if binary is None:
         raise MediaError("ffprobe introuvable", hint="Installer FFmpeg (ffprobe dans le PATH).")
@@ -140,7 +141,7 @@ def parse_probe(data: dict[str, Any], name: str) -> ProbeInfo:
 
 def probe(path: Path) -> ProbeInfo:
     """Facts about a video file; MediaError when it cannot be read as a video."""
-    return parse_probe(_run_ffprobe(path), path.name)
+    return parse_probe(ffprobe_json(path), path.name)
 
 
 def sha256_file(path: Path) -> str:

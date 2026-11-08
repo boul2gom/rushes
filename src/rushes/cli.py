@@ -293,7 +293,7 @@ app.command("assign", help="Attribue les passages approuvés au compte propriét
     _pipeline_stub("8a")
 )
 app.command("render", help="Rend les posts (9:16, bandeau, sous-titres, loudnorm).")(
-    _pipeline_stub("7a")
+    _pipeline_command("render", ("render",))
 )
 app.command("meta", help="Légendes, hashtags et couvertures.")(_pipeline_stub("8b"))
 app.command("package", help="Prépare outbox/ et INDEX.html.")(_pipeline_stub("8b"))

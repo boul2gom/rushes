@@ -45,7 +45,6 @@ PENDING: dict[str, str] = {
     "approve": "8a",
     "assign": "8a",
     "queue rank": "16b",
-    "render": "7a",
     "meta": "8b",
     "package": "8b",
     "stats collect": "17",
@@ -59,7 +58,7 @@ PENDING: dict[str, str] = {
     "review build": "32",
     "review apply": "32",
 }
-IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze", "cut")
+IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze", "cut", "render")
 
 
 def _argv(commands: list[str]) -> list[list[str]]:
