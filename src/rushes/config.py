@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from itertools import pairwise
 from pathlib import Path
-from typing import Annotated, Any, Literal, get_args
+from typing import TYPE_CHECKING, Annotated, Any, Literal, get_args
 
 import yaml
 from pydantic import (
@@ -25,6 +25,9 @@ from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from rushes.core.text import hashtag_from_name, normalize_hashtag
 from rushes.ui import register_secret
+
+if TYPE_CHECKING:  # rushes.render.charter imports this module
+    from rushes.render.charter import BrandCharter
 
 PLACEHOLDER = re.compile(r"<[^>]*>")
 MIN_MONETIZABLE_S = 60  # R6: every family lasts more than one minute
@@ -489,6 +492,7 @@ class Config:
     series: list[SeriesConfig]
     creators: list[CreatorConfig]
     warnings: list[str] = field(default_factory=list)
+    charters: dict[str, BrandCharter] = field(default_factory=dict)  # config/charter.yaml (task 7b)
 
     def __repr__(self) -> str:  # never dump anything that could carry a secret (R47)
         return (
@@ -750,8 +754,11 @@ def _cross_checks(
                 break
 
 
-def load_config(config_dir: Path) -> Config:
-    """Load and validate the whole configuration; raise ConfigError listing every problem."""
+def load_config(config_dir: Path, *, charters: bool = True) -> Config:
+    """Load and validate the whole configuration; raise ConfigError listing every problem.
+
+    `charters=False` skips `charter.yaml` and the avatars (the charter loader itself needs the
+    brands of a loaded config)."""
     if not config_dir.is_dir():
         raise ConfigError([Issue(str(config_dir), "", "dossier de configuration introuvable")])
 
@@ -779,6 +786,14 @@ def load_config(config_dir: Path) -> Config:
     if accounts is not None:
         _cross_checks(accounts, series, creators, issues, warnings)
 
+    brand_charters: dict[str, BrandCharter] = {}
+    if charters and not issues and accounts is not None:  # only once the rest is valid
+        from rushes.render.charter import charters_for  # lazy: it imports this module
+
+        try:
+            brand_charters = charters_for(config_dir, {b.id: b.language for b in accounts.brands})
+        except ConfigError as exc:
+            issues.extend(exc.issues)
     if issues or settings is None or accounts is None:
         raise ConfigError(issues)
-    return Config(settings, accounts, series, creators, warnings)
+    return Config(settings, accounts, series, creators, warnings, brand_charters)

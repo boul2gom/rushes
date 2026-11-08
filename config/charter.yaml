@@ -1,0 +1,55 @@
+# Charte graphique par marque (L35) : polices, couleurs, marges sûres et textes de l'habillage.
+# Polices : dossier src/rushes/assets/fonts/ ; avatars : config/avatars/<marque>.png.
+# Gabarits (str.format) : banner {title} {n} ; next_part {n} ; last_part {other} ; follow, subscribe : aucun.
+saturday_toons:
+  font: LuckiestGuy-Regular.ttf
+  banner_bg: "#3B1F0E"
+  banner_fg: "#FFF4DC"
+  highlight: "#FFB627"
+  progress: "#FF6B35"
+  copy:
+    en:
+      banner: "{title} — Part {n}"
+      next_part: "Part {n} next"
+      last_part: "Watch {other} next"
+      follow: "Follow for more"
+      subscribe: "Follow"
+toon_tape:
+  font: LuckiestGuy-Regular.ttf
+  banner_bg: "#1E1B2E"
+  banner_fg: "#FFFFFF"
+  highlight: "#FF4FA3"
+  progress: "#FFD23F"
+  copy:
+    en:
+      banner: "{title} — Part {n}"
+      next_part: "Part {n} next"
+      last_part: "Watch {other} next"
+      follow: "Follow for more"
+      subscribe: "Follow"
+instant_culte:
+  font: BebasNeue-Regular.ttf
+  banner_bg: "#121316"
+  banner_fg: "#F5F1E8"
+  highlight: "#E63946"
+  progress: "#E63946"
+  copy:
+    fr:
+      banner: "{title} — Partie {n}"
+      next_part: "Partie {n} ensuite"
+      last_part: "À voir ensuite : {other}"
+      follow: "Abonne-toi pour la suite"
+      subscribe: "Abonne-toi"
+peak_moments:
+  font: BebasNeue-Regular.ttf
+  banner_bg: "#0E1A2B"
+  banner_fg: "#F5F1E8"
+  highlight: "#F2A541"
+  progress: "#F2A541"
+  copy:
+    en:
+      banner: "{title} — Part {n}"
+      next_part: "Part {n} next"
+      last_part: "Watch {other} next"
+      follow: "Follow for more"
+      subscribe: "Follow"

@@ -3,6 +3,7 @@
 import dataclasses
 import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -35,13 +36,29 @@ from rushes.render import render as render_module
 from rushes.render.canvas import Rect, video_rect
 from rushes.render.encode import encode_args, render_plate
 from rushes.render.loudnorm import LoudnormMeasure, PlateReport
-from rushes.render.render import RENDER_PLATE_VERSION, RenderStep
+from rushes.render.render import RENDER_VERSION, RenderStep
 from rushes.runner import StepReport, run_step
 
 SOURCE = SynthSpec(duration_ms=6000)  # 1280x720, 30 i/s, tone
 FAST = RenderSettings(preset="ultrafast", crf=30)
 SPAN = (1000, 5000)  # 4 s
 SHORT = (500, 2500)  # 2 s: enough for everything but the R7 spec test
+
+
+# these tests are about the plate (picture, sound, delivery, files, rows): the overlays pass is
+# tested in test_render_overlays.py, so here it is a plain copy (saves a second encode per render)
+REAL_OVERLAYS = {"test_r7_render_matches_ffprobe_spec"}
+
+
+@pytest.fixture(autouse=True)
+def _plain_final(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    if request.node.name in REAL_OVERLAYS or request.node.get_closest_marker("slow"):
+        return
+
+    def copy(plate: Path, plan: Any, out: Path, **kwargs: Any) -> None:
+        shutil.copyfile(plate, out)
+
+    monkeypatch.setattr(render_module, "render_overlays", copy)
 
 
 @pytest.fixture
@@ -165,7 +182,7 @@ def test_r7_render_matches_ffprobe_spec(fast: Context, synth: Synth) -> None:
     assert check_delivery(plate) == [] and check_delivery(final) == []
     assert abs(probe(final).duration_ms - 4000) <= 100
     row = _post(fast, post_id)
-    assert (row["status"], row["render_version"]) == ("rendered", RENDER_PLATE_VERSION)
+    assert (row["status"], row["render_version"]) == ("rendered", RENDER_VERSION)
     assert row["video_path"] == f"renders/p_{post_id:06d}.mp4"
     assert fast.paths.data_dir.joinpath(row["video_path"]).read_bytes() == final.read_bytes()
     assert _files(fast) == [final.name, plate.name]  # no temporary file left
@@ -332,10 +349,13 @@ def test_check_delivery_of_an_unreadable_file_is_a_violation(tmp_path: Path) -> 
 # --- layouts on the canvas (R8) ---------------------------------------------------------------
 
 
+# the placement is read on the plate: the final also carries the banner and the end card (7b)
+
+
 def test_r8_square_is_default_layout(fast: Context, synth: Synth, tmp_path: Path) -> None:
     post_id = post_on_video(fast, _outlined(synth(SOURCE), tmp_path), span=SHORT, layout=None)
     assert _render(fast).done == 1
-    frame = _frame(_final(fast, post_id), tmp_path)
+    frame = _frame(_plate(fast, post_id), tmp_path)
     _assert_video_at(frame, video_rect("square", 1280, 720))
 
 
@@ -345,7 +365,7 @@ def test_r8_empty_layout_preference_still_renders_square(
     fast.config.accounts.layouts.preference = []
     post_id = post_on_video(fast, _outlined(synth(SOURCE), tmp_path), span=SHORT)
     assert _render(fast).done == 1
-    _assert_video_at(_frame(_final(fast, post_id), tmp_path), video_rect("square", 1280, 720))
+    _assert_video_at(_frame(_plate(fast, post_id), tmp_path), video_rect("square", 1280, 720))
 
 
 @pytest.mark.parametrize("size", [(1280, 720), (1440, 1080), (1002, 722)])
@@ -356,14 +376,14 @@ def test_r8_full_layout_puts_the_whole_image_on_a_blurred_background(
     post_id = post_on_video(fast, source, layout="full")
     assert _render(fast).done == 1
     assert check_delivery(_final(fast, post_id)) == []
-    _assert_video_at(_frame(_final(fast, post_id), tmp_path), video_rect("full", *size))
+    _assert_video_at(_frame(_plate(fast, post_id), tmp_path), video_rect("full", *size))
 
 
 def test_r8_vertical_layout_fills_the_canvas(fast: Context, synth: Synth, tmp_path: Path) -> None:
     source = _outlined(synth(SOURCE), tmp_path)
     post_id = post_on_video(fast, source, span=SHORT, layout="vertical")
     assert _render(fast).done == 1
-    frame = _frame(_final(fast, post_id), tmp_path)
+    frame = _frame(_plate(fast, post_id), tmp_path)
     # sharp picture everywhere, also where the other layouts show their blurred bars
     assert _edge(frame, 0, 400) > BLURRED and _edge(frame, 1520, 1920) > BLURRED
     assert check_delivery(_final(fast, post_id)) == []
@@ -375,7 +395,7 @@ def test_r8_portrait_layout_is_3_4_under_the_banner(
     source = _outlined(synth(SOURCE), tmp_path)
     post_id = post_on_video(fast, source, span=SHORT, layout="portrait")
     assert _render(fast).done == 1
-    frame = _frame(_final(fast, post_id), tmp_path)
+    frame = _frame(_plate(fast, post_id), tmp_path)
     _assert_video_at(frame, video_rect("portrait", 1280, 720))
 
 
@@ -386,7 +406,7 @@ def test_r8_pixel_aspect_ratio_is_applied_before_placing(
     post_id = post_on_video(fast, _outlined(synth(stored), tmp_path), layout="full")
     assert _render(fast).done == 1
     assert check_delivery(_final(fast, post_id)) == []
-    frame = _frame(_final(fast, post_id), tmp_path)
+    frame = _frame(_plate(fast, post_id), tmp_path)
     _assert_video_at(frame, video_rect("full", 1280, 720))  # not 4:3
 
 
@@ -517,7 +537,7 @@ def test_version_bump_never_rerenders_ready_post(fast: Context, synth: Synth) ->
         assert report.done == 1  # the rendered post only
         assert state(ready) == ready_state
 
-    assert _post(fast, rendered)["render_version"] == RENDER_PLATE_VERSION
+    assert _post(fast, rendered)["render_version"] == RENDER_VERSION
     assert check_delivery(_final(fast, rendered)) == []  # the old bytes were replaced
     assert _post(fast, ready)["status"] == "ready" and _post(fast, ready)["render_version"] == old
 
@@ -612,7 +632,7 @@ def test_layout_falls_back_on_the_first_configured_preference(
     fast.config.accounts.layouts.preference = ["full", "square"]
     post_id = post_on_video(fast, _outlined(synth(SOURCE), tmp_path), span=SHORT)
     assert _render(fast).done == 1
-    _assert_video_at(_frame(_final(fast, post_id), tmp_path), video_rect("full", 1280, 720))
+    _assert_video_at(_frame(_plate(fast, post_id), tmp_path), video_rect("full", 1280, 720))
 
 
 # --- failure and idempotence ------------------------------------------------------------------

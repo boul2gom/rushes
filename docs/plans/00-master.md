@@ -645,8 +645,10 @@ class NtfySettings(_Model):     url: str; topic_env: str; token_env: str | None 
 - Charte graphique : `config/charter.yaml` (tâche 7b, modèle `BrandCharter`), une entrée par marque (police OFL
   embarquée dans `assets/fonts/`, couleurs du bandeau et du surlignage, marges des zones sûres en pixels, photo de
   profil dans `config/avatars/` pour la carte de fin, textes par langue). Champ `texts: dict[str, Copy] =
-  Field(alias="copy")` : la clé YAML reste `copy`, le code lit `charter.texts[lang].bestof` (pas de champ `copy`,
-  qui masquerait `BaseModel.copy`).
+  Field(alias="copy")` : la clé YAML reste `copy`, le code lit `charter.texts[lang]` (pas de champ `copy`, qui
+  masquerait `BaseModel.copy`). `Copy` n'a pas encore de champ `bestof` : la tâche 13 l'ajoute avec le rendu des
+  best-of (le bandeau d'un best-of est, en 7b, le titre seul). La charte est lue par `load_config` (`Config.charters`) :
+  une erreur de charte ou une photo de profil illisible échoue au démarrage comme toute erreur de config.
 
 ### 5.10 Base de données : suite des migrations
 
@@ -660,7 +662,7 @@ numéros suivent l'ordre d'exécution des tâches (§3), car la chaîne des rév
 | 0004 | 10a | + `channels`, + `video_signals` ; `source_videos` : + `title`, + `channel_handle`, + `discovered_via`, + `extracted_at`, statuts `found, retained, downloaded, rejected, failed` ; `compilations.status CHECK IN ('proposed','approved','needs_review','rejected')` |
 | 0005 | 11 | `episodes` : + `parent_episode_id`, + `span_start_ms`, + `span_end_ms`, + `logo_corner`, statut `split` |
 | 0006 | 12a | + `scene_vectors`, + `words` (remplie par 12c) |
-| 0007 | 16b | `posts` : + `order_after_post_id`, + `ready_at`, + `express_slot` (créneau en plus de la voie express, L27) (le créneau conseillé est `planned_at`, UTC, dès la tâche 8b) |
+| 0007 | 16b | `posts` : + `order_after_post_id`, + `ready_at`, + `express_slot` (créneau en plus de la voie express, L27), + `overlay_digest` (empreinte des textes incrustés, 7b, base de `stale_numbers`) (le créneau conseillé est `planned_at`, UTC, dès la tâche 8b) |
 | 0008 | 36 | + `post_actions` (journal des clics de la page et des gestes de secours ; `kind CHECK IN ('published','discard','hook','submitted')`, `'submitted'` pour le bouton « Soumis » de la tâche 26 ; `origin CHECK IN ('page','folder','system')`) |
 | 0009 | 17 | + `metrics`, + `public_videos`, + `stats_imports`, + `collector_health` ; `posts` : + `platform_post_id` |
 | 0010 | 18 | + `bandit_arms` (remplace `hook_stats` de la spec : dimension `hook_type` ou `layout`), + `post_outcomes` |

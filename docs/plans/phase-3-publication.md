@@ -349,7 +349,8 @@ def test_r16_refresh_rerun_changes_nothing(ctx, synth):
 - [ ] **Step 3 : Implémenter le serveur** (migration 0008, `ops/requests.py`, actions, `refresh`, `serve/*`,
   `scripts/export_openapi.py` qui écrit `create_app(<contexte factice>).openapi()` trié, indentation 2).
 
-- [ ] **Step 4 : Lancer** → PASS. Suite rapide, ruff, mypy verts.
+- [ ] **Step 4 : Lancer** → PASS ; retirer R9 de `rules_pending.toml` (son dernier test est
+  `test_r9_discard_part_marks_following_pending`). Suite rapide, ruff, mypy verts.
 
 - [ ] **Step 5 : Page** — invoquer le skill `frontend-design`, puis créer `web/` (Vite React TypeScript,
   `npx shadcn@<version exacte> init`, composants `button card badge tabs alert-dialog tooltip sonner scroll-area
@@ -1080,7 +1081,7 @@ def test_r16_recalibrate_rerun_same_week_changes_nothing(ctx):
   télécharger, partager par AirDrop vers l'iPhone, copier la légende, écarter, « Accroche 2 » (nouveau paquet
   arrivé en moins de 10 min hors voie express, aucune alerte `timer_failed`), déposer un export Instagram (fichier
   présent dans `data/inbox/<compte>/`, importé au run `stats` suivant).
-- [ ] `tests/rules_pending.toml` ne contient plus R36, R37, R38 ; suite rapide, ruff, mypy, lint et build du front
+- [ ] `tests/rules_pending.toml` ne contient plus R9, R36, R37, R38 ; suite rapide, ruff, mypy, lint et build du front
   verts.
 
 **Pendant le rodage (tâche 41)** : publication détectée seule sur chaque compte, statistiques collectées toutes les

@@ -8,7 +8,7 @@ from rushes.core.intervals import Span
 from rushes.errors import MediaError
 from rushes.fsutil import atomic_path
 from rushes.media.ffmpeg import run_ffmpeg
-from rushes.media.probe import probe
+from rushes.media.probe import ffprobe_json, probe
 from rushes.media.verify import FRAME_RATE, SAMPLE_RATE, SILENT_TRACK
 from rushes.render.canvas import plate_filter
 from rushes.render.loudnorm import (
@@ -22,8 +22,8 @@ from rushes.render.loudnorm import (
 DURATION_TOLERANCE_MS = 150  # video frame (33 ms) plus AAC frames and start-up of the encoder
 
 
-def encode_args(s: RenderSettings) -> list[str]:
-    """H.264 High 8 bit yuv420p at a constant 30 i/s, AAC 48 kHz stereo, +faststart.
+def video_args(s: RenderSettings) -> list[str]:
+    """H.264 High 8 bit yuv420p at a constant 30 i/s.
 
     `-profile:v` only caps the profile, and the fast presets switch the 8x8 transform off, which
     makes x264 write Constrained Baseline: `8x8dct=1` keeps it High at every preset (R7)."""
@@ -31,9 +31,26 @@ def encode_args(s: RenderSettings) -> list[str]:
         *("-c:v", "libx264", "-preset", s.preset, "-crf", str(s.crf), "-profile:v", "high"),
         *("-x264-params", "8x8dct=1"),
         *("-pix_fmt", "yuv420p", "-r", str(FRAME_RATE), "-fps_mode", "cfr"),
-        *("-c:a", "aac", "-b:a", "160k", "-ar", str(SAMPLE_RATE), "-ac", "2"),
-        *("-movflags", "+faststart", "-threads", "4"),
     ]
+
+
+AUDIO_ARGS = ["-c:a", "aac", "-b:a", "160k", "-ar", str(SAMPLE_RATE), "-ac", "2"]
+CONTAINER_ARGS = ["-movflags", "+faststart", "-threads", "4"]
+
+
+def encode_args(s: RenderSettings) -> list[str]:
+    """H.264 High 8 bit yuv420p at a constant 30 i/s, AAC 48 kHz stereo, +faststart."""
+    return [*video_args(s), *AUDIO_ARGS, *CONTAINER_ARGS]
+
+
+def read_plate_tag(path: Path) -> str | None:
+    """The tag `render_plate` wrote in the file (its `comment` metadata); None if unreadable."""
+    try:
+        tags = ffprobe_json(path).get("format", {}).get("tags", {})
+    except MediaError:
+        return None
+    tag = tags.get("comment") if isinstance(tags, dict) else None
+    return tag if isinstance(tag, str) else None
 
 
 def render_plate(
@@ -45,6 +62,7 @@ def render_plate(
     s: RenderSettings,
     crop_x: str | None = None,
     on_progress: Callable[[int], None] | None = None,
+    tag: str | None = None,
 ) -> PlateReport | None:
     """Render `span` (ms) of `src` on the 9:16 canvas with two-pass loudnorm into `out`.
 
@@ -52,6 +70,7 @@ def render_plate(
     delivery always holds AAC: both return None. Otherwise the loudness the second pass
     reached and its mode are returned (the caller checks them against R7). A render shorter than
     the span (it runs past the end of `src`) is a MediaError. `out` is written atomically.
+    `tag` goes into the file's metadata (`read_plate_tag`): what the plate was made from.
     """
     length_ms = span[1] - span[0]
     if length_ms <= 0:
@@ -74,6 +93,8 @@ def render_plate(
     graph += f";{audio_in}{audio},apad[a]"
     args += ["-filter_complex", graph, "-map", "[v]", "-map", "[a]"]
     args += ["-shortest", "-t", f"{length_ms / 1000:.3f}"]
+    if tag is not None:
+        args += ["-metadata", f"comment={tag}"]
     with atomic_path(out) as tmp:
         log = run_ffmpeg(
             [*args, *encode_args(s), "-f", "mp4", tmp],

@@ -704,7 +704,8 @@ remise dans l'ordre chronologique
   - Rendu d'un post de compilation : `render_plate_multi` découpe chaque passage dans sa source, met chaque élément
     à l'échelle de la mise en page (`video_rect(layout)`, même cadence 30 i/s, `setsar=1`) **avant** `xfade=fade` et
     `acrossfade` de `transition_ms`, écrit une plaque intermédiaire, puis loudnorm en deux passes sur elle (tâche
-    7a). Bandeau = `charter.texts[langue].bestof.format(title=nom)` : en `"Best of {title}"`, fr
+    7a). Bandeau = `charter.texts[langue].bestof.format(title=nom)` (champ `bestof` de `Copy`, ajouté ici : la 7b n'a que
+    `banner`, `next_part`, `last_part`, `follow`, `subscribe`) : en `"Best of {title}"`, fr
     `"Le meilleur de {title}"` ; aucun numéro (R9).
   - Pics R5 : `CutStep` passe `peaks_ms = heatmap_peaks_ms(…)` à `cut_point_costs` (remplace le `[]` de la tâche 6) ;
     `rule_violations` (v0) utilise la même fonction.
@@ -1119,7 +1120,7 @@ def test_rotation_plan_recorded_once_per_period(ctx):
   # queue/manual.py
   def detect_manual_actions(session: Session, paths: Paths, *, at: datetime) -> list[str]: ...
   # queue/numbering.py (créé en tâche 7b avec part_number)
-  def stale_numbers(session: Session) -> list[int]: ...   # posts rendus non publiés dont part_number ≠ part_number()
+  def stale_numbers(session: Session) -> list[int]: ...   # posts rendus non publiés dont l'habillage a changé (voir Renumérotation)
   # queue/step.py
   class QueueStep(BaseStep): name = "queue"   # éléments : comptes ; expire, gestes de secours, puis classement
   ```
@@ -1162,9 +1163,15 @@ def test_rotation_plan_recorded_once_per_period(ctx):
     sinon le lendemain ; aucun des deux jours → `None`. L'appelant écrit `planned_at` et `posts.express_slot = 1`.
     Ces posts ne comptent ni dans le quota de `plan_slots` (`taken`) ni comme candidats de `sequence` ; les posts
     `ready` ne bougent jamais.
-  - Renumérotation (R9) : `part_number()` exclut les posts `discarded` et `expired` ; un post rendu dont le numéro
-    change repasse en `rendered` avec `caption = NULL` (rendu léger, puis `meta` et `package` refaits). `stale_numbers`
-    vit dans `queue/numbering.py` : `serve` (tâche 36) le lit pour `PostView.pending_render`.
+  - Renumérotation (R9) : `part_number()` exclut les posts `discarded` et `expired` ; un post rendu dont l'habillage
+    change repasse en `rendered` avec `caption = NULL` et `render_version = NULL` (rendu léger, puis `meta` et
+    `package` refaits). **Ce qui rend un post périmé** n'est pas son seul numéro : la ligne « suite » de la carte de fin
+    dépend de `is_last_part` (7b), qui change quand une partie suivante est écartée, expire, est rejetée ou apparaît.
+    La migration 0007 ajoute donc `posts.overlay_digest TEXT` (empreinte `overlay_digest(job)` de
+    `render/overlays.py`, 7b : sha1 des textes incrustés) ; le `render` l'écrit dans son `UPDATE` gardé dès que la
+    colonne existe, et `stale_numbers` compare cette empreinte à celle d'un `RenderJob` reconstruit (changement de
+    `(part_number, is_last_part)` au minimum) : jamais le `part_number` seul. `stale_numbers` vit dans
+    `queue/numbering.py` : `serve` (tâche 36) le lit pour `PostView.pending_render`.
   - Expiration (R35) : post `ready` dont `ready_at` < now − `expiry_days` → `expired` ; fichiers de rendu
     (`renders/<p_key>.*`) et dossier `outbox*/…/<p_key>/` supprimés ; lignes `assignments` de ses passages supprimées.
     `assign` ne recrée pas de post pour une partie dont une partie suivante du même épisode est déjà `published`.
@@ -1182,7 +1189,8 @@ def test_rotation_plan_recorded_once_per_period(ctx):
     origin="folder")`, sauf si le post est déjà `discarded` (dossier déplacé par la page : rien) ;
     `hook.txt` dont le contenu est égal à celui d'une autre accroche du post → `choose_hook` du rang correspondant.
   - Migration `0007_queue.py` : `posts` + `order_after_post_id INTEGER REFERENCES posts(id)`, + `ready_at TEXT`,
-    + `express_slot INTEGER NOT NULL DEFAULT 0` (créneau en plus, L27).
+    + `express_slot INTEGER NOT NULL DEFAULT 0` (créneau en plus, L27), + `overlay_digest TEXT` (empreinte de ce que
+    le rendu a écrit sur la vidéo, voir Renumérotation).
     `package` écrit `ready_at` ; `upload.json.order_note` utilise `order_after_post_id`.
   - `status` : tableau « File par compte » avec jours de stock (`stock_days`) ; 0 jour → ligne dans « Alertes ».
 
@@ -1218,7 +1226,7 @@ def test_r16_queue_rerun_changes_nothing(ctx):
 ```
 
 - [ ] **Step 2 : Lancer** → FAIL. **Step 3 : Implémenter** (`queue` après `assign` dans `RUN_ORDER` ; `plan_slots`
-  n'est plus appelé par `package`). **Step 4 : Lancer** → PASS ; retirer R9, R35 de `rules_pending.toml` (R37 reste en
+  n'est plus appelé par `package`). **Step 4 : Lancer** → PASS ; retirer R35 de `rules_pending.toml` (R9 reste en attente jusqu'à la tâche 36, R37 reste en
   attente pour les tâches 18 et 36). Suite rapide, ruff, mypy verts.
 
 - [ ] **Step 5 : Commit proposé** — `feat(queue): ranked per-account schedule, on-demand rendering, renumbering, expiry and discard (R9, R35, R37)`
@@ -1466,6 +1474,6 @@ def test_tts_then_whisper_alignment_roundtrip(tmp_path):                  # text
 - [ ] Les épisodes viennent de la découverte seule (aucun fichier déposé à la main) ; chaînes officielles
   enregistrées dans `derived_values`.
 - [ ] Relancer `rushes run` ne change rien (R16).
-- [ ] `tests/rules_pending.toml` ne contient plus R4, R8, R9, R11, R15, R18, R33, R34, R35, R43, R50.
+- [ ] `tests/rules_pending.toml` ne contient plus R4, R8, R11, R15, R18, R33, R34, R35, R43, R50.
 - [ ] Mesures complétées dans `docs/decisions.md` (accroches, recadrage, voix, CLIP, transcription par minute).
 - [ ] Suite rapide verte sur le Mac ; suite `slow` verte dans l'image sur le serveur ; ruff et mypy propres.

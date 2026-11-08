@@ -1129,8 +1129,8 @@ def test_module_for_base_by_default(ctx):
 ```
 
 - [ ] **Step 2 : Lancer** → FAIL. **Step 3 : Implémenter** (polices téléchargées depuis le dépôt Google Fonts à un
-  commit figé, sha256 notés dans `SOURCES.md`). **Step 4 : Lancer** → PASS ; retirer R9 (partiel : la
-  renumérotation reste pour la tâche 16b). Suite rapide, ruff, mypy verts.
+  commit figé, sha256 notés dans `SOURCES.md`). **Step 4 : Lancer** → PASS ; R9 reste dans
+  `rules_pending.toml` (valeur 36 : la renumérotation est à la tâche 16b, le bouton de la page à la tâche 36). Suite rapide, ruff, mypy verts.
 
 - [ ] **Step 5 : Commit proposé** — `feat(render): banner, hook, progress bar and end card overlays with brand charter (R9)`
 
