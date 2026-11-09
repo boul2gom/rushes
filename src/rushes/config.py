@@ -24,6 +24,8 @@ from pydantic import (
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from rushes.core.text import hashtag_from_name, normalize_hashtag
+from rushes.core.timecode import parse_clock
+from rushes.core.types import Platform as Platform  # re-exported: defined in rushes.core
 from rushes.ui import register_secret
 
 if TYPE_CHECKING:  # rushes.render.charter imports this module
@@ -38,7 +40,6 @@ Layout = Literal["square", "vertical", "portrait", "full"]
 Vertical = Literal["cartoons", "creators"]
 RenderPreset = Literal["ultrafast", "veryfast", "fast", "medium", "slow"]
 RENDER_PRESETS: tuple[str, ...] = get_args(RenderPreset)
-Platform = Literal["tiktok", "instagram"]
 
 HASHTAG_TOKENS: frozenset[str] = frozenset({"{series}", "{creator}", "{nostalgia}"})
 FORBIDDEN_HASHTAGS: frozenset[str] = frozenset({"#viral", "#foryou"})
@@ -368,6 +369,45 @@ class AccountsConfig(_Model):
                         errors.append(_line_error((vertical, platform, i), problem, tag))
         if errors:
             raise ValidationError.from_exception_data("required_hashtags", errors)
+        return value
+
+    @field_validator("slots", mode="before")
+    @classmethod
+    def _quote_slots(cls, value: Any) -> Any:
+        """YAML reads an unquoted 15:00 as the number 900: say how to write it."""
+        if not isinstance(value, dict):
+            return value
+        errors = [
+            _line_error(
+                (platform, i),
+                f'heure invalide : {hour!r} (écrire l\'heure entre guillemets, "15:00")',
+                hour,
+            )
+            for platform, hours in value.items()
+            if isinstance(hours, list)
+            for i, hour in enumerate(hours)
+            if isinstance(hour, int | float)
+        ]
+        if errors:
+            raise ValidationError.from_exception_data("slots", errors)
+        return value
+
+    @field_validator("slots")
+    @classmethod
+    def _check_slots(cls, value: dict[Platform, list[str]]) -> dict[Platform, list[str]]:
+        errors: list[InitErrorDetails] = []
+        for platform, hours in value.items():
+            if not hours:
+                errors.append(
+                    _line_error((platform,), "au moins un créneau HH:MM est requis", hours)
+                )
+            for i, hour in enumerate(hours):
+                try:
+                    parse_clock(hour)
+                except ValueError as exc:
+                    errors.append(_line_error((platform, i), str(exc), hour))
+        if errors:
+            raise ValidationError.from_exception_data("slots", errors)
         return value
 
     @model_validator(mode="after")

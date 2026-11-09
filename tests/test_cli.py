@@ -31,7 +31,6 @@ def _reset_cli_state(monkeypatch: pytest.MonkeyPatch) -> None:
 # command -> task that implements it (a string: tasks have suffixes such as "8a").
 # A task that implements a command moves it from PENDING to IMPLEMENTED.
 PENDING: dict[str, str] = {
-    "run": "9",
     "discover youtube": "10a",
     "discover series": "38",
     "models fetch": "9",
@@ -43,7 +42,6 @@ PENDING: dict[str, str] = {
     "compile themes": "30",
     "hooks propose": "14",
     "queue rank": "16b",
-    "package": "8b",
     "stats collect": "17",
     "posts detect-published": "17",
     "creators prospect": "27",
@@ -65,6 +63,8 @@ IMPLEMENTED: tuple[str, ...] = (
     "assign",
     "render",
     "meta",
+    "package",
+    "run",
 )
 
 
@@ -470,3 +470,88 @@ def test_meta_command_runs_the_step_and_is_idempotent(
         assert caption.scalar_one().startswith("Tom and Jerry, Part 1.")
     again = cli_env.invoke(app, ["--json", "meta"])
     assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+def _settled(ctx: Context, post_id: int, delivery: Path) -> None:
+    """Give a packable post its assignment and its plate, so that no earlier step has work."""
+    from sqlalchemy.orm import Session
+
+    from helpers import assign_raw
+    from rushes.db.models import Post, Segment
+
+    with Session(ctx.engine) as session:
+        post = session.get_one(Post, post_id)
+        assign_raw(session, session.get_one(Segment, post.segment_id or 0), post.account_id)
+        session.commit()
+    final = ctx.paths.renders / f"p_{post_id:06d}.mp4"
+    plate = final.with_name(f"p_{post_id:06d}.plate.mp4")
+    plate.write_bytes(delivery.read_bytes())
+    os.utime(plate, (1_700_000_000, 1_700_000_000))  # older than the final: a consistent pair
+
+
+# --- task 8b: package, run ----------------------------------------------------------------------
+
+
+def test_run_order_ends_with_package() -> None:
+    assert steps.RUN_ORDER == (
+        "ingest", "clean", "analyze", "cut", "approve", "assign", "render", "meta", "package",
+    )  # fmt: skip
+    assert steps.STEPS["package"].name == "package"
+
+
+def test_package_command_runs_the_step_and_is_idempotent(
+    cli_env: CliRunner, ctx: Context, delivery: Path
+) -> None:
+    from helpers import packable_post
+
+    post_id = packable_post(ctx, delivery, test=True)
+    first = cli_env.invoke(app, ["--json", "package"])
+    assert first.exit_code == 0, first.output
+    assert '"step": "package"' in first.output
+    with ctx.engine.connect() as conn:
+        status = conn.execute(text("SELECT status FROM posts WHERE id=:i"), {"i": post_id})
+        assert status.scalar_one() == "ready"
+    assert (ctx.paths.outbox_test / "INDEX.html").is_file()
+    again = cli_env.invoke(app, ["--json", "package"])  # R16 through the CLI
+    assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+def test_run_command_chains_the_steps_and_names_the_index(
+    cli_env: CliRunner,
+    ctx: Context,
+    delivery: Path,
+    config_dir: Path,
+    edit_yaml: Callable[..., None],
+) -> None:
+    from helpers import packable_post
+
+    # a post that is not a test needs a licensed series (R14): the packer checks it again
+    edit_yaml(config_dir / "series" / "tom_and_jerry.yaml", lambda d: d.update(licensed=True))
+
+    post_id = packable_post(ctx, delivery)  # a post with its files already: only package has work
+    _settled(ctx, post_id, delivery)
+    result = cli_env.invoke(app, ["--json", "run"])
+    assert result.exit_code == 0, result.output
+    events = [json.loads(line) for line in result.output.splitlines() if line.startswith("{")]
+    assert [e["step"] for e in events if e.get("event") == "step"] == ["package"]
+    summary = events[-1]
+    assert summary["event"] == "summary" and summary["ready_by_account"] == {"st_tt": 1}
+    assert summary["index_path"] == str(ctx.paths.outbox / "INDEX.html")
+    header = next(e for e in events if e["event"] == "header")
+    assert header["command"] == "run"
+    with ctx.engine.connect() as conn:
+        assert conn.execute(text("SELECT command FROM runs")).scalar_one() == "run"
+
+
+def test_run_summary_names_the_test_index_when_only_showcase_posts_exist(
+    cli_env: CliRunner, ctx: Context, delivery: Path
+) -> None:
+    from helpers import packable_post
+
+    post_id = packable_post(ctx, delivery, test=True)
+    _settled(ctx, post_id, delivery)
+    result = cli_env.invoke(app, ["--json", "run"])
+    summary = json.loads(result.output.splitlines()[-1])
+    assert summary["index_path"] == str(ctx.paths.outbox_test / "INDEX.html")
+    assert summary["ready_by_account"] == {}  # a showcase post is not "ready to publish"
+    assert summary["showcase_by_account"] == {"st_tt": 1}

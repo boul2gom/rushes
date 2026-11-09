@@ -280,3 +280,36 @@ def test_ansi_only_on_the_stream_that_is_a_tty(monkeypatch: pytest.MonkeyPatch) 
     em.emit(Message("error", "boum", hint="essaie encore"))
     assert "\x1b[" in out.getvalue()
     assert "boum" in err.getvalue() and "\x1b[" not in err.getvalue()
+
+
+def test_summary_json_carries_the_showcase_posts_and_defaults_to_none() -> None:
+    buf = io.StringIO()
+    em = make_emitter(plain=False, json=True, verbose=False, stream=buf)
+    em.emit(Summary({"tiktok_a": 2}, 0, 10, None, {"st_tt": 3}))
+    em.emit(Summary({}, 0, 10, None))
+    first, second = lines(buf)
+    assert first["showcase_by_account"] == {"st_tt": 3} and first["ready_by_account"] == {
+        "tiktok_a": 2
+    }
+    assert second["showcase_by_account"] == {}
+
+
+@pytest.mark.parametrize(
+    ("ready", "showcase", "expected"),
+    [
+        ({"st_tt": 2}, {"st_ig": 1, "st_tt": 3}, "Prêts : st_tt 2 · vitrine : st_ig 1, st_tt 3"),
+        ({}, {"st_tt": 3}, "Prêts : aucun · vitrine : st_tt 3"),
+        ({"st_tt": 2}, {}, "Prêts : st_tt 2"),
+        ({}, {}, "Prêts : aucun"),
+    ],
+)
+@pytest.mark.parametrize("mode", ["plain", "rich"])
+def test_summary_console_line_names_the_showcase_posts(
+    mode: str, ready: dict[str, int], showcase: dict[str, int], expected: str
+) -> None:
+    buf = Tty()
+    em = make_emitter(plain=mode == "plain", json=False, verbose=False, stream=buf)
+    em.emit(Summary(ready, 1, 1234, None, showcase))
+    out = buf.getvalue()
+    assert expected in out
+    assert ("vitrine" in out) == bool(showcase)

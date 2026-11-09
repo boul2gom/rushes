@@ -27,7 +27,7 @@ from rushes.db.migrate import upgrade
 from rushes.db.models import Assignment, Episode, Post, Segment
 from rushes.db.sync import sync_config
 from rushes.fsutil import atomic_path
-from rushes.ids import episode_key
+from rushes.ids import episode_key, post_key
 from rushes.ingest.ingest import IngestStep
 from rushes.media.ffmpeg import run_ffmpeg
 from rushes.media.probe import probe
@@ -35,7 +35,7 @@ from rushes.models.hub import ModelHub
 from rushes.net.base import NetClients
 from rushes.paths import Paths
 from rushes.runner import BaseStep, Outcome, run_step
-from rushes.schemas import AudioFile, LoudPoint, ScenesFile, Shot, write_json
+from rushes.schemas import AudioFile, LoudPoint, MetaFile, ScenesFile, Shot, write_json
 from rushes.ui import make_emitter
 
 START = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
@@ -399,3 +399,95 @@ def post_on_video(
         )
         session.commit()
         return post.id
+
+
+# --- task 8b: posts that `package` can pack ----------------------------------------------------
+
+DELIVERY_ARGS = (
+    "-f lavfi -i color=c=0x2b5d9b:s=1080x1920:r=30 -f lavfi -i sine=r=48000 -t 1 -c:v libx264 "
+    "-preset ultrafast -profile:v high -x264-params 8x8dct=1 -pix_fmt yuv420p -r 30 -c:a aac "
+    "-ar 48000 -movflags +faststart"
+)
+
+
+def make_delivery_video(target: Path) -> Path:
+    """A 1 s file that satisfies `check_delivery` (R7): 1080x1920, 30 i/s, High, AAC 48 kHz."""
+    run_ffmpeg([*DELIVERY_ARGS.split(), target])
+    return target
+
+
+def meta_inputs(
+    ctx: Context,
+    post_id: int,
+    delivery: Path,
+    *,
+    caption: str = "Tom and Jerry, Part 1. Who wins? 👇 #fyp #nostalgiatok #cartoons",
+    hashtags: Sequence[str] = ("#fyp", "#nostalgiatok", "#cartoons"),
+    hook: str | None = None,
+    alternatives: Sequence[str] = (),
+    cover_frame_ms: int = 3200,
+    video: bool = True,
+    write_meta: bool = True,
+) -> None:
+    """What `render` and `meta` leave for a post: video, cover, meta.json, caption in the row."""
+    from PIL import Image
+
+    key = post_key(post_id)
+    ctx.paths.renders.mkdir(parents=True, exist_ok=True)
+    if video:
+        shutil.copy2(delivery, ctx.paths.renders / f"{key}.mp4")
+    if write_meta:
+        Image.new("RGB", (1080, 1920), (40, 90, 150)).save(
+            ctx.paths.renders / f"{key}.cover.jpg", format="JPEG"
+        )
+        write_json(
+            MetaFile(
+                version=1,
+                post_id=post_id,
+                caption=caption,
+                hashtags=list(hashtags),
+                cover_frame_ms=cover_frame_ms,
+                hook_applied=hook,
+                hook_alternatives=list(alternatives),
+            ),
+            ctx.paths.renders / f"{key}.meta.json",
+        )
+    with ctx.engine.begin() as conn:
+        conn.execute(
+            text("UPDATE posts SET caption=:c, hashtags=:h WHERE id=:i"),
+            {"c": caption, "h": json.dumps(list(hashtags), ensure_ascii=False), "i": post_id},
+        )
+
+
+def packable_post(
+    ctx: Context,
+    delivery: Path,
+    *,
+    owner: str = ACCOUNT,
+    creator_id: str | None = None,
+    episode: int | None = None,
+    span: tuple[int, int] = (0, 60_000),
+    part_number: int | None = 1,
+    test: bool = False,
+    status: str = "rendered",
+    segment_status: str = "approved",
+    **meta: Any,
+) -> int:
+    """A rendered post with its video, cover and meta files, ready for `package`."""
+    with Session(ctx.engine) as session:
+        parent = (
+            session.get_one(Episode, episode)
+            if episode is not None
+            else make_episode(session, owner=owner, creator_id=creator_id)
+        )
+        segment = make_segment(session, parent, "part", *span)
+        segment.status = segment_status
+        post = make_post(
+            session, segment, owner, status=status, layout="square", render_version="plate-1+ov-1"
+        )
+        post.part_number = part_number
+        post.is_test = test
+        session.commit()
+        post_id = post.id
+    meta_inputs(ctx, post_id, delivery, **meta)
+    return post_id

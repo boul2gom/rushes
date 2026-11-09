@@ -231,15 +231,25 @@ def _close_run(
         )
 
 
-def _ready_by_account(ctx: Context) -> dict[str, int]:
+def _ready_by_account(ctx: Context, *, test: bool = False) -> dict[str, int]:
+    """`ready` posts by account id: the ones to publish, or (`test`) the showcase ones."""
     with ctx.engine.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT account_id, count(*) FROM posts WHERE status='ready' AND is_test=0 "
+                "SELECT account_id, count(*) FROM posts WHERE status='ready' AND is_test=:t "
                 "GROUP BY account_id ORDER BY account_id"
-            )
+            ),
+            {"t": int(test)},
         ).all()
     return {str(account): int(count) for account, count in rows}
+
+
+def _index_path(ctx: Context) -> str | None:
+    """INDEX.html of outbox/, else (only showcase posts so far) that of outbox_test/."""
+    for folder in (ctx.paths.outbox, ctx.paths.outbox_test):
+        if (folder / "INDEX.html").exists():
+            return str(folder / "INDEX.html")
+    return None
 
 
 def _report_error(ctx: Context, error: RushesError) -> None:
@@ -295,10 +305,13 @@ def run_pipeline(
     warnings = sum(r.warned for r in reports) + sum(
         e.exit_code == EXIT_SOURCE_UNAVAILABLE for e in errors
     )
-    index = ctx.paths.outbox / "INDEX.html"
     ctx.ui.emit(
         Summary(
-            _ready_by_account(ctx), warnings, _ms(started), str(index) if index.exists() else None
+            _ready_by_account(ctx),
+            warnings,
+            _ms(started),
+            _index_path(ctx),
+            _ready_by_account(ctx, test=True),
         )
     )
     return code

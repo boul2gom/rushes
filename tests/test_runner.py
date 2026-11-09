@@ -249,6 +249,7 @@ def test_summary_counts_ready_posts_per_account(ctx: Context) -> None:
     run_pipeline(ctx, [], Filters(), command="t")
     summary = ctx_events(ctx)[-1]
     assert summary["ready_by_account"] == {account: 2}
+    assert summary["showcase_by_account"] == {account: 1}  # the `ready` test post, apart
 
 
 def test_pipeline_event_stream_has_no_secret(ctx: Context) -> None:

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
+Platform = Literal["tiktok", "instagram"]
 type SoundLabel = Literal["impact", "explosion", "splash", "scream", "laughter"]
 
 

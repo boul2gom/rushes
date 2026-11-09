@@ -271,7 +271,7 @@ class Message:  level: Level; text: str; hint: str | None = None; alert: str | N
 @dataclass(frozen=True)
 class Table:    title: str; columns: list[str]; rows: list[list[str]]
 @dataclass(frozen=True)
-class Summary:  ready_by_account: dict[str, int]; warnings: int; duration_ms: int; index_path: str | None
+class Summary:  ready_by_account: dict[str, int]; warnings: int; duration_ms: int; index_path: str | None; showcase_by_account: dict[str, int] = field(default_factory=dict)  # posts `ready` de test (vitrine), ajouté en 8b
 
 Event = Header | StepEvent | Progress | Message | Table | Summary
 

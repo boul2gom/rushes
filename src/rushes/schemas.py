@@ -1,11 +1,11 @@
 """Episode and post files as strict Pydantic models (docs/plans/00-master.md section 5.6)."""
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from rushes.core.types import SoundEvent
+from rushes.core.types import Platform, SoundEvent
 from rushes.fsutil import atomic_path
 
 type RemovedKind = Literal["black", "silence", "intro", "outro", "title_card"]
@@ -89,3 +89,39 @@ class MetaFile(_Strict):
     cover_frame_ms: int
     hook_applied: str | None
     hook_alternatives: list[str]
+
+
+class PublishAt(_Strict):
+    brand_local: str  # "2026-11-16 15:00 America/New_York"
+    paris: str  # "2026-11-16 21:00"
+
+
+class UploadFiles(_Strict):
+    video: str
+    cover: str
+    cover_frame_s: float
+
+
+class UploadHook(_Strict):
+    applied: str | None
+    alternatives: list[str]
+
+
+class UploadFile(_Strict):
+    """`upload.json` of a post (task 8b): what Louis types in the app, in the order of the screen.
+
+    Fields and order are those of the example in docs/spec.md (Publication manuelle)."""
+
+    post_id: str
+    platform: Platform
+    account: str
+    publish_at: PublishAt
+    order_note: str | None
+    files: UploadFiles
+    caption: str
+    hashtags: list[str]
+    hook: UploadHook
+    settings: dict[str, Any]
+    mentions: list[str]
+    campaign: dict[str, Any] | None
+    checklist: list[str]

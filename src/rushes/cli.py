@@ -277,7 +277,7 @@ def status() -> None:
 
 app.command("status", help="Derniers runs, files, alertes et espace disque.")(status)
 
-app.command("run", help="Enchaîne tout ce qui est prêt.")(_pipeline_stub("9"))
+app.command("run", help="Enchaîne tout ce qui est prêt.")(_pipeline_command("run", steps.RUN_ORDER))
 app.command("ingest", help="Télécharge et enregistre les épisodes.")(
     _pipeline_command("ingest", ("ingest",))
 )
@@ -298,7 +298,9 @@ app.command("render", help="Rend les posts (9:16, bandeau, sous-titres, loudnorm
     _pipeline_command("render", ("render",))
 )
 app.command("meta", help="Légendes, hashtags et couvertures.")(_pipeline_command("meta", ("meta",)))
-app.command("package", help="Prépare outbox/ et INDEX.html.")(_pipeline_stub("8b"))
+app.command("package", help="Prépare outbox/ et INDEX.html.")(
+    _pipeline_command("package", ("package",))
+)
 app.command("serve", help="Sert la page de suivi et le tableau de bord.")(_plain_stub("36"))
 
 # --- groups ---------------------------------------------------------------------------------

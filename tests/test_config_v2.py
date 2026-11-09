@@ -495,3 +495,39 @@ def test_series_rights_block_is_parsed(config_dir: Path) -> None:
     assert tj is not None
     assert tj.rights is not None
     assert tj.rights.status == "to_request"
+
+
+@pytest.mark.parametrize("bad", ["25:00", "15", "15:00:30", "9:00", "12:60", "quinze heures", ""])
+def test_slots_must_be_hh_mm(config_dir: Path, edit_yaml: Edit, bad: str) -> None:
+    edit_yaml(config_dir / "accounts.yaml", lambda d: d.update(slots={"tiktok": ["15:00", bad]}))
+    with pytest.raises(ConfigError) as exc:
+        load_config(config_dir)
+    text = str(exc.value)
+    assert "slots" in text and "tiktok" in text and "HH:MM" in text and "1" in text  # key + index
+
+
+def test_slots_cannot_be_an_empty_list_and_the_bounds_are_accepted(
+    config_dir: Path, edit_yaml: Edit
+) -> None:
+    edit_yaml(config_dir / "accounts.yaml", lambda d: d.update(slots={"instagram": []}))
+    with pytest.raises(ConfigError, match="instagram"):
+        load_config(config_dir)
+    edit_yaml(
+        config_dir / "accounts.yaml", lambda d: d.update(slots={"tiktok": ["00:00", "23:59"]})
+    )
+    assert load_config(config_dir).slots_for("st_tt") == ["00:00", "23:59"]
+
+
+@pytest.mark.parametrize("unquoted", [900, 15.5])
+def test_slots_unquoted_hour_says_to_write_it_in_quotes(
+    config_dir: Path, edit_yaml: Edit, unquoted: float
+) -> None:
+    """YAML reads `[15:00, 18:00]` as numbers (900): the message must say how to write it."""
+    edit_yaml(
+        config_dir / "accounts.yaml", lambda d: d.update(slots={"tiktok": ["18:00", unquoted]})
+    )
+    with pytest.raises(ConfigError) as exc:
+        load_config(config_dir)
+    text = str(exc.value)
+    assert "slots" in text and "tiktok" in text and str(unquoted) in text
+    assert "entre guillemets" in text and '"15:00"' in text

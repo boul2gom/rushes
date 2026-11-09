@@ -11,7 +11,7 @@ from typer.testing import CliRunner
 
 from fakes.clock import FakeClock
 from fixtures.generator import Synth, SynthSpec, cache_key, make_video
-from helpers import START, make_context
+from helpers import START, make_context, make_delivery_video
 from rushes import ui
 from rushes.context import Context
 from rushes.db.engine import write_session
@@ -120,3 +120,9 @@ def synth(tmp_path_factory: pytest.TempPathFactory) -> Synth:
         return cache[key]
 
     return make
+
+
+@pytest.fixture(scope="session")
+def delivery(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A video that satisfies `check_delivery`, made once (copy it, do not edit it)."""
+    return make_delivery_video(tmp_path_factory.mktemp("delivery") / "delivery.mp4")

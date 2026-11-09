@@ -10,6 +10,7 @@ from rushes.clean.clean import CleanStep
 from rushes.cut.parts import CutStep
 from rushes.ingest.ingest import IngestStep
 from rushes.meta.meta import MetaStep
+from rushes.package.outbox import PackageStep
 from rushes.render.render import RenderStep
 from rushes.runner import Step
 
@@ -22,6 +23,7 @@ STEPS: dict[str, Callable[[], Step[Any]]] = {
     "assign": AssignStep,
     "render": RenderStep,
     "meta": MetaStep,
+    "package": PackageStep,
 }
 RUN_ORDER: tuple[str, ...] = (
     "ingest",
@@ -32,4 +34,5 @@ RUN_ORDER: tuple[str, ...] = (
     "assign",
     "render",
     "meta",
+    "package",
 )

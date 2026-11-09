@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ "Posts de test (vitrine)" if test else "Posts prêts" }}</title>
+<style>
+:root { color-scheme: light dark; --bg: #fafafa; --fg: #1b1b1b; --card: #fff; --line: #d8d8d8; --warn: #b00020; }
+@media (prefers-color-scheme: dark) { :root { --bg: #151515; --fg: #ececec; --card: #202020; --line: #3a3a3a; --warn: #ff6b81; } }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+main { max-width: 60rem; margin: 0 auto; }
+h1, h2 { line-height: 1.2; }
+.warn { color: var(--warn); font-weight: 700; }
+article { display: grid; grid-template-columns: 9rem 1fr; gap: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 12px 0; }
+article img { width: 9rem; height: auto; border-radius: 4px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0; }
+@media (max-width: 36rem) { article { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<h1>{{ "Posts de test (vitrine)" if test else "Posts prêts" }}</h1>
+{% if test %}
+<p class="warn">NE PAS PUBLIER : ces posts sont des vitrines (série sans licence ou créateur non autorisé).</p>
+{% endif %}
+{% for section in sections %}
+<section>
+<h2>{{ section.handle }} <small>({{ section.platform }}, {{ section.account_id }})</small></h2>
+{% for entry in section.entries %}
+<article id="{{ entry.key }}">
+{% if entry.upload %}
+<a href="{{ entry.folder }}/cover.jpg"><img src="{{ entry.folder }}/cover.jpg" alt="Couverture de {{ entry.key }}" loading="lazy"></a>
+<div>
+<h3>{{ entry.key }} : {{ entry.upload.publish_at.brand_local }} ({{ entry.upload.publish_at.paris }} à Paris)</h3>
+{% if entry.upload.order_note %}
+<p><strong>{{ entry.upload.order_note }}</strong></p>
+{% endif %}
+<p><a href="{{ entry.folder }}/video.mp4">Vidéo</a> · <a href="{{ entry.folder }}/cover.jpg">Couverture</a> · <a href="{{ entry.folder }}/upload.json">upload.json</a></p>
+<h4>Légende</h4>
+<pre>{{ entry.upload.caption }}</pre>
+<h4>Hashtags</h4>
+<pre>{{ entry.hashtags }}</pre>
+{% if entry.hooks %}
+<h4>Accroches</h4>
+<pre>{{ entry.hooks | join("\n") }}</pre>
+{% endif %}
+<ul>
+{% for item in entry.upload.checklist %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+</div>
+{% else %}
+<div>
+<h3>{{ entry.key }}</h3>
+<p class="warn">créneau ou upload.json illisible : le dossier de ce post est incomplet.</p>
+</div>
+{% endif %}
+</article>
+{% endfor %}
+</section>
+{% else %}
+<p>Aucun post pour l'instant.</p>
+{% endfor %}
+</main>
+</body>
+</html>

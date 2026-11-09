@@ -68,3 +68,18 @@ def test_ms_tc_round_trip() -> None:
 def test_tc_to_ms_rejects_malformed(bad: str) -> None:
     with pytest.raises(ValueError):
         tc_to_ms(bad)
+
+
+def test_parse_instant_is_utc_and_french_on_garbage() -> None:
+    from datetime import UTC, datetime
+
+    from rushes.core.timecode import parse_instant
+
+    expected = datetime(2026, 11, 17, 20, 0, tzinfo=UTC)
+    assert parse_instant("2026-11-17T20:00:00+00:00") == expected
+    assert parse_instant("2026-11-17T20:00") == expected  # no offset: UTC
+    assert parse_instant("2026-11-17T22:00:00+02:00") == expected
+    assert parse_instant("2026-11-17T22:00:00+02:00").utcoffset().total_seconds() == 0  # type: ignore[union-attr]
+    for bad in ("", "demain", "2026-13-40"):
+        with pytest.raises(ValueError, match="date invalide"):
+            parse_instant(bad)

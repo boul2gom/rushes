@@ -1125,6 +1125,10 @@ def test_rotation_plan_recorded_once_per_period(ctx):
   class QueueStep(BaseStep): name = "queue"   # éléments : comptes ; expire, gestes de secours, puis classement
   ```
 - Règles fixées :
+  - Héritage de 8b (C48 (4), (13)) : `package` donne un créneau à chaque partie strictement après celui des parties
+    précédentes et ne déplace jamais un créneau déjà pris ; la file reprend `earlier_parts` (`package/upload.py`) et `_next_slot` (`package/outbox.py`) de
+    `package/outbox.py` et doit **réordonner** les créneaux d'un épisode quand une partie ultérieure en détient un antérieur
+    à celui d'une partie précédente (test à ajouter : `test_queue_reorders_parts_slots_out_of_order`).
   - Score (spec, File de publication) : `0,35 × qualité + 0,25 × fraîcheur + 0,15 × tendance + 0,25 × appris`.
     Qualité = `passage_quality` (best-of de niveau 3 × `level3_factor`) − `expired_penalty × expired_count`.
     Fraîcheur : créateurs `exp(−âge_source_h / freshness_half_h)`, cartoons 1. Tendance = `min(1,

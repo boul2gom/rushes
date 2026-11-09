@@ -10,7 +10,7 @@ import re
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, Protocol, TextIO
@@ -72,6 +72,7 @@ class Summary:
     warnings: int
     duration_ms: int
     index_path: str | None
+    showcase_by_account: dict[str, int] = field(default_factory=dict)  # `ready` test posts
 
 
 Event = Header | StepEvent | Progress | Message | Table | Summary
@@ -219,6 +220,7 @@ def _record(event: Event, command: str | None, moment: datetime) -> dict[str, An
                 "warnings": event.warnings,
                 "duration_ms": event.duration_ms,
                 "index_path": event.index_path,
+                "showcase_by_account": event.showcase_by_account,
             }
     return _redact_value(base)  # type: ignore[no-any-return]
 
@@ -275,6 +277,9 @@ def _lines(event: Event) -> list[list[Segment]]:
         case Summary():
             ready = ", ".join(f"{k} {v}" for k, v in sorted(event.ready_by_account.items()))
             head = f"Prêts : {ready or 'aucun'}"
+            showcase = ", ".join(f"{k} {v}" for k, v in sorted(event.showcase_by_account.items()))
+            if showcase:
+                head += f" · vitrine : {showcase}"
             warn_style = "yellow" if event.warnings else "dim"
             line = [
                 ("bold green", redact(head)),

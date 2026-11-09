@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -45,3 +47,19 @@ def test_clean_file_forbids_unknown_fields_versions_and_kinds() -> None:
 
 def test_clean_file_span_is_optional() -> None:
     assert _clean().span is None
+
+
+def _loaded_after(statement: str) -> set[str]:
+    """Modules in sys.modules after `statement`, in a clean interpreter (-I: no env, no cwd)."""
+    code = f"{statement}; import sys; print('\\n'.join(sorted(sys.modules)))"
+    done = subprocess.run(
+        [sys.executable, "-I", "-c", code], capture_output=True, text=True, check=True
+    )
+    return set(done.stdout.split())
+
+
+@pytest.mark.parametrize("statement", ["import rushes.schemas", "import rushes.package.upload"])
+def test_light_modules_do_not_load_the_config_or_the_console(statement: str) -> None:
+    """`rushes serve` (task 36) must start fast: schemas and build_upload stay light."""
+    loaded = _loaded_after(statement)
+    assert not {"rushes.config", "rushes.ui", "rich", "yaml"} & loaded
