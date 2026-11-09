@@ -288,14 +288,16 @@ app.command("analyze", help="Plans, audio, parole et index des scènes.")(
     _pipeline_command("analyze", ("analyze",))
 )
 app.command("cut", help="Découpe en parties et best-of.")(_pipeline_command("cut", ("cut",)))
-app.command("approve", help="Approbation automatique des passages.")(_pipeline_stub("8a"))
+app.command("approve", help="Approbation automatique des passages.")(
+    _pipeline_command("approve", ("approve",))
+)
 app.command("assign", help="Attribue les passages approuvés au compte propriétaire.")(
-    _pipeline_stub("8a")
+    _pipeline_command("assign", ("assign",))
 )
 app.command("render", help="Rend les posts (9:16, bandeau, sous-titres, loudnorm).")(
     _pipeline_command("render", ("render",))
 )
-app.command("meta", help="Légendes, hashtags et couvertures.")(_pipeline_stub("8b"))
+app.command("meta", help="Légendes, hashtags et couvertures.")(_pipeline_command("meta", ("meta",)))
 app.command("package", help="Prépare outbox/ et INDEX.html.")(_pipeline_stub("8b"))
 app.command("serve", help="Sert la page de suivi et le tableau de bord.")(_plain_stub("36"))
 

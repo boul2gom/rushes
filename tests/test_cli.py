@@ -42,10 +42,7 @@ PENDING: dict[str, str] = {
     "market analyze": "31",
     "compile themes": "30",
     "hooks propose": "14",
-    "approve": "8a",
-    "assign": "8a",
     "queue rank": "16b",
-    "meta": "8b",
     "package": "8b",
     "stats collect": "17",
     "posts detect-published": "17",
@@ -58,7 +55,17 @@ PENDING: dict[str, str] = {
     "review build": "32",
     "review apply": "32",
 }
-IMPLEMENTED: tuple[str, ...] = ("status", "ingest", "clean", "analyze", "cut", "render")
+IMPLEMENTED: tuple[str, ...] = (
+    "status",
+    "ingest",
+    "clean",
+    "analyze",
+    "cut",
+    "approve",
+    "assign",
+    "render",
+    "meta",
+)
 
 
 def _argv(commands: list[str]) -> list[list[str]]:
@@ -403,4 +410,63 @@ def test_cut_command_runs_the_step_and_is_idempotent(cli_env: CliRunner, ctx: Co
         count = conn.execute(text("SELECT count(*) FROM segments WHERE kind='part'")).scalar_one()
     assert count >= 2
     again = cli_env.invoke(app, ["--json", "cut"])  # R16 through the CLI
+    assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+# --- task 8a: approve, assign, meta -------------------------------------------------------------
+
+
+def test_steps_registry_runs_approve_and_assign_between_cut_and_render_then_meta() -> None:
+    assert {"approve", "assign", "meta"} <= set(steps.STEPS)
+    order = steps.RUN_ORDER
+    assert order.index("cut") < order.index("approve") < order.index("assign")
+    assert order.index("assign") < order.index("render") < order.index("meta")
+    assert set(order) <= set(steps.STEPS)
+
+
+def test_approve_then_assign_commands_run_the_steps_and_are_idempotent(
+    cli_env: CliRunner, ctx: Context
+) -> None:
+    analyzed_episode(ctx, duration_ms=300_000)
+    assert cli_env.invoke(app, ["--json", "cut"]).exit_code == 0
+    approve = cli_env.invoke(app, ["--json", "approve"])
+    assert approve.exit_code == 0, approve.output
+    assert '"step": "approve"' in approve.output
+    with ctx.engine.connect() as conn:
+        approved = int(
+            conn.execute(text("SELECT count(*) FROM segments WHERE status='approved'")).scalar_one()
+        )
+    assert approved >= 2
+    assign = cli_env.invoke(app, ["--json", "assign"])
+    assert assign.exit_code == 0, assign.output
+    assert '"step": "assign"' in assign.output
+    with ctx.engine.connect() as conn:
+        planned = conn.execute(text("SELECT count(*) FROM posts WHERE status='planned'"))
+        assert planned.scalar_one() == approved
+    for command in ("approve", "assign"):  # R16 through the CLI
+        again = cli_env.invoke(app, ["--json", command])
+        assert again.exit_code == 0 and '"event": "step"' not in again.output
+
+
+def test_meta_command_runs_the_step_and_is_idempotent(
+    cli_env: CliRunner, ctx: Context, synth: Synth
+) -> None:
+    from helpers import post_on_video
+
+    video = synth(SynthSpec(duration_ms=3000, size=(64, 36), fps=10))
+    post_id = post_on_video(
+        ctx,
+        video,
+        span=(500, 2500),
+        status="rendered",
+        layout="square",
+        render_version="plate-1+ov-1",
+    )
+    first = cli_env.invoke(app, ["--json", "meta"])
+    assert first.exit_code == 0, first.output
+    assert '"step": "meta"' in first.output
+    with ctx.engine.connect() as conn:
+        caption = conn.execute(text("SELECT caption FROM posts WHERE id=:i"), {"i": post_id})
+        assert caption.scalar_one().startswith("Tom and Jerry, Part 1.")
+    again = cli_env.invoke(app, ["--json", "meta"])
     assert again.exit_code == 0 and '"event": "step"' not in again.output

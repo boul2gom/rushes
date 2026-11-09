@@ -1185,6 +1185,9 @@ def test_rotation_plan_recorded_once_per_period(ctx):
   - `choose_hook` : `chosen` déplacé sur le rang demandé ; `render_version = NULL`, `caption = NULL` et
     `status = 'rendered'` (comme la renumérotation : rendu léger, puis `meta` refait la légende, qui commence par la
     nouvelle accroche, et la couverture, puis `package`). Le post garde son `planned_at`.
+    `meta` lit `posts.part_number` fixé au rendu (C47) : une remise à `caption = NULL` est suivie d'un rendu qui récrit
+    `part_number`, et `meta` ne prend que les posts dont `render_version` n'est pas NULL (C47 (12)) : l'ordre des deux
+    remises à NULL n'a plus d'importance.
   - Gestes de secours : dossier présent dans `outbox/_ecartes/` → `discard_post(reason="dossier déplacé",
     origin="folder")`, sauf si le post est déjà `discarded` (dossier déplacé par la page : rien) ;
     `hook.txt` dont le contenu est égal à celui d'une autre accroche du post → `choose_hook` du rang correspondant.

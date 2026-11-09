@@ -75,3 +75,17 @@ class AudioFile(_Strict):
     loudness: list[LoudPoint]
     speech: list[tuple[int, int]]
     events: list[SoundEvent] | None = None  # task 12b; None = not analyzed
+
+
+class MetaFile(_Strict):
+    """Caption, hashtags and cover of a post (task 8a): `renders/<p_key>.meta.json`.
+
+    `cover_frame_ms` is in the time of the post's video (0 = its first frame)."""
+
+    version: Literal[1]
+    post_id: int
+    caption: str
+    hashtags: list[str]
+    cover_frame_ms: int
+    hook_applied: str | None
+    hook_alternatives: list[str]
