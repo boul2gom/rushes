@@ -8,6 +8,16 @@ from typing import Any, Literal, Protocol
 from rushes.errors import SourceUnavailable
 
 
+class HttpError(SourceUnavailable):
+    """A request that failed: `status` is the non-2xx HTTP status, None for a network error."""
+
+    def __init__(
+        self, message: str = "", *, status: int | None = None, hint: str | None = None
+    ) -> None:
+        super().__init__(message, hint=hint)
+        self.status = status
+
+
 class YtDlp(Protocol):
     def extract(
         self,
@@ -27,7 +37,9 @@ class Http(Protocol):
     def get_json(self, url: str, *, params: Mapping[str, str] | None = None) -> Any: ...
     def get_text(self, url: str) -> str: ...
     def post(self, url: str, *, body: bytes, headers: Mapping[str, str]) -> int: ...  # ntfy only
-    def download(self, url: str, dest: Path) -> None: ...  # model weights (task 9)
+    def download(
+        self, url: str, dest: Path, *, max_bytes: int | None = None
+    ) -> None: ...  # weights (task 9)
 
 
 @dataclass(frozen=True)
@@ -70,5 +82,5 @@ class UnavailableHttp:
     def post(self, url: str, *, body: bytes, headers: Mapping[str, str]) -> int:
         raise _unavailable()
 
-    def download(self, url: str, dest: Path) -> None:
+    def download(self, url: str, dest: Path, *, max_bytes: int | None = None) -> None:
         raise _unavailable()

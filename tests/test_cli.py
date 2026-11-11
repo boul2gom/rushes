@@ -33,8 +33,6 @@ def _reset_cli_state(monkeypatch: pytest.MonkeyPatch) -> None:
 PENDING: dict[str, str] = {
     "discover youtube": "10a",
     "discover series": "38",
-    "models fetch": "9",
-    "models check": "9",
     "rights list": "38",
     "serve": "36",
     "market collect": "31",
@@ -65,6 +63,8 @@ IMPLEMENTED: tuple[str, ...] = (
     "meta",
     "package",
     "run",
+    "models fetch",
+    "models check",
 )
 
 
@@ -555,3 +555,121 @@ def test_run_summary_names_the_test_index_when_only_showcase_posts_exist(
     assert summary["index_path"] == str(ctx.paths.outbox_test / "INDEX.html")
     assert summary["ready_by_account"] == {}  # a showcase post is not "ready to publish"
     assert summary["showcase_by_account"] == {"st_tt": 1}
+
+
+# --- models fetch / models check (task 9) -------------------------------------------------------
+
+
+def _models_manifest(monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
+    """A two-model manifest of tiny files; returns the bytes behind each URL."""
+    import hashlib
+
+    from rushes.models import fetch as model_fetch
+
+    blobs = {"https://example.test/one": b"one", "https://example.test/two": b"two!"}
+    manifest = [
+        model_fetch.ModelFile(
+            name=name,
+            file=f"{name}/w.bin",
+            url=f"https://example.test/{name}",
+            sha256=hashlib.sha256(data).hexdigest(),
+            bytes=len(data),
+            license="MIT",
+        )
+        for name, data in (("one", b"one"), ("two", b"two!"))
+    ]
+    monkeypatch.setattr(model_fetch, "load_manifest", lambda: manifest)
+    return blobs
+
+
+def test_models_check_exits_1_and_lists_what_is_missing(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _models_manifest(monkeypatch)
+    result = cli_env.invoke(app, ["models", "check"])
+    assert result.exit_code == 1
+    assert "one" in result.output and "two" in result.output and "missing" in result.output
+    assert "rushes models fetch" in result.output
+
+
+def test_r16_models_fetch_twice_downloads_nothing_the_second_time(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fakes.net import FakeHttp
+
+    blobs = _models_manifest(monkeypatch)
+    http = FakeHttp(blobs=blobs)
+    monkeypatch.setattr(cli, "make_http", lambda: http)
+    first = cli_env.invoke(app, ["models", "fetch"])
+    assert first.exit_code == 0, first.output
+    assert "one téléchargé" in first.output and "two téléchargé" in first.output
+    again = cli_env.invoke(app, ["models", "fetch"])  # nothing to download the second time
+    assert again.exit_code == 0
+    assert "one déjà présent" in again.output and "two déjà présent" in again.output
+    assert len(http.downloads) == 2
+    check = cli_env.invoke(app, ["models", "check"])
+    assert check.exit_code == 0 and "ok" in check.output and "missing" not in check.output
+
+
+def test_models_check_reports_a_wrong_sha256(
+    cli_env: CliRunner, data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _models_manifest(monkeypatch)
+    target = data_dir / "cache" / "models" / "one" / "w.bin"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"nope")
+    result = cli_env.invoke(app, ["models", "check"])
+    assert result.exit_code == 1 and "bad_sha256" in result.output
+
+
+def test_models_fetch_only_limits_the_models(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fakes.net import FakeHttp
+
+    http = FakeHttp(blobs=_models_manifest(monkeypatch))
+    monkeypatch.setattr(cli, "make_http", lambda: http)
+    result = cli_env.invoke(app, ["models", "fetch", "--only", "two"])
+    assert result.exit_code == 0
+    assert [url for url, _ in http.downloads] == ["https://example.test/two"]
+    assert "one" not in result.output
+
+
+def test_models_fetch_unknown_only_lists_the_valid_names(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fakes.net import FakeHttp
+
+    _models_manifest(monkeypatch)
+    monkeypatch.setattr(cli, "make_http", lambda: FakeHttp())
+    result = cli_env.invoke(app, ["models", "fetch", "--only", "nope"])
+    assert result.exit_code == 1
+    assert "modèle inconnu : nope" in result.output
+    assert "one" in result.output and "two" in result.output
+
+
+def test_models_commands_emit_json_events(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _models_manifest(monkeypatch)
+    result = cli_env.invoke(app, ["--json", "models", "check"])
+    assert result.exit_code == 1
+    events = [json.loads(line) for line in result.output.splitlines() if line.startswith("{")]
+    assert [e["event"] for e in events] == ["table", "message"]
+    assert events[1]["level"] == "error"
+
+
+def test_models_fetch_network_failure_is_a_clean_error(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from rushes.net.base import HttpError
+
+    class Down:
+        def download(self, url: str, dest: Path, *, max_bytes: int | None = None) -> None:
+            raise HttpError("échec de la connexion à example.test", hint="Vérifie le réseau.")
+
+    _models_manifest(monkeypatch)
+    monkeypatch.setattr(cli, "make_http", lambda: Down())
+    result = cli_env.invoke(app, ["models", "fetch"])
+    assert result.exit_code == 5  # SourceUnavailable
+    assert "échec de la connexion" in result.output and "Traceback" not in result.output

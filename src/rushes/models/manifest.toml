@@ -1,0 +1,320 @@
+# Pinned model files (docs/plans/00-master.md section 5.5, task 9). One [[model]] table per file.
+# Fields: file (path under paths.cache_models), url, sha256 and bytes (of that file), license.
+# Archive members add archive_member (path inside the archive), archive_sha256 and archive_bytes
+# (of the whole archive: size bound of the download, hash checked before any extraction); `url` is
+# then the archive URL.
+#
+# Sources, read once on 2026-11-10 (the only network pass; sha256 computed locally):
+# - Hugging Face files are pinned on the full commit (`/resolve/<commit>/...`), resolved through
+#   `/api/models/<repo>/revision/<short commit>`. LFS files: sha256 and size come from the API
+#   (`lfs.oid`, `size`) and match docs/decisions.md (task 42 table, identical on Mac and server).
+#   Small files (config.json, tokenizer.json, vocabulary.txt) were downloaded and hashed; their
+#   byte counts match the API sizes.
+#     whisper_small  Systran/faster-whisper-small            536b0662742c02347bc0e980a01041f333bce120
+#     whisper_base   Systran/faster-whisper-base             ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66
+#     clip           laion/CLIP-ViT-B-32-DataComp.XL-s13B-b90K f0e2ffa09cbadab3db6a261ec1ec56407ce42912
+#     qwen4b         unsloth/Qwen3-4B-Instruct-2507-GGUF    a06e946bb6b655725eafa393f4a9745d460374c9
+#     qwen1_7b       unsloth/Qwen3-1.7B-GGUF                d7f544eead698dbd1f15126ef60b45a1e1933222
+# - yunet: opencv_zoo commit eb9f4f2d4b79b58e5513b5d25d5f0243a8357bf4 (LFS file, served by
+#   media.githubusercontent.com); sha256 identical to the task 42 table.
+# - ced, supertonic, kokoro: sherpa-onnx GitHub release archives (the release tags are mutable: the
+#   archive sha256 is the pin, from the task 42 table and recomputed here). Members are the files the
+#   loaders open (scripts/spike_models.py). Kokoro is English only: the espeak-ng data is cut down to
+#   the core tables plus the en and en-US voices, and no dict/ folder (Chinese segmentation); a load
+#   and a generation were checked against that cut-down layout on the Mac.
+# - Licenses: the espeak-ng data files are GPL-3.0-or-later (espeak-ng); the origin of
+#   lexicon-us-en.txt could not be checked offline (it is not named in the archive's README that
+#   was available): Apache-2.0 is the license of the Kokoro archive, origin of the lexicon to confirm.
+# - Silero VAD comes from the silero-vad package, not from this manifest.
+
+[[whisper_small]]
+file = "whisper_small/model.bin"
+url = "https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/model.bin"
+sha256 = "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671"
+bytes = 483546902
+license = "MIT"
+
+[[whisper_small]]
+file = "whisper_small/config.json"
+url = "https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/config.json"
+sha256 = "b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828"
+bytes = 2370
+license = "MIT"
+
+[[whisper_small]]
+file = "whisper_small/tokenizer.json"
+url = "https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/tokenizer.json"
+sha256 = "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab"
+bytes = 2203239
+license = "MIT"
+
+[[whisper_small]]
+file = "whisper_small/vocabulary.txt"
+url = "https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/vocabulary.txt"
+sha256 = "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913"
+bytes = 459861
+license = "MIT"
+
+
+[[whisper_base]]
+file = "whisper_base/model.bin"
+url = "https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/model.bin"
+sha256 = "d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9"
+bytes = 145217532
+license = "MIT"
+
+[[whisper_base]]
+file = "whisper_base/config.json"
+url = "https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json"
+sha256 = "56a6d8110d311f19c8f0471e562832c7527f146b567275bfca59fcf7c184da9a"
+bytes = 2309
+license = "MIT"
+
+[[whisper_base]]
+file = "whisper_base/tokenizer.json"
+url = "https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json"
+sha256 = "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab"
+bytes = 2203239
+license = "MIT"
+
+[[whisper_base]]
+file = "whisper_base/vocabulary.txt"
+url = "https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt"
+sha256 = "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913"
+bytes = 459861
+license = "MIT"
+
+
+[[clip]]
+file = "clip/open_clip_model.safetensors"
+url = "https://huggingface.co/laion/CLIP-ViT-B-32-DataComp.XL-s13B-b90K/resolve/f0e2ffa09cbadab3db6a261ec1ec56407ce42912/open_clip_model.safetensors"
+sha256 = "3c00043509d2e3f35ec62bd85a643a393883dcda624d8208d034cc390c708297"
+bytes = 605143284
+license = "MIT"
+
+
+[[ced]]
+file = "ced/model.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/audio-tagging-models/sherpa-onnx-ced-mini-audio-tagging-2024-04-19.tar.bz2"
+sha256 = "ff29f39f9fbe637f72535160e9d006d61d872fdab0fce838672265b9b38cf946"
+bytes = 10451715
+license = "Apache-2.0"
+archive_member = "sherpa-onnx-ced-mini-audio-tagging-2024-04-19/model.int8.onnx"
+archive_sha256 = "bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c"
+archive_bytes = 47658399
+
+[[ced]]
+file = "ced/class_labels_indices.csv"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/audio-tagging-models/sherpa-onnx-ced-mini-audio-tagging-2024-04-19.tar.bz2"
+sha256 = "cdd1049833c4b86127c2773ac0d14a2754b6a6d0d1798002ed5c66e699708429"
+bytes = 14675
+license = "Apache-2.0"
+archive_member = "sherpa-onnx-ced-mini-audio-tagging-2024-04-19/class_labels_indices.csv"
+archive_sha256 = "bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c"
+archive_bytes = 47658399
+
+
+[[yunet]]
+file = "yunet/face_detection_yunet_2026may.onnx"
+url = "https://media.githubusercontent.com/media/opencv/opencv_zoo/eb9f4f2d4b79b58e5513b5d25d5f0243a8357bf4/models/face_detection_yunet/face_detection_yunet_2026may.onnx"
+sha256 = "ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0"
+bytes = 229738
+license = "MIT"
+
+
+[[qwen4b]]
+file = "qwen4b/Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+url = "https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/a06e946bb6b655725eafa393f4a9745d460374c9/Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+sha256 = "3605803b982cb64aead44f6c1b2ae36e3acdb41d8e46c8a94c6533bc4c67e597"
+bytes = 2497281120
+license = "Apache-2.0"
+
+
+[[qwen1_7b]]
+file = "qwen1_7b/Qwen3-1.7B-Q4_K_M.gguf"
+url = "https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/d7f544eead698dbd1f15126ef60b45a1e1933222/Qwen3-1.7B-Q4_K_M.gguf"
+sha256 = "b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897"
+bytes = 1107409472
+license = "Apache-2.0"
+
+
+[[supertonic]]
+file = "supertonic/duration_predictor.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db"
+bytes = 3700147
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/duration_predictor.int8.onnx"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/text_encoder.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff"
+bytes = 36416150
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/text_encoder.int8.onnx"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/vector_estimator.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "20cd86fa5c6effedfda0e7cffe5b0569ca401c440a0c3a1d72bf39286c0db3fd"
+bytes = 78400833
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/vector_estimator.int8.onnx"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/vocoder.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "e923d60f53f95eb1ce235f1dc33ec56d9c057823c96fa6f8acf98f32b0da6152"
+bytes = 25991073
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/vocoder.int8.onnx"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/tts.json"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09"
+bytes = 8253
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/tts.json"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/unicode_indexer.bin"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "8402ca48e5189a8950138580b0fff64db6f072f24ac07cd54ba8b2fbb9883b30"
+bytes = 262144
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/unicode_indexer.bin"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+[[supertonic]]
+file = "supertonic/voice.bin"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+sha256 = "67d5209b0ee8ce6c74105ffbe12fe6a7628aea3b4ba2fcb308a4a67938a93ce8"
+bytes = 517168
+license = "OpenRAIL-M (weights), MIT (code)"
+archive_member = "sherpa-onnx-supertonic-3-tts-int8-2026-05-11/voice.bin"
+archive_sha256 = "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427"
+archive_bytes = 128774318
+
+
+[[kokoro]]
+file = "kokoro/model.int8.onnx"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e"
+bytes = 114202993
+license = "Apache-2.0"
+archive_member = "kokoro-int8-multi-lang-v1_0/model.int8.onnx"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/voices.bin"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29"
+bytes = 28200960
+license = "Apache-2.0"
+archive_member = "kokoro-int8-multi-lang-v1_0/voices.bin"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/tokens.txt"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425"
+bytes = 687
+license = "Apache-2.0"
+archive_member = "kokoro-int8-multi-lang-v1_0/tokens.txt"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/lexicon-us-en.txt"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14"
+bytes = 5956885
+license = "Apache-2.0"
+archive_member = "kokoro-int8-multi-lang-v1_0/lexicon-us-en.txt"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/phondata"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "4e0288957874029a8c3c9f41a8f517ad4bf18127046decbdd4b9d1d6807ce3a3"
+bytes = 550424
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/phondata"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/phonindex"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "3ca7b8fa3b42624e4b0f152707e7a39245fce569aa99ea47c055d9e622fcf0c4"
+bytes = 39074
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/phonindex"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/phontab"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "886f3fa402cb0ba73d483aa8ad000af47a6b7cc06293c75a97913fba68a530f6"
+bytes = 55796
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/phontab"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/intonations"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "3f8af65fd3eda9759a10f021d61361c120871f463515229c925995c7f90918cc"
+bytes = 2040
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/intonations"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/en_dict"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "71bd330ba8a2e3e8076e631508208ef49449d6147c17b7bd2b4b1e1468292e35"
+bytes = 166944
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/en_dict"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/lang/gmw/en"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "4605d5330801de3641c6e366d15f129ea1f5ffbce8722642aba01ace07ab9c83"
+bytes = 140
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/lang/gmw/en"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410
+
+[[kokoro]]
+file = "kokoro/espeak-ng-data/lang/gmw/en-US"
+url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2"
+sha256 = "41534c2a22df5dd4f1052ff9e1a33a3ea7bff5a26b5c02bdad5ba8ddb7524704"
+bytes = 257
+license = "GPL-3.0-or-later (espeak-ng data)"
+archive_member = "kokoro-int8-multi-lang-v1_0/espeak-ng-data/lang/gmw/en-US"
+archive_sha256 = "72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653"
+archive_bytes = 132353410

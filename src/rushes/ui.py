@@ -303,7 +303,10 @@ def _table_cells(event: Table) -> tuple[list[str], list[list[str]]]:
 def _plain_table(event: Table) -> list[str]:
     columns, rows = _table_cells(event)
     widths = [max(len(cell) for cell in col) for col in zip(columns, *rows, strict=True)]
-    fmt = lambda cells: "  ".join(c.ljust(w) for c, w in zip(cells, widths, strict=True)).rstrip()  # noqa: E731
+
+    def fmt(cells: list[str]) -> str:
+        return "  ".join(c.ljust(w) for c, w in zip(cells, widths, strict=True)).rstrip()
+
     return [redact(event.title), fmt(columns), *(fmt(row) for row in rows)]
 
 
@@ -420,7 +423,10 @@ class RichEmitter:
 
     @staticmethod
     def _text(line: list[Segment]) -> Text:
-        return Text.assemble(*[(text, style or None) for style, text in line])
+        result = Text()
+        for style, text in line:
+            result.append(text, style or None)
+        return result
 
     def emit(self, event: Event) -> None:
         if isinstance(event, Header):

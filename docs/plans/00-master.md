@@ -557,7 +557,7 @@ class Http(Protocol):
     def get_json(self, url: str, *, params: Mapping[str, str] | None = None) -> Any: ...
     def get_text(self, url: str) -> str: ...
     def post(self, url: str, *, body: bytes, headers: Mapping[str, str]) -> int: ...  # ntfy seulement
-    def download(self, url: str, dest: Path) -> None: ...                              # poids des modèles (tâche 9)
+    def download(self, url: str, dest: Path, *, max_bytes: int | None = None) -> None: ...  # poids des modèles (tâche 9) ; au-delà de max_bytes : HttpError
 
 
 @dataclass(frozen=True)
@@ -951,7 +951,7 @@ R16, une variante par étape : `test_r16_clean_rerun_changes_nothing` (4), `test
 | Whisper small int8 / base int8 | 1,0 / 0,8 Go (mesuré) |
 | CLIP ViT-B/32 (safetensors) | ≈ 0,8 Go |
 | CED-mini | < 0,2 Go |
-| Silero VAD / YuNet | 0,24 / 0,05 Go (mesuré) |
+| Silero VAD (chemin ONNX) / YuNet | 0,29 / 0,08 Go (mesuré sur le serveur, Python 3.14) |
 | Qwen3-4B Q4\_K\_M, contexte 2048 | ≈ 3,1 Go |
 | Supertonic 3 | ≈ 0,3 Go |
 | FFmpeg x264 1080×1920 | 0,5 à 1 Go |

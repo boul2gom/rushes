@@ -13,10 +13,13 @@ from rushes.config import ConfigError, load_config
 from rushes.context import Context, Filters, app_version, build_context
 from rushes.errors import EXIT_ERROR, EXIT_INVALID_CONFIG, RushesError
 from rushes.ids import parse_key
+from rushes.models import fetch as model_fetch
+from rushes.net.base import Http
+from rushes.net.http import UrllibHttp
 from rushes.paths import Paths
 from rushes.runner import Step, run_pipeline
 from rushes.status import collect_status
-from rushes.ui import Emitter, Message, emit_trace, make_emitter
+from rushes.ui import Emitter, Message, Table, emit_trace, make_emitter
 
 EXIT_NOT_IMPLEMENTED = EXIT_ERROR
 
@@ -312,8 +315,6 @@ discover.command("youtube", help="Métadonnées, heatmap, commentaires et score.
 discover.command("series", help="Séries en tendance et chaînes officielles.")(_plain_stub("38"))
 
 models = _group("models", "Modèles locaux.")
-models.command("fetch", help="Télécharge les modèles une fois.")(_plain_stub("9"))
-models.command("check", help="Vérifie la présence des modèles.")(_plain_stub("9"))
 
 rights = _group("rights", "Suivi des licences.")
 rights.command("list", help="Tableau des licences et de leur priorité.")(_plain_stub("38"))
@@ -348,6 +349,65 @@ creators.command("revisit", help="Second passage à 24 h et 72 h.")(_pipeline_st
 review = _group("review", "Revue facultative.")
 review.command("build", help="Génère la page de revue.")(_pipeline_stub("32"))
 review.command("apply", help="Applique les décisions exportées.")(_pipeline_stub("32"))
+
+
+def make_http() -> Http:
+    """The network client of `models fetch` (tests replace it)."""
+    return UrllibHttp()
+
+
+@models.command("fetch", help="Télécharge les modèles une fois (sha256 vérifié).")
+@_guarded
+def models_fetch(
+    only: Annotated[
+        list[str] | None,
+        typer.Option("--only", help="Un modèle seulement (répétable), ex. --only clip."),
+    ] = None,
+) -> None:
+    ui = _ui()
+    paths = Paths.from_env()
+    chosen = tuple(only or ())
+    done = model_fetch.fetch(
+        make_http(),
+        paths,
+        only=chosen,
+        progress=lambda name: ui.emit(Message("info", f"téléchargement de {name}…")),
+    )
+    names = dict.fromkeys(entry.name for entry in model_fetch.load_manifest())
+    for name in names:
+        if chosen and name not in chosen:
+            continue
+        ui.emit(
+            Message("info", f"✓ {name} téléchargé" if name in done else f"✓ {name} déjà présent")
+        )
+
+
+@models.command("check", help="Vérifie la présence et l'empreinte des modèles (sans réseau).")
+@_guarded
+def models_check() -> None:
+    ui = _ui()
+    manifest = model_fetch.load_manifest()
+    states = model_fetch.check(Paths.from_env(), manifest=manifest)
+    ui.emit(
+        Table(
+            "Modèles",
+            ["Modèle", "Fichier", "État"],
+            [[entry.name, entry.file, states[entry.file]] for entry in manifest],
+        )
+    )
+    bad = [entry for entry in manifest if states[entry.file] != "ok"]
+    if bad:
+        names = ", ".join(dict.fromkeys(entry.name for entry in bad))
+        ui.emit(
+            Message(
+                "error",
+                f"{len(bad)} fichier(s) absents ou incorrects : {names}",
+                hint="Lance `rushes models fetch`.",
+            )
+        )
+        raise typer.Exit(EXIT_ERROR)
+    ui.emit(Message("info", f"✓ {len(manifest)} fichiers de modèles présents et conformes"))
+
 
 # --- tooling (not in the spec's command list) -----------------------------------------------
 

@@ -13,6 +13,7 @@ from rushes.context import Filters, build_context, rotate_logs
 from rushes.errors import SourceUnavailable
 from rushes.models.hub import ModelHub
 from rushes.net.base import NetClients, UnavailableHttp, UnavailableYtDlp
+from rushes.net.http import UrllibHttp
 from rushes.paths import Paths
 from rushes.runner import run_pipeline
 from rushes.ui import Message
@@ -28,6 +29,7 @@ def test_build_context_migrates_syncs_and_opens_the_log(config_dir: Path, data_d
         assert ctx.paths.data_dir == data_dir.resolve()
         assert ctx.paths.db.exists()
         assert isinstance(ctx.models, ModelHub) and isinstance(ctx.net, NetClients)
+        assert isinstance(ctx.net.http, UrllibHttp)  # the real Http client (task 9)
         ctx.ui.emit(Message("info", "bonjour"))
     finally:
         ctx.close()

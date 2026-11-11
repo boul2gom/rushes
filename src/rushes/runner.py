@@ -11,7 +11,7 @@ import traceback
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import ExitStack
 from dataclasses import asdict, dataclass, field
-from typing import Any, ClassVar, Protocol
+from typing import Any, ClassVar, Literal, Protocol
 
 from sqlalchemy import text
 
@@ -253,7 +253,9 @@ def _index_path(ctx: Context) -> str | None:
 
 
 def _report_error(ctx: Context, error: RushesError) -> None:
-    level = "warn" if error.exit_code == EXIT_SOURCE_UNAVAILABLE else "error"
+    level: Literal["warn", "error"] = (
+        "warn" if error.exit_code == EXIT_SOURCE_UNAVAILABLE else "error"
+    )
     ctx.ui.emit(Message(level, str(error) or type(error).__name__, hint=error.hint))
 
 

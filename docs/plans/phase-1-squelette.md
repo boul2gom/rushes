@@ -1427,6 +1427,7 @@ deux vrais épisodes déposés par Louis dans `data/import/tom_and_jerry/` et `d
   `INDEX.html`) sur la vidéo synthétique **et** sur 2 vrais épisodes, sur le serveur, dans l'image.
 - [ ] Relancer `rushes run` ne change rien (R16).
 - [ ] Rapport de mesures consigné dans `docs/decisions.md`.
-- [ ] `tests/rules_pending.toml` ne contient plus R1, R7, R12, R13, R17, R19, R20, R22, R27, R39,
-  R40, R41, R47. Restent en attente jusqu'à leur dernière tâche : R2 (17), R3 (32), R5 (13), R14 (40a).
+- [ ] `tests/rules_pending.toml` ne contient plus R12, R19, R20, R22, R27, R39, R40, R41 (règles closes pendant la
+  phase 1). Les autres restent jusqu'à leur dernière tâche, selon la matrice du plan maître (par exemple R1 et R14
+  (40a), R2 (17), R3 (32), R5 (13), R7 (35), R13 (40a), R17 (24)) : C48 et C49.
 - [ ] Suite rapide verte sur le Mac ; suite `slow` verte dans l'image sur le serveur ; ruff et mypy propres.

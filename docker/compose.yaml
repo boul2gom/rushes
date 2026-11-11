@@ -1,0 +1,41 @@
+# Commands container (docs/plans/00-master.md section 9). No port is published: `rushes serve`
+# gets its own service in task 36. Run from the repository root, with RUSHES_DATA_DIR defined in
+# the environment (the host's data folder, owned by uid 1000, the image's `rushes` user):
+#   export RUSHES_DATA_DIR=/srv/rushes/data
+#   docker compose -f docker/compose.yaml --profile test build --build-arg RUSHES_COMMIT=$(git rev-parse --short HEAD)
+#   docker compose -f docker/compose.yaml run --rm -T rushes rushes status
+#   docker compose -f docker/compose.yaml --profile test run --rm -T rushes-test pytest -m slow
+# `--profile test` on build makes both images (rushes:prod and rushes:test): without it the test
+# image would stay the one of an older commit.
+name: rushes
+
+x-limits: &limits
+  init: true # tini as PID 1: SIGTERM reaches the command, zombies are reaped
+  mem_limit: 6g
+  cpus: 4
+  cpu_shares: 512
+  environment:
+    OMP_NUM_THREADS: "4"
+    RUSHES_DATA_DIR: /data
+    RUSHES_CONFIG_DIR: /config
+  volumes:
+    - ${RUSHES_DATA_DIR}:/data
+    - ../config:/config:ro
+
+services:
+  rushes:
+    <<: *limits
+    image: rushes:prod
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runtime
+
+  rushes-test:
+    <<: *limits
+    image: rushes:test
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: test
+    profiles: ["test"]
