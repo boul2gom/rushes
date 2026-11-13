@@ -61,6 +61,7 @@ def rule_violations(session: Session, segment_id: int, ctx: Context) -> list[str
         episode.owner_account_id,
         tolerance_ms=s_to_ms(registry.overlap_tolerance_s),
         phash_max=registry.phash_max_distance,
+        phash_min_share=registry.phash_min_share,
     )
     if not verdict.ok:
         found.append(f"R1 : {verdict.message}")

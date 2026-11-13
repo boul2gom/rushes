@@ -318,7 +318,7 @@ hashtag: "#createur"                # facultatif : par défaut, nom du créateur
 # config/settings.yaml (extrait)
 rate_limit_s: 2
 # approval_threshold: {cartoons: 0.7, creators: 0.7}   # sans cette clé : 0,7 recalé par rushes ; décommenter pour forcer
-registry: {overlap_tolerance_s: 2, phash_max_distance: 10}
+registry: {overlap_tolerance_s: 2, phash_max_distance: 10, phash_min_share: 0.25}
 llm: {enabled: true, model: "qwen3-4b-instruct-2507-q4_k_m.gguf", fallback: "qwen3-1.7b-q4_k_m.gguf", threads: 4}
 originality:
   default: base                     # base | advanced ; surchargé par compte dans accounts.yaml

@@ -312,6 +312,32 @@ def test_cut_settings_out_of_range_are_refused_in_french(
     assert "doit être" in str(exc.value)
 
 
+@pytest.mark.parametrize("value", [0, -0.1, 1.5, 2, "beaucoup", None, True, float("nan")])
+def test_r1_phash_min_share_out_of_range_is_refused_in_french(
+    config_dir: Path, edit_yaml: Edit, value: object
+) -> None:
+    edit_yaml(config_dir / "settings.yaml", lambda d: d["registry"].update(phash_min_share=value))
+    with pytest.raises(ConfigError) as exc:
+        load_config(config_dir)
+    assert "phash_min_share" in str(exc.value)
+    assert "doit être" in str(exc.value)
+
+
+def test_r1_phash_min_share_one_is_accepted_and_shipped_value_is_a_quarter(
+    config_dir: Path, edit_yaml: Edit
+) -> None:
+    assert load_config(config_dir).settings.registry.phash_min_share == 0.25
+    edit_yaml(config_dir / "settings.yaml", lambda d: d["registry"].update(phash_min_share=1))
+    assert load_config(config_dir).settings.registry.phash_min_share == 1
+
+
+def test_r1_phash_min_share_defaults_to_a_quarter_without_the_key(
+    config_dir: Path, edit_yaml: Edit
+) -> None:
+    edit_yaml(config_dir / "settings.yaml", lambda d: d["registry"].pop("phash_min_share"))
+    assert load_config(config_dir).settings.registry.phash_min_share == 0.25
+
+
 def test_cut_settings_default_to_the_brief_values(config_dir: Path) -> None:
     cut = load_config(config_dir).settings.cut
     assert cut.model_dump() == {

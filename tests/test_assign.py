@@ -1,5 +1,6 @@
 """`assign` step (task 8a): approved parts go to the owner account of their episode (R1, R2, R3)."""
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -141,6 +142,20 @@ def test_assign_refusal_is_warned_with_reason(ctx: Context) -> None:
     assert _count(ctx, Assignment) == 1  # only the setup row; the refused segment got none
     with Session(ctx.engine) as session:
         assert session.get(Assignment, candidate) is None
+
+
+def test_r1_assign_accepts_part_sharing_only_black_frames(ctx: Context) -> None:
+    _, held = _segment(ctx, owner=ACCOUNT_OTHER_BRAND)
+    _, candidate = _segment(ctx)
+    with Session(ctx.engine) as session:
+        for segment_id, image in ((held, "5" * 16), (candidate, "a" * 16)):  # fade + own image
+            session.get_one(Segment, segment_id).phash_json = json.dumps(["0" * 16, image])
+        assign_raw(session, session.get_one(Segment, held), ACCOUNT_OTHER_BRAND)
+        session.commit()
+    report = _assign(ctx)
+    assert (report.done, report.warned, report.failed) == (1, 0, 0)
+    with Session(ctx.engine) as session:
+        assert session.get(Assignment, candidate) is not None
 
 
 def test_assign_goes_to_the_owner_only(ctx: Context) -> None:

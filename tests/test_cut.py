@@ -17,6 +17,7 @@ from helpers import (
     ctx_events,
     make_episode,
     snapshot,
+    synthetic_phash,
     with_config,
 )
 from rushes.config import CutSettings
@@ -64,7 +65,9 @@ def test_r43_episode_always_gets_parts(ctx: Context) -> None:
         assert (part["kind"], part["family"], part["status"]) == ("part", "monetizable", "proposed")
         assert 0 < part["score"] <= 1
         first, last = part["start_ms"] // 5000, (part["end_ms"] - 1) // 5000
-        assert json.loads(part["phash_json"]) == [f"{i:016x}" for i in range(first, last + 1)]
+        assert json.loads(part["phash_json"]) == [
+            synthetic_phash(i) for i in range(first, last + 1)
+        ]
 
 
 def test_r6_target_seed_recorded(ctx: Context) -> None:
@@ -176,7 +179,7 @@ def test_r6_plan_parts_never_leaves_the_bounds_over_200_episodes() -> None:
                 motion=rng.choice([0.0, 0.05, 0.6]),
                 loudness_lufs=None,
                 speech_ratio=0.0,
-                phash=f"{i:016x}",
+                phash=synthetic_phash(i),
             )
             for i, (a, b) in enumerate(zip(starts, ends, strict=True))
         ]

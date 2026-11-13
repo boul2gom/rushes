@@ -247,6 +247,20 @@ def make_episode(
     return episode
 
 
+def synthetic_phash(i: int) -> str:
+    """A usable pHash per shot index (5+ bits of each value).
+
+    At least 17 bits apart for the first 300 indices (checked in test_core_phash); beyond that
+    collisions exist (indices 115 and 1897 are 10 bits apart). Same index, same hash in any
+    episode.
+    """
+    x = (0x9E3779B97F4A7C15 * (i + 1)) % 2**64
+    x ^= x >> 29
+    x = (x * 0xBF58476D1CE4E5B9) % 2**64
+    x ^= x >> 32
+    return f"{x:016x}"
+
+
 def make_segment(
     session: Session,
     episode: Episode,
@@ -312,7 +326,7 @@ def analyzed_episode(
             motion=motion,
             loudness_lufs=None,
             speech_ratio=0.0,
-            phash=f"{i:016x}",
+            phash=synthetic_phash(i),
         )
         for i, (a, b) in enumerate(zip(starts, ends, strict=True))
     ]

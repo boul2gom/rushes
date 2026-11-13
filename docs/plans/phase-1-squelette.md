@@ -617,20 +617,21 @@ Expected : vert.
   def weighted_choice[T: str](seed: int, weights: Mapping[T, float]) -> T: ...   # clés triées ; poids nuls ignorés
   # core/phash.py
   def phash_distance(a: str, b: str) -> int: ...                  # hex 16 caractères, distance de Hamming
-  def min_phash_distance(a: Sequence[str], b: Sequence[str]) -> int | None: ...
+  # (C53) is_degenerate_phash, usable_phashes, close_shots, phash_conflict : voir core/phash.py ; min_phash_distance supprimée
   # db/registry.py
   VerdictCode = Literal["ok", "owner", "overlap", "phash", "same_account_part"]
   @dataclass(frozen=True)
   class Verdict: ok: bool; code: VerdictCode; message: str
   class RegistryRefused(RushesError): ...
-  def can_assign(session: Session, segment_id: int, account_id: str, *, tolerance_ms: int, phash_max: int) -> Verdict: ...
-  def assign(session: Session, segment_id: int, account_id: str, *, at: datetime, tolerance_ms: int, phash_max: int) -> Verdict: ...
+  def can_assign(session: Session, segment_id: int, account_id: str, *, tolerance_ms: int, phash_max: int, phash_min_share: float) -> Verdict: ...
+  def assign(session: Session, segment_id: int, account_id: str, *, at: datetime, tolerance_ms: int, phash_max: int, phash_min_share: float) -> Verdict: ...
   ```
   `can_assign` n'écrit jamais ; `assign` appelle `can_assign` puis insère `Assignment` dans la même transaction
   (session de l'appelant, ouverte par `db.engine.write_session` : `BEGIN IMMEDIATE`, sinon `assign` lève `RegistryRefused` ;
   `can_assign` reste utilisable sur toute session, R33). Ordre des contrôles : propriétaire (R44), chevauchement avec un passage du même épisode
-  attribué à un autre compte de plus de `tolerance_ms` (R1, strictement supérieur), pHash à distance
-  `<= phash_max` d'un passage attribué à un autre compte (R1), même compte : deux `part` qui se chevauchent de plus
+  attribué à un autre compte de plus de `tolerance_ms` (R1, strictement supérieur), pHash selon C53
+  (empreintes dégénérées retirées, part de plans proches `phash_min_share` dans les deux sens, distance `<= phash_max`,
+  `core.phash.phash_conflict`) d'un passage attribué à un autre compte (R1), même compte : deux `part` qui se chevauchent de plus
   de `tolerance_ms` (R2). Un `bestof_item` ou `compilation_item` peut chevaucher une `part` du même compte.
 
 - [ ] **Step 1 : Tests qui échouent**

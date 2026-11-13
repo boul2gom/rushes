@@ -269,7 +269,9 @@ def test_r1_attribution_check_and_insert_are_atomic(ctx: Context, wsession: Sess
     segment = make_segment(wsession, make_episode(wsession), "part", 0, 10_000)
     wsession.commit()
     # the check alone already holds the write lock: no one can slip an assignment in between
-    verdict = can_assign(wsession, segment.id, "st_tt", tolerance_ms=2000, phash_max=10)
+    verdict = can_assign(
+        wsession, segment.id, "st_tt", tolerance_ms=2000, phash_max=10, phash_min_share=0.25
+    )
     assert verdict.ok
     other = _contender(ctx)
     try:
@@ -286,7 +288,9 @@ def test_r1_attribution_insert_blocks_other_writers_until_commit(
     segment = make_segment(wsession, make_episode(wsession), "part", 0, 10_000)
     wsession.commit()
     at = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
-    assert assign(wsession, segment.id, "st_tt", at=at, tolerance_ms=2000, phash_max=10).ok
+    assert assign(
+        wsession, segment.id, "st_tt", at=at, tolerance_ms=2000, phash_max=10, phash_min_share=0.25
+    ).ok
     other = _contender(ctx)
     try:
         assert _locked(other)
@@ -315,7 +319,9 @@ def test_r1_write_session_takes_the_lock_again_for_each_transaction(
 def test_plain_sessions_never_block_on_a_writer_in_wal(ctx: Context, wsession: Session) -> None:
     segment = make_segment(wsession, make_episode(wsession), "part", 0, 10_000)
     wsession.commit()
-    assert can_assign(wsession, segment.id, "st_tt", tolerance_ms=2000, phash_max=10).ok
+    assert can_assign(
+        wsession, segment.id, "st_tt", tolerance_ms=2000, phash_max=10, phash_min_share=0.25
+    ).ok
     # wsession holds the write lock; readers on the default engine are not blocked (WAL)
     with Session(ctx.engine) as reader:
         assert reader.scalar(select(Assignment.segment_id)) is None

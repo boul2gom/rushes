@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from rushes.core.intervals import overlap_ms
-from rushes.core.phash import is_phash, min_phash_distance
+from rushes.core.phash import PhashConflict, is_phash, phash_conflict, usable_phashes
 from rushes.db.engine import WRITE_LOCK
 from rushes.db.models import Account, Assignment, Episode, Segment
 from rushes.errors import RushesError
@@ -51,8 +51,28 @@ def _hashes(segment_id: int, raw: str | None) -> list[str]:
     return [str(h) for h in data]
 
 
+def _phash_message(conflict: PhashConflict, account: str) -> str:
+    n, total = conflict.close, conflict.total
+    plans = f"{n} plan" if n == 1 else f"{n} plans"
+    if conflict.direction == "mine":
+        return (
+            f"Image proche (distance {conflict.distance} ; {plans} sur {total}) "
+            f"d'un passage du compte {account}."
+        )
+    return (
+        f"Image proche (distance {conflict.distance}) : {plans} sur {total} d'un passage "
+        f"du compte {account} se retrouve{'' if n == 1 else 'nt'} dans ce passage."
+    )
+
+
 def can_assign(
-    session: Session, segment_id: int, account_id: str, *, tolerance_ms: int, phash_max: int
+    session: Session,
+    segment_id: int,
+    account_id: str,
+    *,
+    tolerance_ms: int,
+    phash_max: int,
+    phash_min_share: float,
 ) -> Verdict:
     """Check R44, R1 then R2 for this segment and account. Never writes."""
     segment = session.get(Segment, segment_id)
@@ -60,7 +80,8 @@ def can_assign(
         raise RegistryRefused(f"Passage {segment_id} introuvable.")
     if session.get(Account, account_id) is None:
         raise RegistryRefused(f"Compte {account_id} introuvable.")
-    mine = _hashes(segment.id, segment.phash_json)  # a corrupt row is reported before any verdict
+    # a corrupt row is reported before any verdict
+    mine = usable_phashes(_hashes(segment.id, segment.phash_json))
     episode = session.get(Episode, segment.episode_id)
     if episode is None:  # the foreign key forbids it
         raise RegistryRefused(f"Épisode {segment.episode_id} introuvable.")
@@ -98,12 +119,12 @@ def can_assign(
             .order_by(Segment.id)
         ).all()
         for other_id, other_json, other_account in held_with_hash:
-            distance = min_phash_distance(mine, _hashes(other_id, other_json))
-            if distance is not None and distance <= phash_max:
-                return _refuse(
-                    "phash",
-                    f"Image proche (distance {distance}) d'un passage du compte {other_account}.",
-                )
+            theirs = usable_phashes(_hashes(other_id, other_json))
+            conflict = phash_conflict(
+                mine, theirs, max_distance=phash_max, min_share=phash_min_share
+            )
+            if conflict is not None:
+                return _refuse("phash", _phash_message(conflict, other_account))
 
     held_here = session.execute(
         select(Segment.id, Segment.kind, Segment.start_ms, Segment.end_ms)
@@ -134,6 +155,7 @@ def assign(
     at: datetime,
     tolerance_ms: int,
     phash_max: int,
+    phash_min_share: float,
 ) -> Verdict:
     """can_assign, then the insert in the caller's transaction; nothing is written on refusal.
 
@@ -148,7 +170,12 @@ def assign(
             "sinon le contrôle et l'insertion ne sont pas atomiques."
         )
     verdict = can_assign(
-        session, segment_id, account_id, tolerance_ms=tolerance_ms, phash_max=phash_max
+        session,
+        segment_id,
+        account_id,
+        tolerance_ms=tolerance_ms,
+        phash_max=phash_max,
+        phash_min_share=phash_min_share,
     )
     if verdict.ok:
         session.add(

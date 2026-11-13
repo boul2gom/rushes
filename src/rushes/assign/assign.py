@@ -101,6 +101,7 @@ class AssignStep(BaseStep):
                 at=ctx.clock.now(),
                 tolerance_ms=s_to_ms(registry.overlap_tolerance_s),
                 phash_max=registry.phash_max_distance,
+                phash_min_share=registry.phash_min_share,
             )
             if not verdict.ok:
                 session.rollback()

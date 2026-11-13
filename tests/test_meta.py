@@ -20,6 +20,7 @@ from helpers import (
     ctx_events,
     post_on_video,
     snapshot,
+    synthetic_phash,
     with_config,
 )
 from rushes.context import Context, Filters
@@ -60,7 +61,7 @@ def _write_scenes(ctx: Context, post_id: int, motions: tuple[float, float] = (0.
     episode = _episode_of(ctx, post_id)
     shots = [
         Shot(id=i, start_ms=a, end_ms=a + 3000, keyframe_ms=a + 1500, motion=m,
-             loudness_lufs=None, speech_ratio=0.0, phash=f"{i:016x}")
+             loudness_lufs=None, speech_ratio=0.0, phash=synthetic_phash(i))
         for i, (a, m) in enumerate(zip((0, 3000), motions, strict=True))
     ]  # fmt: skip
     scenes = ScenesFile(version=1, episode_id=episode, duration_ms=6000, detector={}, shots=shots)

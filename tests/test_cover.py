@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
+from helpers import synthetic_phash
 from rushes.config import Layout
 from rushes.context import Context
 from rushes.meta.cover import (
@@ -109,7 +110,7 @@ def test_cover_candidates_are_reproducible(tmp_path: Path) -> None:
 
 def _shot(i: int, a: int, b: int, key: int, motion: float) -> Shot:
     return Shot(id=i, start_ms=a, end_ms=b, keyframe_ms=key, motion=motion, loudness_lufs=None,
-                speech_ratio=0.0, phash=f"{i:016x}")  # fmt: skip
+                speech_ratio=0.0, phash=synthetic_phash(i))  # fmt: skip
 
 
 def _scenes(*shots: Shot) -> ScenesFile:

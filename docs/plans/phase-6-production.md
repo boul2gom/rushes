@@ -328,7 +328,12 @@ scripts/rushes run --profile night & sleep 60; scripts/rushes run --no-wait; ech
   # db/registry.py
   @dataclass(frozen=True)
   class Placed: segment_id: int; account_id: str; episode_id: int; span: Span; kind: str; phashes: Sequence[str]
-  def pair_verdict(a: Placed, b: Placed, *, tolerance_ms: int, phash_max: int) -> Verdict: ...   # utilisé par can_assign et par l'audit
+  def pair_verdict(
+      a: Placed, b: Placed, *, tolerance_ms: int, phash_max: int, phash_min_share: float
+  ) -> Verdict: ...   # utilisé par can_assign et par l'audit ; a = le candidat (le passage attribué le plus tard), b = le passage déjà attribué
+  # core/phash.py (déjà là depuis le correctif C53, que pair_verdict réutilise tel quel)
+  def usable_phashes(hashes: Sequence[str]) -> list[int]: ...        # retire les empreintes dégénérées
+  def phash_conflict(mine, theirs, *, max_distance, min_share) -> PhashConflict | None: ...   # les deux sens
   # ops/audit.py
   @dataclass(frozen=True)
   class Violation: rule: str; subject: str; message: str        # rule = "R1", subject = "post:p_000123"
@@ -357,7 +362,7 @@ scripts/rushes run --profile night & sleep 60; scripts/rushes run --no-wait; ech
 
     | Règle | Contrôle |
     | --- | --- |
-    | R1, R2, R27 | `pair_verdict` sur chaque paire d'attributions vivantes (posts non `discarded`/`expired`) d'un même épisode, et sur les paires à pHash proche |
+    | R1, R2, R27 | `pair_verdict` sur chaque paire d'attributions vivantes (posts non `discarded`/`expired`) d'un même épisode, et sur les paires à pHash proche. Le pHash suit C53 : empreintes dégénérées (moins de 5 bits à 1 ou à 0) retirées, puis part de plans proches `registry.phash_min_share` (0,25) dans les deux sens (celui de la partie, et celui du passage attribué de 3 plans utilisables ou plus) via `core.phash.phash_conflict`, jamais « un plan proche suffit ». Une paire de passages qui ne partage qu'un fondu au noir n'est donc pas une violation. **Ordre de la paire** : le verdict pHash dépend de l'ordre quand un passage a moins de 3 plans utilisables (le minimum de 3 ne vaut que pour le passage déjà attribué). L'audit évalue donc chaque paire d'attributions vivantes avec comme `a` (candidat) le passage attribué LE PLUS TARD (`assignments.assigned_at`, puis `segment_id` le plus grand à égalité) et comme `b` l'autre, exactement l'ordre dans lequel `can_assign` l'a jugée ; jamais les deux ordres |
     | R44 | compte de l'attribution = propriétaire de l'épisode |
     | R3, R33 | tout post `rendered`/`ready`/`published` repose sur un passage `approved` |
     | R6, R7 | chaque `video.mp4` prêt : durée dans les bornes de sa famille, 1080×1920, H.264 High, yuv420p, 30 i/s, AAC 48 kHz (`media.probe` ; sauté si `probe_files=False`) |
@@ -408,7 +413,8 @@ def test_audit_ignores_published_and_ecartes_folders(ctx, synth_ready):
     # post publié (dossier gardé), dossier sous outbox/_ecartes/, INDEX.html, post rendered après « Accroche 2 » → aucune violation ;
     # dossier d'un post is_test dans outbox/ ou d'un p_key absent de la base → violation R14
 def test_audit_step_fails_items_and_alerts_once(ctx):            # 3 violations → 3 éléments failed, code 4, une seule alerte rule_violation
-def test_pair_verdict_matches_can_assign(session):               # mêmes cas que test_r1_* et test_r2_* de la tâche 3
+def test_pair_verdict_matches_can_assign(session):               # mêmes cas que test_r1_* et test_r2_* de la tâche 3, y compris C53 : plans noirs ignorés des deux côtés, 1 plan sur 4 refusé et 1 sur 5 accepté, gag de 3 plans recopié dans une partie de 30 plans refusé (sens passage attribué), passage attribué de 2 plans non refusé de ce sens, pas de cumul entre passages
+def test_audit_pair_order_follows_assignment_order(session):        # passage de 2 plans attribué d'abord, partie de 30 plans avec 1 coïncidence attribuée ensuite (acceptée par can_assign) : aucune violation R1 ; le candidat de la paire est le plus tardif (assigned_at, puis segment_id), jamais l'inverse
 # tests/test_licence_sync.py
 def test_r14_licence_granted_moves_showcase_post_to_outbox(ctx):
     # licensed passe à true → post requeued, réempaqueté dans outbox/, caption.txt sans « NE PAS PUBLIER », plus rien dans outbox_test/

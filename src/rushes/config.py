@@ -101,6 +101,17 @@ class Threshold(_Model):
 class RegistrySettings(_Model):
     overlap_tolerance_s: float = Field(ge=0)
     phash_max_distance: int = Field(ge=0)
+    phash_min_share: float = (
+        0.25  # share of a passage's shots that must be close to refuse it (C53)
+    )
+
+    @field_validator("phash_min_share", mode="before")
+    @classmethod
+    def _share_in_french(cls, value: Any) -> Any:
+        ok = isinstance(value, int | float) and not isinstance(value, bool)
+        if not ok or not math.isfinite(value) or not 0 < value <= 1:
+            raise ValueError("phash_min_share: doit être un nombre compris entre 0 (exclu) et 1")
+        return value
 
 
 class LlmSettings(_Model):
