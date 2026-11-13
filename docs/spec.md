@@ -291,7 +291,7 @@ sources:
   search_queries: ["tom and jerry classic"]
 intro_outro:
   reference_frames: ["refs/tom_and_jerry_intro.png"]
-  theme_audio: "refs/tom_and_jerry_theme.wav"   # empreinte audio du générique
+  theme_audio: "refs/tom_and_jerry_theme.wav"   # empreinte audio du générique ; une liste donne une variante par époque
 characters:
   - {id: tom, refs: ["refs/tom_1.png"]}
   - {id: jerry, refs: ["refs/jerry_1.png"]}

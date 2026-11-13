@@ -49,24 +49,34 @@ def match_reference_frames(
     max_distance: int = 12,
     tmp_dir: Path | None = None,
     duration_ms: int | None = None,
+    span: Span | None = None,
+    windows: Sequence[Span] | None = None,
 ) -> list[Span]:
     """Spans where the picture looks like a reference image, in the first and last `window_ms`.
 
-    Frames are sampled at `fps`; two matches separated by one missed sample are one span.
+    Frames are sampled at `fps`; two matches separated by one missed sample are one span. `span`
+    (ms of the file) moves those two windows to the edges of that part (a child episode); `windows`
+    replaces them with the given ones (where a theme was heard). Spans are in file time.
     """
     if not refs:
         return []
     duration = probe(video).duration_ms if duration_ms is None else duration_ms
     ref_hashes = [_hash(ref) for ref in refs]
-    windows = {
-        (0, min(window_ms, duration)),
-        (max(0, duration - window_ms), min(window_ms, duration)),
-    }
+    if windows is not None:
+        limit = duration
+        todo = {(a, min(b, duration) - a) for a, b in windows if a < min(b, duration)}
+    else:
+        lo, limit = span if span is not None else (0, duration)
+        length = limit - lo
+        todo = {
+            (lo, min(window_ms, length)),
+            (lo + max(0, length - window_ms), min(window_ms, length)),
+        }
     if tmp_dir is not None:
         tmp_dir.mkdir(parents=True, exist_ok=True)
     found: list[Span] = []
     with tempfile.TemporaryDirectory(dir=tmp_dir, prefix="intro-") as folder:
-        for start, length in sorted(windows):
+        for start, length in sorted(todo):
             found += _window_matches(
                 video,
                 start,
@@ -76,5 +86,5 @@ def match_reference_frames(
                 max_distance=max_distance,
                 work=Path(folder),
             )
-    clipped = [(s, min(e, duration)) for s, e in found if s < duration]
+    clipped = [(s, min(e, limit)) for s, e in found if s < limit]
     return merge(clipped, gap_ms=1000 // fps)

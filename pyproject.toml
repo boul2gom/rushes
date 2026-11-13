@@ -98,5 +98,9 @@ module = ["fontTools.*"]
 ignore_missing_imports = true  # fontTools ships no type information
 
 [[tool.mypy.overrides]]
+module = ["scipy", "scipy.*"]
+ignore_missing_imports = true  # no stubs (scipy-stubs is not a dependency)
+
+[[tool.mypy.overrides]]
 module = ["scenedetect", "scenedetect.*", "silero_vad", "silero_vad.*"]
 ignore_missing_imports = true  # no stubs and no py.typed marker

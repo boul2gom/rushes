@@ -13,4 +13,17 @@ originality:
 youtube: {cookies: fallback}        # never | fallback (défaut) | always
 showcase: {max_episodes_per_week: 4}   # budget de calcul de la vitrine (séries et créateurs non autorisés)
 serve: {host: 0.0.0.0, port: 8080, public_origin: "https://rushes.<domaine>"}   # auth : GoDoxy + PocketID
+# clean:                            # nettoyage v2 : valeurs de départ, décommenter pour forcer
+#   {theme_threshold: 0.6, theme_end_snap_s: 10, theme_hop_ms: 50,
+#    compilation_min_s: 1200, episode_min_s: 240,
+#    episode_max_s: 1800, typical_episode_s: 420, boundary_min_ms: 500, logo_samples: 120,
+#    logo_static_std: 6.0, logo_static_share: 0.9, logo_min_edge_ratio: 0.01}
+#   # générique : un pic ≥ theme_sure_threshold (0,85 ou theme_threshold si plus haut) est gardé sans image de
+#   # référence ; la fin d'un générique se cale sur le noir ou le silence qui le termine vraiment, avant ou après
+#   # la fin nominale, à ± theme_end_snap_s (0 : désactivé), car la durée varie selon les époques.
+#   # Deux conséquences à connaître : un thème joué DANS l'histoire (personnages qui le fredonnent) qui se
+#   # termine à moins de theme_end_snap_s de la fin de l'épisode est retiré avec le générique de fin ; et la
+#   # référence doit être le générique de l'époque la PLUS LONGUE (ou lister les deux variantes), car un
+#   # générique plus long que sa référence peut s'arrêter à un fondu au noir situé après la fin de la référence
+#   # logo : un pixel est fixe s'il reste à ± logo_static_std de sa médiane dans au moins logo_static_share des images
 ntfy: {url: "https://ntfy.<domaine>", topic_env: NTFY_TOPIC, token_env: NTFY_TOKEN}

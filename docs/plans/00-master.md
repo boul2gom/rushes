@@ -103,9 +103,9 @@ Phase 6 : 39 → 40a → 40b → (lancement) → 41
 | 8a assign, meta | 7b | Approbation v0, `assign` simple, `db/derived.py`, légendes (R12), hashtags (R13), couverture |
 | 8b package, run | 8a | `outbox/` et `outbox_test/` (R14, R22), `upload.json`, `INDEX.html`, traçabilité (R17), `rushes run` |
 | 9 image, mesures | 8b, 42 | Dockerfile définitif, `rushes models fetch` (sha256), rapport de mesures sur le vrai pipeline |
-| 10a discover youtube | 9 | `net.ytdlp` (`cookies_allowed`, R18), cassettes, chaînes officielles (écrites dans `derived_values`), `source_videos`, `video_signals` (migration 0004) |
+| 10a discover youtube | 9 | `net.ytdlp` (`cookies_allowed`, R18), cassettes, chaînes officielles (écrites dans `derived_values`), `source_videos`, `video_signals` (migration 0005) |
 | 10b ingest youtube | 10a | Sélection des téléchargements selon le stock (`stock_days`), `YtDlp.download` (cookies en secours seulement, R18), épisodes communautaires jamais découpés |
-| 11 clean v2 | 10b | Empreinte audio, découpe de compilations, logos (migration 0005) |
+| 11 clean v2 | 9 | Empreinte audio, découpe de compilations, logos (migration 0004) |
 | 12a analyze : vision | 11 | Facettes d'analyse, `ImageEncoder` CLIP, `scene_vectors`, recherche en texte libre (migration 0006) |
 | 12b analyze : sons | 12a | `SoundTagger` CED, `events` de `audio.json` |
 | 12c analyze : parole | 12b | `Transcriber`, `words.json`, table `words`, phrases |
@@ -659,8 +659,8 @@ numéros suivent l'ordre d'exécution des tâches (§3), car la chaîne des rév
 | --- | --- | --- |
 | 0002 | 33 | `accounts` : − `publish_mode`, − `postiz_integration`, + `originality` (`base`/`advanced`, NULL = défaut). `posts` : − `postiz_*`, + `layout`, + `originality`, statuts `planned, rendered, ready, published, discarded, expired`. `series` et `creators` : + `origin` (`config`/`prospect`), + `status` (`candidate`/`active`/`dropped`). + `rights`, + `derived_values`, + `derived_values_history` |
 | 0003 | 2 | `runs` : `CHECK status IN (running, ok, partial, failed)`, + `exit_code` |
-| 0004 | 10a | + `channels`, + `video_signals` ; `source_videos` : + `title`, + `channel_handle`, + `discovered_via`, + `extracted_at`, statuts `found, retained, downloaded, rejected, failed` ; `compilations.status CHECK IN ('proposed','approved','needs_review','rejected')` |
-| 0005 | 11 | `episodes` : + `parent_episode_id`, + `span_start_ms`, + `span_end_ms`, + `logo_corner`, statut `split` |
+| 0004 | 11 | `episodes` : + `parent_episode_id`, + `span_start_ms`, + `span_end_ms`, + `logo_corner`, statut `split` |
+| 0005 | 10a | + `channels`, + `video_signals` ; `source_videos` : + `title`, + `channel_handle`, + `discovered_via`, + `extracted_at`, statuts `found, retained, downloaded, rejected, failed` ; `compilations.status CHECK IN ('proposed','approved','needs_review','rejected')` |
 | 0006 | 12a | + `scene_vectors`, + `words` (remplie par 12c) |
 | 0007 | 16b | `posts` : + `order_after_post_id`, + `ready_at`, + `express_slot` (créneau en plus de la voie express, L27), + `overlay_digest` (empreinte des textes incrustés, 7b, base de `stale_numbers`) (le créneau conseillé est `planned_at`, UTC, dès la tâche 8b) |
 | 0008 | 36 | + `post_actions` (journal des clics de la page et des gestes de secours ; `kind CHECK IN ('published','discard','hook','submitted')`, `'submitted'` pour le bouton « Soumis » de la tâche 26 ; `origin CHECK IN ('page','folder','system')`) |
@@ -711,7 +711,7 @@ class BanditArm(Base):                                                     # 001
 Les colonnes des autres tables suivent le tableau « Modèle de données » de la spec ; le plan de phase de chaque
 tâche les écrit en entier dans son étape de migration. Valeurs de statut sans contrainte en 0001 :
 `compilations.status` ∈ {`proposed`, `approved`, `needs_review`, `rejected`} (contrainte ajoutée par la migration
-0004, avec celles de `source_videos` ; `needs_review` vient de l'approbation, tâche 15, et `review build` liste ces
+0005, avec celles de `source_videos` ; `needs_review` vient de l'approbation, tâche 15, et `review build` liste ces
 compilations, tâche 32).
 
 ### 5.11 Verrou (`rushes/lock.py`, tâche 2)

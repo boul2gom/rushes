@@ -390,7 +390,7 @@ def test_r16_compile_themes_rerun_changes_nothing(ctx):
   ```
 - Règles fixées :
   - `review build` : segments `part` en `needs_review` et compilations `status = 'needs_review'` (statut du CHECK
-    de la migration 0004) (filtres `--account`, `--limit`) ; raisons
+    de la migration 0005) (filtres `--account`, `--limit`) ; raisons
     recalculées sans rien écrire (`segment_checks`/`compilation_checks` puis `decide`) ; aperçu 480 px de large par
     élément (`libx264 -preset ultrafast -crf 30`, AAC 96 k, passages enchaînés pour une compilation) dans
     `previews/<key>.mp4`, vignette `thumbs/<key>.jpg` ; page = `review/static/review.html` dans laquelle les données

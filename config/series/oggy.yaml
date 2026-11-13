@@ -5,3 +5,7 @@ id: oggy
 title: "Oggy and the Cockroaches"
 audio: nonverbal
 licensed: false
+# Générique (référence extraite d'un épisode de Louis : 48 s d'audio en tête, image à 2 s)
+intro_outro:
+  reference_frames: ["refs/oggy_intro.png"]
+  theme_audio: "refs/oggy_theme.wav"

@@ -59,13 +59,24 @@ def _seconds(ms: int) -> str:
     return f"{ms / 1000:.3f}"
 
 
-def _end(path: Path, duration_ms: int | None) -> int:
-    return probe(path).duration_ms if duration_ms is None else duration_ms
+def _end(path: Path, duration_ms: int | None, span: Span | None) -> int:
+    if duration_ms is not None:
+        return duration_ms
+    return span[1] - span[0] if span is not None else probe(path).duration_ms
 
 
-def detect_black(path: Path, *, min_ms: int) -> list[Span]:
+def _seek(span: Span | None) -> list[str]:
+    """Input options that keep only `span`: the logs then count from the start of the span."""
+    if span is None:
+        return []
+    return ["-ss", _seconds(span[0]), "-t", _seconds(span[1] - span[0])]
+
+
+def detect_black(path: Path, *, min_ms: int, span: Span | None = None) -> list[Span]:
+    """Black pictures; with `span` (ms of the file) only that part, times counted from its start."""
     log = run_ffmpeg(
         [
+            *_seek(span),
             "-i",
             path,
             "-an",
@@ -80,20 +91,38 @@ def detect_black(path: Path, *, min_ms: int) -> list[Span]:
 
 
 def detect_silence(
-    path: Path, *, min_ms: int, noise_db: float = -50.0, duration_ms: int | None = None
+    path: Path,
+    *,
+    min_ms: int,
+    noise_db: float = -50.0,
+    duration_ms: int | None = None,
+    span: Span | None = None,
 ) -> list[Span]:
-    """`duration_ms` closes a silence still open at the end; probed when not given."""
+    """`duration_ms` closes a silence still open at the end; probed when not given.
+
+    With `span` only that part is read and times count from its start (`duration_ms` is then the
+    length of the span; it defaults to it).
+    """
     flt = f"silencedetect=noise={noise_db}dB:d={_seconds(min_ms)}"
-    log = run_ffmpeg(["-i", path, "-vn", "-af", flt, "-f", "null", "-"])
-    return parse_silencedetect(log, end_ms=_end(path, duration_ms))
+    log = run_ffmpeg([*_seek(span), "-i", path, "-vn", "-af", flt, "-f", "null", "-"])
+    return parse_silencedetect(log, end_ms=_end(path, duration_ms, span))
 
 
 def detect_freeze(
-    path: Path, *, min_ms: int, noise: float = 0.003, duration_ms: int | None = None
+    path: Path,
+    *,
+    min_ms: int,
+    noise: float = 0.003,
+    duration_ms: int | None = None,
+    span: Span | None = None,
 ) -> list[Span]:
-    """`duration_ms` closes a freeze still open at the end; probed when not given."""
+    """`duration_ms` closes a freeze still open at the end; probed when not given.
+
+    With `span` only that part is read and times count from its start.
+    """
     log = run_ffmpeg(
         [
+            *_seek(span),
             "-i",
             path,
             "-an",
@@ -104,4 +133,4 @@ def detect_freeze(
             "-",
         ]
     )
-    return parse_freezedetect(log, end_ms=_end(path, duration_ms))
+    return parse_freezedetect(log, end_ms=_end(path, duration_ms, span))

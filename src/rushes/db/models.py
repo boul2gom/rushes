@@ -41,7 +41,8 @@ RIGHTS_STATUSES = ("to_request", "requested", "granted", "refused")
 AUDIO = ("nonverbal", "dialogue_en")
 SOURCE_KINDS = ("official", "community")
 PROVENANCES = ("official", "community", "local")
-EPISODE_STATUSES = ("imported", "cleaned", "analyzed")
+EPISODE_STATUSES = ("imported", "split", "cleaned", "analyzed")
+CORNERS = ("tl", "tr", "bl", "br")
 SEGMENT_KINDS = ("part", "bestof_item", "compilation_item")
 SEGMENT_STATUSES = ("proposed", "approved", "needs_review", "rejected")
 RUN_STATUSES = ("running", "ok", "partial", "failed")
@@ -136,6 +137,7 @@ class Episode(Base):
     __table_args__ = (
         CheckConstraint(_in("provenance", PROVENANCES), name="provenance"),
         CheckConstraint(_in("status", EPISODE_STATUSES), name="status"),
+        CheckConstraint(_in("logo_corner", CORNERS), name="logo_corner"),
         CheckConstraint("(series_id IS NULL) <> (creator_id IS NULL)", name="one_origin"),
         {"sqlite_autoincrement": True},
     )
@@ -150,6 +152,11 @@ class Episode(Base):
     sha256: Mapped[str] = mapped_column(Text, unique=True)
     duration_ms: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(Text)
+    # child of a split compilation: same file as the parent, own portion of it (task 11)
+    parent_episode_id: Mapped[int | None] = mapped_column(ForeignKey("episodes.id"))
+    span_start_ms: Mapped[int | None] = mapped_column(Integer)
+    span_end_ms: Mapped[int | None] = mapped_column(Integer)
+    logo_corner: Mapped[str | None] = mapped_column(Text)  # burned-in logo (R34)
 
 
 class Scene(Base):

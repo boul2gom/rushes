@@ -7,7 +7,7 @@
 #   search_queries: ["tom and jerry classic"]
 # intro_outro:
 #   reference_frames: ["refs/tom_and_jerry_intro.png"]  # le fichier doit exister sous config/
-#   theme_audio: "refs/tom_and_jerry_theme.wav"
+#   theme_audio: "refs/tom_and_jerry_theme.wav"         # ou une liste, un fichier par époque du générique
 # characters:
 #   - {id: tom, refs: ["refs/tom_1.png"]}
 #   - {id: jerry, refs: ["refs/jerry_1.png"]}
@@ -23,3 +23,7 @@ rights:                             # facultatif : suivi de la demande de licenc
   status: to_request                # to_request | requested | granted | refused
   requested_at: null
   notes: ""
+# Générique (référence extraite d'un épisode de Louis : 24 s d'audio en tête, image à 2 s)
+intro_outro:
+  reference_frames: ["refs/tom_and_jerry_intro.png"]
+  theme_audio: "refs/tom_and_jerry_theme.wav"

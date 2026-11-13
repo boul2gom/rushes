@@ -22,7 +22,7 @@ def test_migration_0003_adds_exit_code_and_status_check(tmp_path: Path) -> None:
     con.execute("INSERT INTO runs(command, started_at, status) VALUES ('odd', 't', 'weird')")
     con.commit()
     con.close()
-    upgrade(db)
+    upgrade(db, "0003")  # pinned: later revisions have their own tests
     assert current_revision(db) == "0003"
     assert columns(db, "runs")["exit_code"] == "INTEGER"
     con = sqlite3.connect(db)

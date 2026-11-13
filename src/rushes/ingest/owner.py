@@ -9,11 +9,12 @@ from rushes.config import Config, RotationPeriod
 from rushes.errors import RushesError
 
 # An episode is "in progress" when it has no post at all, or at least one post that is not
-# published (a post reaches an episode through its segment or its compilation).
+# published (a post reaches an episode through its segment or its compilation). A `split` parent
+# is not an episode of the stock: its children are (task 11).
 _STOCK = text(
     """
     SELECT e.owner_account_id, count(*) FROM episodes e
-    WHERE e.owner_account_id IN :accounts AND (
+    WHERE e.owner_account_id IN :accounts AND e.status <> 'split' AND (
         NOT EXISTS (
             SELECT 1 FROM posts p
             LEFT JOIN segments s ON s.id = p.segment_id

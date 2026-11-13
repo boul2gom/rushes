@@ -34,6 +34,7 @@ if TYPE_CHECKING:  # rushes.render.charter imports this module
 PLACEHOLDER = re.compile(r"<[^>]*>")
 MIN_MONETIZABLE_S = 60  # R6: every family lasts more than one minute
 MAX_HASHTAGS = 5  # R13
+DEFAULT_SURE_THRESHOLD = 0.85  # settings.clean: a theme match this strong needs no image
 
 Originality = Literal["base", "advanced"]
 Layout = Literal["square", "vertical", "portrait", "full"]
@@ -208,6 +209,60 @@ class RenderSettings(_Model):
         return value
 
 
+class CleanSettings(_Model):
+    """Cleaning v2 (task 11): theme fingerprint, compilation splitting, logo; starting values."""
+
+    theme_threshold: float = 0.6  # Pearson correlation of the theme fingerprint to count a match
+    theme_sure_threshold: float | None = None  # a match this strong needs no image (0.85)
+    theme_end_snap_s: float = 10  # window around a generic's nominal end (s); 0: no snapping
+    theme_hop_ms: int = 50  # step of the fingerprint (and precision of a match)
+    compilation_min_s: int = 1200  # a cartoon at least this long is looked at for several episodes
+    episode_min_s: int = 240  # shorter pieces are dropped
+    episode_max_s: int = 1800
+    typical_episode_s: int = 420  # the black closest to this episode length wins (fallback)
+    boundary_min_ms: int = 500  # shortest black taken for a boundary between episodes
+    logo_samples: int = 120
+    logo_static_std: float = 6.0  # a pixel is static within +/- this of its temporal median...
+    logo_static_share: float = 0.9  # ...in at least this share of the samples
+    logo_min_edge_ratio: float = 0.01
+
+    @model_validator(mode="after")
+    def _ranges(self) -> CleanSettings:
+        if not math.isfinite(self.theme_threshold) or not 0 < self.theme_threshold <= 1:
+            raise ValueError("theme_threshold: doit être compris entre 0 (exclu) et 1")
+        sure = self.theme_sure_threshold
+        if sure is not None and not (math.isfinite(sure) and self.theme_threshold <= sure <= 1):
+            raise ValueError("theme_sure_threshold: doit être compris entre theme_threshold et 1")
+        if not math.isfinite(self.theme_end_snap_s) or not 0 <= self.theme_end_snap_s <= 30:
+            raise ValueError("theme_end_snap_s: doit être compris entre 0 et 30")
+        if not 10 <= self.theme_hop_ms <= 63:  # the STFT window is 64 ms: a hop must overlap it
+            raise ValueError("theme_hop_ms: doit être compris entre 10 et 63")
+        for name in ("compilation_min_s", "episode_min_s", "typical_episode_s", "boundary_min_ms"):
+            if getattr(self, name) <= 0:
+                raise ValueError(f"{name}: doit être strictement positif")
+        if self.episode_max_s < self.episode_min_s:
+            raise ValueError("episode_max_s: doit être au moins episode_min_s")
+        if self.logo_samples < 8:
+            raise ValueError("logo_samples: doit être au moins 8")
+        if not math.isfinite(self.logo_static_std) or self.logo_static_std < 0:
+            raise ValueError("logo_static_std: doit être un nombre fini, positif ou nul")
+        if not math.isfinite(self.logo_static_share) or not 0.5 < self.logo_static_share <= 1:
+            raise ValueError("logo_static_share: doit être compris entre 0,5 (exclu) et 1")
+        if not math.isfinite(self.logo_min_edge_ratio) or not 0 < self.logo_min_edge_ratio <= 1:
+            raise ValueError("logo_min_edge_ratio: doit être compris entre 0 (exclu) et 1")
+        return self
+
+    @property
+    def sure_threshold(self) -> float:
+        """The correlation from which a theme peak needs no reference image (0.85 if unwritten).
+
+        A correlation is clipped to 1.0, so an exact match is always sure, even at 1.0.
+        """
+        if self.theme_sure_threshold is not None:
+            return self.theme_sure_threshold
+        return max(DEFAULT_SURE_THRESHOLD, self.theme_threshold)
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -220,6 +275,7 @@ class Settings(_Model):
     models: ModelSettings = ModelSettings()
     cut: CutSettings = CutSettings()
     render: RenderSettings = RenderSettings()
+    clean: CleanSettings = CleanSettings()
     ntfy: NtfySettings | None = None
 
 
@@ -463,8 +519,34 @@ class SeriesSources(_Model):
 
 
 class IntroOutro(_Model):
+    """Opening/closing credits of a series: reference images and the audio of its theme.
+
+    `theme_audio` is one WAV, or a list of them when the generic changed over the years (one file
+    per variant); each variant is looked for separately.
+    """
+
     reference_frames: list[str] = []
-    theme_audio: str | None = None
+    theme_audio: str | list[str] | None = None
+
+    @field_validator("theme_audio", mode="before")
+    @classmethod
+    def _files(cls, value: Any) -> Any:
+        if value is None or isinstance(value, str):
+            return value
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise ValueError("theme_audio : un fichier ou une liste de fichiers")
+        if not value:
+            raise ValueError("theme_audio : liste vide (écrire un fichier, ou retirer la clé)")
+        if duplicated := sorted(_dupes(value)):
+            raise ValueError(f"theme_audio : fichier en double : {', '.join(duplicated)}")
+        return value
+
+    @property
+    def theme_paths(self) -> list[str]:
+        """The theme files, whichever form was written."""
+        if self.theme_audio is None:
+            return []
+        return [self.theme_audio] if isinstance(self.theme_audio, str) else list(self.theme_audio)
 
 
 class Character(_Model):
@@ -698,8 +780,11 @@ def _check_seed_files(root: Path, rel: str, series: SeriesConfig, issues: list[I
         (f"intro_outro.reference_frames.{i}", ref)
         for i, ref in enumerate(series.intro_outro.reference_frames)
     ]
-    if series.intro_outro.theme_audio is not None:
-        refs.append(("intro_outro.theme_audio", series.intro_outro.theme_audio))
+    listed = isinstance(series.intro_outro.theme_audio, list)
+    for i, theme in enumerate(series.intro_outro.theme_paths):
+        refs.append(
+            (f"intro_outro.theme_audio.{i}" if listed else "intro_outro.theme_audio", theme)
+        )
     for ci, character in enumerate(series.characters):
         refs.extend((f"characters.{ci}.refs.{ri}", ref) for ri, ref in enumerate(character.refs))
 

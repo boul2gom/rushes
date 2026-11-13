@@ -9,10 +9,14 @@ muted while a louder one plays, silence and black are exact (to a millisecond / 
 import hashlib
 import itertools
 import random
+import tempfile
+import wave
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
+
+import numpy as np
 
 from rushes.core.intervals import Span
 from rushes.media.ffmpeg import run_ffmpeg
@@ -22,6 +26,24 @@ from rushes.media.ffmpeg import run_ffmpeg
 _PALETTE = ("0x2b5d9b", "0x9b2b3c", "0x2b9b4f", "0x9b8a2b", "0x6b2b9b", "0x2b9b94")
 _BOXES = 12
 _RATE = 48_000
+THEME_RATE = 16_000
+THEME_MS = 6000
+
+
+@dataclass(frozen=True)
+class Generic:
+    """A series generic as it plays in one episode, against the reference theme of its series.
+
+    The reference is `make_theme(ms=ref_ms, variant=variant)`. The episode plays it cut to
+    `length_ms` (a shorter era) or followed by other music up to `length_ms` (a longer one); the
+    last `alt_tail_ms` can differ from the reference as well.
+    """
+
+    at_ms: int
+    length_ms: int = THEME_MS
+    ref_ms: int = THEME_MS
+    variant: int = 0
+    alt_tail_ms: int = 0
 
 
 @dataclass(frozen=True)
@@ -42,6 +64,8 @@ class SynthSpec:
     sar: tuple[int, int] = (1, 1)  # pixel aspect ratio of the stream
     vfr: bool = False  # variable frame rate (frames dropped, timestamps kept)
     audio: bool = True
+    theme_ms: Sequence[int] = ()  # instants where the series theme (make_theme) plays, alone
+    generics: Sequence[Generic] = ()  # generics that differ from the reference (other eras)
 
 
 Synth = Callable[[SynthSpec], Path]
@@ -112,7 +136,7 @@ def _video_graph(spec: SynthSpec, extra_inputs: dict[str, int]) -> str:
         last = "v3"
     tail: list[str] = []
     if spec.logo_corner is not None:
-        size = max(min(width, height) // 12, 4)
+        size = max(min(width, height) // 8, 4)
         x = "0" if spec.logo_corner[1] == "l" else f"iw-{size}"
         y = "0" if spec.logo_corner[0] == "t" else f"ih-{size}"
         tail.append(f"drawbox=x={x}:y={y}:w={size}:h={size}:color=white:t=fill")
@@ -133,7 +157,9 @@ def _video_graph(spec: SynthSpec, extra_inputs: dict[str, int]) -> str:
 
 def _audio_graph(spec: SynthSpec, first: int) -> tuple[str, int]:
     """Filter chains for the audio inputs starting at index `first`; returns (graph, next index)."""
-    loud = [*spec.beeps_ms, *spec.speech_like_ms, *spec.silence_ms]
+    themes = [(at, at + THEME_MS) for at in spec.theme_ms]
+    themes += [(g.at_ms, g.at_ms + g.length_ms) for g in spec.generics]
+    loud = [*spec.beeps_ms, *spec.speech_like_ms, *spec.silence_ms, *themes]
     chains: list[str] = []
     labels: list[str] = []
     ms = "asetnsamples=n=48:p=0"  # 1 ms frames: the gain changes are exact to the millisecond
@@ -155,6 +181,14 @@ def _audio_graph(spec: SynthSpec, first: int) -> tuple[str, int]:
         chains.append(f"[{index}:a]{ms},volume='{_window(spec.speech_like_ms)}':eval=frame[speech]")
         labels.append("[speech]")
         index += 1
+    if spec.theme_ms:
+        chains.append(_theme_graph(spec, index))
+        labels.append("[theme]")
+        index += 1
+    for i, generic in enumerate(spec.generics):  # one input (a WAV) per generic
+        chains.append(f"[{index}:a]aresample={_RATE},adelay={generic.at_ms}:all=1[gen{i}]")
+        labels.append(f"[gen{i}]")
+        index += 1
     mix = "".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=longest"
     if spec.silence_ms:
         mix += f",volume='1-{_window(spec.silence_ms)}':eval=frame"
@@ -162,7 +196,91 @@ def _audio_graph(spec: SynthSpec, first: int) -> tuple[str, int]:
     return ";".join(chains), index
 
 
+def theme_samples(ms: int = THEME_MS, variant: int = 0) -> np.ndarray:
+    """A theme of `ms`: a slowly pulsing chord plus a glissando, 16 kHz mono.
+
+    Variant 0 (the default theme): 440/554/659 Hz and a sweep rising 300 -> 2400 Hz. Variant 1
+    (another era): 330/415/494 Hz and a sweep falling 2000 -> 250 Hz.
+    """
+    t = np.arange(ms * THEME_RATE // 1000) / THEME_RATE
+    chord_hz, pulse_hz, (f0, f1) = (
+        ((440.0, 554.0, 659.0), 3.0, (300.0, 2400.0))
+        if variant == 0
+        else ((330.0, 415.0, 494.0), 2.0, (2000.0, 250.0))
+    )
+    pulse = 1.0 + 0.5 * np.sin(2 * np.pi * pulse_hz * t)
+    chord = sum(np.sin(2 * np.pi * f * t) for f in chord_hz) * pulse
+    # exponential sweep f0 -> f1 over the theme: its phase is the integral of the frequency
+    rate = np.log(f1 / f0) / (ms / 1000)
+    sweep = np.sin(2 * np.pi * f0 * (np.exp(rate * t) - 1) / rate)
+    wave_ = chord / 3 + 1.5 * sweep
+    return (0.5 * wave_ / np.abs(wave_).max()).astype(np.float32)
+
+
+def _other_samples(ms: int) -> np.ndarray:
+    """Music that is not in any theme (what an era adds or changes), 16 kHz mono."""
+    t = np.arange(ms * THEME_RATE // 1000) / THEME_RATE
+    pulse = 1.0 + 0.8 * np.sin(2 * np.pi * 5.0 * t)
+    rate = np.log(500 / 1800) / max(ms / 1000, 0.001)
+    sweep = np.sin(2 * np.pi * 1800 * (np.exp(rate * t) - 1) / rate)
+    return (0.4 * (np.sin(2 * np.pi * 800 * t) * pulse + sweep) / 2.5).astype(np.float32)
+
+
+def generic_samples(generic: Generic) -> np.ndarray:
+    """What an episode plays: the reference cut or extended to `length_ms`, tail maybe changed."""
+    reference = theme_samples(generic.ref_ms, generic.variant)
+    size = generic.length_ms * THEME_RATE // 1000
+    samples = (
+        reference[:size]
+        if size <= reference.size
+        else np.concatenate([reference, _other_samples(generic.length_ms - generic.ref_ms)])
+    )[:size]
+    tail = generic.alt_tail_ms * THEME_RATE // 1000
+    if tail:
+        samples = samples.copy()
+        samples[-tail:] = _other_samples(generic.alt_tail_ms)[:tail]
+    return samples
+
+
+def _write_wav(samples: np.ndarray, out: Path) -> Path:
+    pcm = np.round(samples * 32767).astype("<i2")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(out), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(THEME_RATE)
+        handle.writeframes(pcm.tobytes())
+    return out
+
+
+def make_theme(out: Path, *, ms: int = THEME_MS, variant: int = 0) -> Path:
+    """A reference theme alone as a 16 kHz mono 16-bit WAV (what `theme_audio` points to)."""
+    return _write_wav(theme_samples(ms, variant), out)
+
+
+def _theme_graph(spec: SynthSpec, index: int) -> str:
+    """Chains placing the theme input `index` at each instant; the mix is labelled [theme]."""
+    count = len(spec.theme_ms)
+    copies = "".join(f"[tp{i}]" for i in range(count))
+    chains = [f"[{index}:a]aresample={_RATE},asplit={count}{copies}"]
+    for i, at in enumerate(spec.theme_ms):
+        chains.append(f"[tp{i}]adelay={at}:all=1[td{i}]")
+    delayed = "".join(f"[td{i}]" for i in range(count))
+    chains.append(f"{delayed}amix=inputs={count}:normalize=0[theme]")
+    return ";".join(chains)
+
+
 def make_video(spec: SynthSpec, out: Path) -> Path:
+    with tempfile.TemporaryDirectory(prefix="theme-") as folder:
+        root = Path(folder)
+        generics = [
+            _write_wav(generic_samples(g), root / f"generic{i}.wav")
+            for i, g in enumerate(spec.generics)
+        ]
+        return _make_video(spec, out, make_theme(root / "theme.wav"), generics)
+
+
+def _make_video(spec: SynthSpec, out: Path, theme: Path, generics: Sequence[Path]) -> Path:
     width, height = spec.size
     seconds = _s(spec.duration_ms)
     fps = spec.fps
@@ -191,6 +309,10 @@ def make_video(spec: SynthSpec, out: Path) -> Path:
             args += ["-f", "lavfi", "-i", f"sine=f=1000:r={_RATE}:d={seconds}"]
         if spec.speech_like_ms:
             args += ["-f", "lavfi", "-i", f"anoisesrc=c=white:a=0.5:seed=1:r={_RATE}:d={seconds}"]
+        if spec.theme_ms:
+            args += ["-i", theme]
+        for generic in generics:
+            args += ["-i", generic]
         audio_graph, _ = _audio_graph(spec, first)
         graph += ";" + audio_graph
         maps += ["-map", "[aout]", "-c:a", "aac", "-b:a", "96k", "-ar", str(_RATE)]

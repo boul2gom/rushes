@@ -49,9 +49,17 @@ def _fresh_secrets() -> Iterator[None]:
 
 @pytest.fixture
 def config_dir(tmp_path: Path) -> Path:
-    """Writable copy of the repository's example config."""
+    """Writable copy of the repository's config, without Louis's real generic references.
+
+    The series' `intro_outro` keys and `refs/` point at real media: tests that need references
+    write their own (synthetic) ones.
+    """
     target = tmp_path / "config"
-    shutil.copytree(REPO_CONFIG, target)
+    shutil.copytree(REPO_CONFIG, target, ignore=shutil.ignore_patterns("refs"))
+    for path in (target / "series").glob("*.yaml"):
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and data.pop("intro_outro", None) is not None:
+            path.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
     return target
 
 

@@ -71,7 +71,7 @@ relatifs à `clean.mp4`, préset `ultrafast` en test, fin de tâche) s'appliquen
 - Create : `src/rushes/net/ytdlp.py`, `src/rushes/net/ratelimit.py`, `src/rushes/discover/__init__.py`,
   `src/rushes/discover/channels.py`, `src/rushes/discover/videos.py`, `src/rushes/discover/score.py`,
   `src/rushes/discover/signals.py`, `src/rushes/discover/discover.py`,
-  `src/rushes/db/migrations/versions/0004_discovery.py`, `scripts/record_cassette.py`
+  `src/rushes/db/migrations/versions/0005_discovery.py`, `scripts/record_cassette.py`
 - Modify : `src/rushes/net/base.py` (`YtDlp.download`, `YtDlp.extract(..., cookies_allowed)`, §5.8),
   `src/rushes/context.py` (vrai `YtDlpClient`),
   `src/rushes/config.py` (`DiscoverSettings`), `src/rushes/db/models.py`, `src/rushes/ids.py` (`source_key`),
@@ -166,7 +166,7 @@ relatifs à `clean.mp4`, préset `ultrafast` en test, fin de tâche) s'appliquen
     `register_secret` ligne par ligne (R47). Toute autre `DownloadError` → `ExtractError(signin=False)`.
   - `RateLimiter(settings.rate_limit_s)` partagé par toutes les requêtes du client, en plus de
     `sleep_interval_requests` (R18).
-  - Migration `0004_discovery.py` : `source_videos` + `title TEXT`, + `channel_handle TEXT`,
+  - Migration `0005_discovery.py` : `source_videos` + `title TEXT`, + `channel_handle TEXT`,
     + `discovered_via TEXT CHECK IN ('popular','search','channel','rss','backfill')`, + `extracted_at TEXT`,
     `status CHECK IN ('found','retained','downloaded','rejected','failed')` ; `compilations.status CHECK IN
     ('proposed','approved','needs_review','rejected')` (valeurs utilisées par les tâches 13, 15, 30 et 32 ;
@@ -346,7 +346,7 @@ def test_r16_ingest_youtube_rerun_changes_nothing(ctx, synth):
 
 **Files :**
 - Create : `src/rushes/media/fingerprint.py`, `src/rushes/clean/splitter.py`, `src/rushes/clean/logo.py`,
-  `src/rushes/db/migrations/versions/0005_episode_split_logo.py`
+  `src/rushes/db/migrations/versions/0004_episode_split_logo.py`
 - Modify : `src/rushes/clean/clean.py`, `src/rushes/clean/intro.py`, `src/rushes/schemas.py` (`CleanFile.span`),
   `src/rushes/db/models.py`, `src/rushes/config.py` (`CleanSettings`)
 - Test : `tests/fixtures/generator.py` (`theme_ms`, `make_theme`), `tests/test_fingerprint.py`,
@@ -399,7 +399,7 @@ def test_r16_ingest_youtube_rerun_changes_nothing(ctx, synth):
     médiane temporelle, contours `cv2.Canny(médiane, 50, 150)` dilatés de 1 px ; part des pixels du coin à la fois
     statiques (`std < logo_static_std`) et sur un contour ≥ `logo_min_edge_ratio`, **et** `std` moyen du centre
     > 10 (sinon vidéo fixe, pas de logo). Coin de part maximale → `episodes.logo_corner`.
-  - Migration `0005_episode_split_logo.py` : `episodes` + `parent_episode_id INTEGER REFERENCES episodes(id)`,
+  - Migration `0004_episode_split_logo.py` : `episodes` + `parent_episode_id INTEGER REFERENCES episodes(id)`,
     + `span_start_ms`, + `span_end_ms`, + `logo_corner TEXT CHECK IN ('tl','tr','bl','br')`, statut
     `CHECK IN ('imported','split','cleaned','analyzed')`.
   - Générateur : `theme_ms: Sequence[int]` insère aux instants donnés un thème fixe (accord de sinus 440/554/659 Hz
@@ -948,7 +948,7 @@ def test_llm_fallback_model_used_when_main_missing(tmp_path):
   - `--force` : un segment ou une compilation déjà attribué(e) est `skipped` (« déjà attribué ») ; le calibrage
     passe par `--dry-run`.
   - Compilation : `approved` seulement si chaque passage passe ses contrôles, si la durée totale respecte R6, et si
-    le score moyen ≥ seuil ; sinon `needs_review` ou `rejected` (statuts de `compilations.status`, migration 0004) ;
+    le score moyen ≥ seuil ; sinon `needs_review` ou `rejected` (statuts de `compilations.status`, migration 0005) ;
     chaque passage prend le statut de la compilation (un `bestof_item` `approved` n'est attribué que par sa
     compilation, R2).
   - Re-sourçage (R15) : aiguilles = fenêtres de `resource_window_s` tous les `resource_step_s` de l'épisode
