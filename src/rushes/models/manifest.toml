@@ -23,8 +23,7 @@
 #   the core tables plus the en and en-US voices, and no dict/ folder (Chinese segmentation); a load
 #   and a generation were checked against that cut-down layout on the Mac.
 # - Licenses: the espeak-ng data files are GPL-3.0-or-later (espeak-ng); the origin of
-#   lexicon-us-en.txt could not be checked offline (it is not named in the archive's README that
-#   was available): Apache-2.0 is the license of the Kokoro archive, origin of the lexicon to confirm.
+#   lexicon-us-en.txt is Apache-2.0, like the Kokoro archive (origin checked by Louis, 2026-11-17).
 # - Silero VAD comes from the silero-vad package, not from this manifest.
 
 [[whisper_small]]
