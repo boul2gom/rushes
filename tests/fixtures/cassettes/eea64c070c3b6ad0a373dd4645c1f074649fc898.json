@@ -1,0 +1,483 @@
+{
+ "request": {
+  "url": "https://www.youtube.com/channel/UC1ghHlhem7676hJfsyoON5Q/videos",
+  "flat": true,
+  "platform": "youtube",
+  "comments": 0,
+  "playlist_items": "1:50"
+ },
+ "info": {
+  "id": "UC1ghHlhem7676hJfsyoON5Q",
+  "channel": "Oggy and the Cockroaches TV",
+  "channel_id": "UC1ghHlhem7676hJfsyoON5Q",
+  "title": "Oggy and the Cockroaches TV - Videos",
+  "availability": "public",
+  "channel_follower_count": 770000,
+  "description": "Welcome to Oggy and the Cockroaches : All episodes Youtube channel! Subscribe and get new episodes of Oggy and the Cockroaches every week! Watch tons of gags and discover lots of exclusive material: assortment of episodes sorted by theme, a grab-bag of wacky excerpts, making-of, behind-the-scenes videos… and a lot more! Join Oggy channel and boost your fun with Oggy, Joey, Dee Dee and Marky!! Oggy and the cockroaches, a worldwide hit that kids and parents alike love watching together! He’s blue, he’s a good guy and he wouldn’t hurt a fly. Here is OGGY, the only cat the word « feline » can’t apply to. He would be the happiest of cats if three hideous cockroaches hadn’t decided to settle inside his comfortable home: JOEY, DEEDEE, and MARKY. They are ugly, stupid, nasty and determined to make Oggy’s life a misery. It’s fast, it’s crazy and it’s hilarious… it’s OGGY AND THE COCKROACHES!",
+  "tags": [],
+  "uploader_id": "@Oggy_Cartoon",
+  "uploader_url": "https://www.youtube.com/@Oggy_Cartoon",
+  "channel_is_verified": true,
+  "uploader": "Oggy and the Cockroaches TV",
+  "channel_url": "https://www.youtube.com/channel/UC1ghHlhem7676hJfsyoON5Q",
+  "_type": "playlist",
+  "entries": [
+   {
+    "title": "Dee Dee Is Too Hungry! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7623,
+    "view_count": 73000,
+    "ie_key": "Youtube",
+    "id": "dpsYCV5DT6Y",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=dpsYCV5DT6Y"
+   },
+   {
+    "title": "Pool Day! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7658,
+    "view_count": 58000,
+    "ie_key": "Youtube",
+    "id": "8xKfDQ9Uh7I",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=8xKfDQ9Uh7I"
+   },
+   {
+    "title": "The Magic Pen | OGGY TV | 1 Hour Compilation | New Episodes in HD",
+    "duration": 4018,
+    "view_count": 32000,
+    "ie_key": "Youtube",
+    "id": "7QmmI5X68w0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=7QmmI5X68w0"
+   },
+   {
+    "title": "Oggy’s New Favorite Toy | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7659,
+    "view_count": 80000,
+    "ie_key": "Youtube",
+    "id": "gfl39q_yC8A",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=gfl39q_yC8A"
+   },
+   {
+    "title": "Oggy the Taxi Driver! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 112000,
+    "ie_key": "Youtube",
+    "id": "3oJO0mOX5X4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=3oJO0mOX5X4"
+   },
+   {
+    "title": "Oggy Dreams Big! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7174,
+    "view_count": 85000,
+    "ie_key": "Youtube",
+    "id": "oyTevSztJO0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=oyTevSztJO0"
+   },
+   {
+    "title": "TITRE | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7659,
+    "view_count": 108000,
+    "ie_key": "Youtube",
+    "id": "W7iRbme4PdI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=W7iRbme4PdI"
+   },
+   {
+    "title": "Oggy’s shadow | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 155000,
+    "ie_key": "Youtube",
+    "id": "nu3bluOJROI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=nu3bluOJROI"
+   },
+   {
+    "title": "The Chase! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7693,
+    "view_count": 80000,
+    "ie_key": "Youtube",
+    "id": "OUwAOECXHis",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=OUwAOECXHis"
+   },
+   {
+    "title": "Roach Mechanics! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 8026,
+    "view_count": 288000,
+    "ie_key": "Youtube",
+    "id": "jzpcXhpRaRY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=jzpcXhpRaRY"
+   },
+   {
+    "title": "Very Special Deliveries | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7174,
+    "view_count": 76000,
+    "ie_key": "Youtube",
+    "id": "DYet-7QRrPs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=DYet-7QRrPs"
+   },
+   {
+    "title": "The Dream Life | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 495000,
+    "ie_key": "Youtube",
+    "id": "q6rbeE3yUmE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=q6rbeE3yUmE"
+   },
+   {
+    "title": "Monsters in the Dark! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 104000,
+    "ie_key": "Youtube",
+    "id": "S_S8B6iKCg8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=S_S8B6iKCg8"
+   },
+   {
+    "title": "Artsy Oggy | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7195,
+    "view_count": 156000,
+    "ie_key": "Youtube",
+    "id": "EpR-VphbgWE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=EpR-VphbgWE"
+   },
+   {
+    "title": "Oggy’s Fancy Party! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7195,
+    "view_count": 100000,
+    "ie_key": "Youtube",
+    "id": "IG3FgpxcW9E",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=IG3FgpxcW9E"
+   },
+   {
+    "title": "Who Made This Mess? | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 54000,
+    "ie_key": "Youtube",
+    "id": "odmf5KZC8_o",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=odmf5KZC8_o"
+   },
+   {
+    "title": "Jack Loves Cycling! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 8158,
+    "view_count": 76000,
+    "ie_key": "Youtube",
+    "id": "4env8KRmNlo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=4env8KRmNlo"
+   },
+   {
+    "title": "The Secrets of Love | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7691,
+    "view_count": 60000,
+    "ie_key": "Youtube",
+    "id": "GFNTWjrjgZk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GFNTWjrjgZk"
+   },
+   {
+    "title": "Champion Oggy! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7195,
+    "view_count": 77000,
+    "ie_key": "Youtube",
+    "id": "eRKszOyccyo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=eRKszOyccyo"
+   },
+   {
+    "title": "Pool Day with Oggy! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7691,
+    "view_count": 43000,
+    "ie_key": "Youtube",
+    "id": "eowv3dvky-4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=eowv3dvky-4"
+   },
+   {
+    "title": "Not That Button! | OGGY TV | 2 Hour Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 37000,
+    "ie_key": "Youtube",
+    "id": "4HlvZz00Kro",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=4HlvZz00Kro"
+   },
+   {
+    "title": "Oggy Gets Lost | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7604,
+    "view_count": 105000,
+    "ie_key": "Youtube",
+    "id": "_XRYsT3eQ-0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=_XRYsT3eQ-0"
+   },
+   {
+    "title": "Gardening Day | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7172,
+    "view_count": 184000,
+    "ie_key": "Youtube",
+    "id": "z3bd1otB8mI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=z3bd1otB8mI"
+   },
+   {
+    "title": "Oggy is stuck | OGGY TV |  2 Hours Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 125000,
+    "ie_key": "Youtube",
+    "id": "pT8EPr39ZiQ",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=pT8EPr39ZiQ"
+   },
+   {
+    "title": "The long-awaited package! | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 446000,
+    "ie_key": "Youtube",
+    "id": "EU3VZXIVW1o",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=EU3VZXIVW1o"
+   },
+   {
+    "title": "Oggy’s Big Project | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7657,
+    "view_count": 412000,
+    "ie_key": "Youtube",
+    "id": "MlEspw2XzOM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=MlEspw2XzOM"
+   },
+   {
+    "title": "The Cockroaches Trap | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7671,
+    "view_count": 40000,
+    "ie_key": "Youtube",
+    "id": "oKBKS2TaMzg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=oKBKS2TaMzg"
+   },
+   {
+    "title": "All for Oggy! | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7623,
+    "view_count": 81000,
+    "ie_key": "Youtube",
+    "id": "_Rz0z4jMyMY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=_Rz0z4jMyMY"
+   },
+   {
+    "title": "The Birthday Party | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7195,
+    "view_count": 74000,
+    "ie_key": "Youtube",
+    "id": "SA0aohRRx7c",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=SA0aohRRx7c"
+   },
+   {
+    "title": "Flight to the sun | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7192,
+    "view_count": 304000,
+    "ie_key": "Youtube",
+    "id": "yq7TBhFyo4s",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=yq7TBhFyo4s"
+   },
+   {
+    "title": "Journey to the Center of the Earth | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 187000,
+    "ie_key": "Youtube",
+    "id": "cFrL6ZuBIDE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=cFrL6ZuBIDE"
+   },
+   {
+    "title": "Oggy and the Dodo Bird | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 52000,
+    "ie_key": "Youtube",
+    "id": "rlKlisrJ9XE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=rlKlisrJ9XE"
+   },
+   {
+    "title": "Oggy's Feast | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7192,
+    "view_count": 57000,
+    "ie_key": "Youtube",
+    "id": "TazkwwXKD_4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=TazkwwXKD_4"
+   },
+   {
+    "title": "Oggy's in trouble | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 8092,
+    "view_count": 258000,
+    "ie_key": "Youtube",
+    "id": "MvDei7vCY4w",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=MvDei7vCY4w"
+   },
+   {
+    "title": "Holiday Memories | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7192,
+    "view_count": 65000,
+    "ie_key": "Youtube",
+    "id": "GugGh8DhspI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GugGh8DhspI"
+   },
+   {
+    "title": "Pool Day | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7639,
+    "view_count": 86000,
+    "ie_key": "Youtube",
+    "id": "u9VLtEn0-lo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=u9VLtEn0-lo"
+   },
+   {
+    "title": "Farmer for a Day | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 8559,
+    "view_count": 75000,
+    "ie_key": "Youtube",
+    "id": "3rTbOz1tow0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=3rTbOz1tow0"
+   },
+   {
+    "title": "Romantic getaway | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 8061,
+    "view_count": 317000,
+    "ie_key": "Youtube",
+    "id": "LaJMv3xG3I8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=LaJMv3xG3I8"
+   },
+   {
+    "title": "Wrestling Time! | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7195,
+    "view_count": 88000,
+    "ie_key": "Youtube",
+    "id": "s-dxTRhlCcg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=s-dxTRhlCcg"
+   },
+   {
+    "title": "Baby Oggy’s Mischief | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7596,
+    "view_count": 148000,
+    "ie_key": "Youtube",
+    "id": "FvpBeRpEPK4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=FvpBeRpEPK4"
+   },
+   {
+    "title": "Oggy in the Snow | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7597,
+    "view_count": 2700000,
+    "ie_key": "Youtube",
+    "id": "d-Qem5Z4Y-0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=d-Qem5Z4Y-0"
+   },
+   {
+    "title": "The house in the dark | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 63000,
+    "ie_key": "Youtube",
+    "id": "AZ3QCF6bTbE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=AZ3QCF6bTbE"
+   },
+   {
+    "title": "Magic Oggy | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7624,
+    "view_count": 182000,
+    "ie_key": "Youtube",
+    "id": "joQ-pQSuRwU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=joQ-pQSuRwU"
+   },
+   {
+    "title": "Oggy and the Flour Man | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7598,
+    "view_count": 107000,
+    "ie_key": "Youtube",
+    "id": "Hi5kizqbmMY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Hi5kizqbmMY"
+   },
+   {
+    "title": "Journey on the river | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7194,
+    "view_count": 315000,
+    "ie_key": "Youtube",
+    "id": "O3ifvrolOFA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=O3ifvrolOFA"
+   },
+   {
+    "title": "Oggy's Christmas Vacation | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7691,
+    "view_count": 251000,
+    "ie_key": "Youtube",
+    "id": "pNv2sRhwdK4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=pNv2sRhwdK4"
+   },
+   {
+    "title": "Oggy the Mechanic | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 8093,
+    "view_count": 229000,
+    "ie_key": "Youtube",
+    "id": "0KTR1QHfMjc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=0KTR1QHfMjc"
+   },
+   {
+    "title": "Oggy’s shadow | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7660,
+    "view_count": 149000,
+    "ie_key": "Youtube",
+    "id": "_GHc-LoxCls",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=_GHc-LoxCls"
+   },
+   {
+    "title": "City of Love | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 8559,
+    "view_count": 122000,
+    "ie_key": "Youtube",
+    "id": "Qw_jzR6Whaw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Qw_jzR6Whaw"
+   },
+   {
+    "title": "Olivia to the Rescue | OGGY TV | 2 Hours Compilation | New Episodes in HD",
+    "duration": 7193,
+    "view_count": 72000,
+    "ie_key": "Youtube",
+    "id": "qouIyIruYxo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=qouIyIruYxo"
+   }
+  ],
+  "extractor_key": "YoutubeTab",
+  "extractor": "youtube:tab",
+  "webpage_url": "https://www.youtube.com/channel/UC1ghHlhem7676hJfsyoON5Q/videos",
+  "original_url": "https://www.youtube.com/channel/UC1ghHlhem7676hJfsyoON5Q/videos",
+  "webpage_url_basename": "videos",
+  "webpage_url_domain": "youtube.com"
+ }
+}

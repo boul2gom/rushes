@@ -310,7 +310,7 @@ app.command("serve", help="Sert la page de suivi et le tableau de bord.")(_plain
 
 discover = _group("discover", "Découverte de vidéos sources.")
 discover.command("youtube", help="Métadonnées, heatmap, commentaires et score.")(
-    _pipeline_stub("10a")
+    _pipeline_command("discover youtube", ("discover_youtube",))
 )
 discover.command("series", help="Séries en tendance et chaînes officielles.")(_plain_stub("38"))
 

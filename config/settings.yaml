@@ -26,4 +26,10 @@ serve: {host: 0.0.0.0, port: 8080, public_origin: "https://rushes.<domaine>"}   
 #   # référence doit être le générique de l'époque la PLUS LONGUE (ou lister les deux variantes), car un
 #   # générique plus long que sa référence peut s'arrêter à un fondu au noir situé après la fin de la référence
 #   # logo : un pixel est fixe s'il reste à ± logo_static_std de sa médiane dans au moins logo_static_share des images
+# discover:                         # découverte YouTube : valeurs de départ, décommenter pour forcer
+#   {refresh_days: 7, popular_limit: 200, median_window: 50, full_extract_per_run: 20,
+#    search_results: 20, min_duration_s: 120, max_duration_s: 10800, keep_top: 30,
+#    keep_community: 5, min_score: 0.0, official_min_followers: 100000,
+#    official_min_name_sim: 80, official_min_content_share: 0.6,
+#    weights: {views_per_day: 0.5, overperformance: 0.3, engagement: 0.2}}
 ntfy: {url: "https://ntfy.<domaine>", topic_env: NTFY_TOPIC, token_env: NTFY_TOKEN}

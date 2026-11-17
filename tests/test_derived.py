@@ -123,3 +123,12 @@ def test_derived_record_refuses_nan_and_infinity_in_french(session: Session, bad
     with pytest.raises(ValueError, match="non sérialisable"):
         record(session, "k", "global", bad, source="s", confidence=1, at=START)
     assert _history(session) == 0
+
+
+def test_derived_resolve_returns_the_recorded_confidence(session: Session) -> None:
+    """One read gives the value and its confidence (a list carried over keeps it)."""
+    assert _resolve(session).confidence is None
+    record(session, "hashtags.pool", "tom_and_jerry", ["#a"], source="market", confidence=0.7,
+           at=START)  # fmt: skip
+    assert _resolve(session).confidence == 0.7
+    assert _resolve(session, config_value=["#c"]).confidence is None

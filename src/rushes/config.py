@@ -274,6 +274,37 @@ class CleanSettings(_Model):
         return max(DEFAULT_SURE_THRESHOLD, self.theme_threshold)
 
 
+class DiscoverWeights(_Model):
+    views_per_day: float = Field(0.5, ge=0)
+    overperformance: float = Field(0.3, ge=0)
+    engagement: float = Field(0.2, ge=0)
+
+
+class DiscoverSettings(_Model):
+    """YouTube discovery (spec, Algorithmes); every value is a starting point."""
+
+    refresh_days: int = Field(7, ge=1)  # a series is rediscovered after this many days
+    popular_limit: int = Field(200, ge=1)  # videos read from the "popular" playlist
+    median_window: int = Field(50, ge=1)  # latest videos giving a channel's median views
+    full_extract_per_run: int = Field(20, ge=0)  # videos fully extracted per series and run
+    search_results: int = Field(20, ge=1)  # results of a keyword search
+    min_duration_s: int = Field(120, ge=0)
+    max_duration_s: int = Field(10_800, ge=1)
+    keep_top: int = Field(30, ge=0)  # official videos retained per series
+    keep_community: int = Field(5, ge=0)
+    min_score: float = 0.0
+    official_min_followers: int = Field(100_000, ge=0)
+    official_min_name_sim: float = Field(80.0, ge=0, le=100)
+    official_min_content_share: float = Field(0.6, ge=0, le=1)
+    weights: DiscoverWeights = DiscoverWeights()
+
+    @model_validator(mode="after")
+    def _durations_ordered(self) -> DiscoverSettings:
+        if self.min_duration_s >= self.max_duration_s:
+            raise ValueError("min_duration_s doit être inférieure à max_duration_s")
+        return self
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -287,6 +318,7 @@ class Settings(_Model):
     cut: CutSettings = CutSettings()
     render: RenderSettings = RenderSettings()
     clean: CleanSettings = CleanSettings()
+    discover: DiscoverSettings = DiscoverSettings()
     ntfy: NtfySettings | None = None
 
 

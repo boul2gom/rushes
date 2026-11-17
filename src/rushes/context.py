@@ -16,8 +16,9 @@ from rushes.db.engine import make_engine
 from rushes.db.migrate import upgrade
 from rushes.db.sync import sync_config
 from rushes.models.hub import ModelHub
-from rushes.net.base import NetClients, UnavailableYtDlp
+from rushes.net.base import NetClients
 from rushes.net.http import UrllibHttp
+from rushes.net.ytdlp import YtDlpClient
 from rushes.paths import Paths
 from rushes.ui import Emitter, Message, make_emitter
 
@@ -55,7 +56,7 @@ class Context:
     ui: Emitter
     clock: Clock
     models: ModelHub  # task 5; empty before
-    net: NetClients  # real Http (task 9), yt-dlp from task 10a; doubles in tests
+    net: NetClients  # real Http (task 9) and yt-dlp (task 10a); doubles in tests
     environ: Mapping[str, str] | None = None  # the environment build_context was given
 
     def close(self) -> None:
@@ -125,6 +126,6 @@ def build_context(
         ui=ui,
         clock=clock,
         models=ModelHub(paths, config.settings),
-        net=NetClients(ytdlp=UnavailableYtDlp(), http=UrllibHttp()),
+        net=NetClients(ytdlp=YtDlpClient(config.settings, paths, ui), http=UrllibHttp()),
         environ=environ,
     )

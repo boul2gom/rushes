@@ -23,6 +23,7 @@ class Resolved[T]:
     origin: Literal["config", "derived", "default"]
     source: str | None
     computed_at: datetime | None
+    confidence: float | None = None  # the derived value's own
 
 
 def record(
@@ -84,5 +85,5 @@ def resolve[T](
         except ValueError, TypeError, KeyError:
             pass
         else:
-            return Resolved(value, "derived", row.source, computed_at)
+            return Resolved(value, "derived", row.source, computed_at, row.confidence)
     return Resolved(default, "default", None, None)

@@ -1,0 +1,483 @@
+{
+ "request": {
+  "url": "https://www.youtube.com/channel/UCwEuCjq11jl47RS_EjqzTMw/videos",
+  "flat": true,
+  "platform": "youtube",
+  "comments": 0,
+  "playlist_items": "1:50"
+ },
+ "info": {
+  "id": "UCwEuCjq11jl47RS_EjqzTMw",
+  "channel": "Oggy und die Kakerlaken",
+  "channel_id": "UCwEuCjq11jl47RS_EjqzTMw",
+  "title": "Oggy und die Kakerlaken - Videos",
+  "availability": "public",
+  "channel_follower_count": 2730000,
+  "description": "Welkom bij het Duitse officiële Oggy YouTube-kanaal!\n\nAbonneer je en ontvang elke week nieuwe afleveringen van Oggy and the Cockroaches! Bekijk tonnen gags en ontdek veel exclusief materiaal: assortiment afleveringen gesorteerd op thema, een tas vol gekke fragmenten, video's maken achter de schermen ... en nog veel meer! Word lid van Oggy-kanaal en boost je plezier met Oggy, Joey, Dee Dee en Marky !!\n\n\n\nSein Fell ist blau, er ist nett und möchte einfach nur seine Ruhe. Kater Oggy führt eigentlich ein ganz schönes Leben. Wären da nicht drei Kakerlaken - Joey, Dee-Dee und Marky – die Oggy beinahe in den Wahnsinn treiben. Da ist Ärger natürlich vorprogrammiert!\n\nA series by @Xilam Animation\n",
+  "tags": [],
+  "uploader_id": "@OggyundieKakerlaken",
+  "uploader_url": "https://www.youtube.com/@OggyundieKakerlaken",
+  "channel_is_verified": true,
+  "uploader": "Oggy und die Kakerlaken",
+  "channel_url": "https://www.youtube.com/channel/UCwEuCjq11jl47RS_EjqzTMw",
+  "_type": "playlist",
+  "entries": [
+   {
+    "title": "Oggy und die Kakerlaken | Die Kakerlaken crashen die Hochzeit! | Ganze Folge in HD",
+    "duration": 1978,
+    "view_count": 20000,
+    "ie_key": "Youtube",
+    "id": "EPmjj1uWZK0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=EPmjj1uWZK0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Party und Luftballons | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 50000,
+    "ie_key": "Youtube",
+    "id": "UaKR-5piR8Q",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=UaKR-5piR8Q"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Die Pizzaverkäufer | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 225000,
+    "ie_key": "Youtube",
+    "id": "UUO3pPloixo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=UUO3pPloixo"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Ein fast perfekter Urlaub | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 18000,
+    "ie_key": "Youtube",
+    "id": "arSGTVRszKY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=arSGTVRszKY"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Wer ist jetzt stärker?! | Ganze Folge in HD",
+    "duration": 2401,
+    "view_count": 71000,
+    "ie_key": "Youtube",
+    "id": "h52MXWLHx00",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=h52MXWLHx00"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der schreckliche Schneemann | Ganze Folge in HD",
+    "duration": 2429,
+    "view_count": 29000,
+    "ie_key": "Youtube",
+    "id": "ajh6MlbwkFo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=ajh6MlbwkFo"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der Zauberstift | Ganze Folge in HD",
+    "duration": 3629,
+    "view_count": 479000,
+    "ie_key": "Youtube",
+    "id": "csANrWa4WZo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=csANrWa4WZo"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy wird Vegetarier | Ganze Folge in HD",
+    "duration": 1978,
+    "view_count": 79000,
+    "ie_key": "Youtube",
+    "id": "NdTqFGiHFck",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=NdTqFGiHFck"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy sucht ein neues Zuhause | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 112000,
+    "ie_key": "Youtube",
+    "id": "4T4sUcIa5Ig",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=4T4sUcIa5Ig"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy und der Diamant | Ganze Folge in HD",
+    "duration": 4255,
+    "view_count": 25000,
+    "ie_key": "Youtube",
+    "id": "caUiEdmKkMw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=caUiEdmKkMw"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Trainer Jack | Ganze Folge in HD",
+    "duration": 2496,
+    "view_count": 48000,
+    "ie_key": "Youtube",
+    "id": "GSZM2C3oq4A",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GSZM2C3oq4A"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Kakerlakensuppe | Ganze Folge in HD",
+    "duration": 1997,
+    "view_count": 108000,
+    "ie_key": "Youtube",
+    "id": "OZjgVVecuZc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=OZjgVVecuZc"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Waschtag | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 23000,
+    "ie_key": "Youtube",
+    "id": "4mvDT45m0VU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=4mvDT45m0VU"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy auf Reisen | Ganze Folge in HD",
+    "duration": 2496,
+    "view_count": 20000,
+    "ie_key": "Youtube",
+    "id": "NOkA1SlkUd4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=NOkA1SlkUd4"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Die Angeber | Ganze Folge in HD",
+    "duration": 2000,
+    "view_count": 78000,
+    "ie_key": "Youtube",
+    "id": "yI28zZZH6H0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=yI28zZZH6H0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Party | Ganze Folge in HD",
+    "duration": 2402,
+    "view_count": 33000,
+    "ie_key": "Youtube",
+    "id": "Gj2mRSJ_mN0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Gj2mRSJ_mN0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Das Fest | Ganze Folge in HD",
+    "duration": 1997,
+    "view_count": 289000,
+    "ie_key": "Youtube",
+    "id": "a7lmoQ705-Q",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=a7lmoQ705-Q"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy ist viel zu naschhaft! | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 33000,
+    "ie_key": "Youtube",
+    "id": "slg_XhDbjD0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=slg_XhDbjD0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Die schönste Belohnung | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 110000,
+    "ie_key": "Youtube",
+    "id": "hObTg5QHCgY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=hObTg5QHCgY"
+   },
+   {
+    "title": "Oggy and the Cockroaches | Don't sink! | Full Episode in HD",
+    "duration": 2429,
+    "view_count": 579000,
+    "ie_key": "Youtube",
+    "id": "pBqtht9Q4L8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=pBqtht9Q4L8"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Haus ist zerstört | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 50000,
+    "ie_key": "Youtube",
+    "id": "eAfWgfqnmNk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=eAfWgfqnmNk"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | LAUSALARM!!!! | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 103000,
+    "ie_key": "Youtube",
+    "id": "OgBIH79VxWU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=OgBIH79VxWU"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Kaviar-Festmahl | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 117000,
+    "ie_key": "Youtube",
+    "id": "uEA6rmy0yQ0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=uEA6rmy0yQ0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Traum | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 338000,
+    "ie_key": "Youtube",
+    "id": "0cLD9w4OsYk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=0cLD9w4OsYk"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Die drei Vielfraße | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 32000,
+    "ie_key": "Youtube",
+    "id": "8WA4pBl1Hss",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=8WA4pBl1Hss"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Ein perfekter Tag | Ganze Folge in HD",
+    "duration": 1996,
+    "view_count": 56000,
+    "ie_key": "Youtube",
+    "id": "yhsZAiTxb3Q",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=yhsZAiTxb3Q"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Zeit zum Ringen Wrestling Time! | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 19000,
+    "ie_key": "Youtube",
+    "id": "8CL8Jsk42j4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=8CL8Jsk42j4"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys neue Leidenschaft | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 18000,
+    "ie_key": "Youtube",
+    "id": "acNVZXN6_pM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=acNVZXN6_pM"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Kostümfest | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 407000,
+    "ie_key": "Youtube",
+    "id": "yjlOI8jy2as",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=yjlOI8jy2as"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Ferien | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 61000,
+    "ie_key": "Youtube",
+    "id": "iC2g79dcnIY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=iC2g79dcnIY"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Mein Freund, der Papagei | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 15000,
+    "ie_key": "Youtube",
+    "id": "t6gPw--VthE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=t6gPw--VthE"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der Würfel | Ganze Folge in HD",
+    "duration": 2000,
+    "view_count": 12000,
+    "ie_key": "Youtube",
+    "id": "bv3bJZFkbOM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=bv3bJZFkbOM"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Reise zum Mittelpunkt der Erde | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 14000,
+    "ie_key": "Youtube",
+    "id": "Ru_z33P3HWY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Ru_z33P3HWY"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy hat Läuse! | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 21000,
+    "ie_key": "Youtube",
+    "id": "3Fyf4cvguoc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=3Fyf4cvguoc"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Extremsport mit den Kakerlaken | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 9600,
+    "ie_key": "Youtube",
+    "id": "Ij4uuYwaMsI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Ij4uuYwaMsI"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy am Meer | Ganze Folge in HD",
+    "duration": 2000,
+    "view_count": 10000,
+    "ie_key": "Youtube",
+    "id": "oXaitMlzV_g",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=oXaitMlzV_g"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Schiffskapitän Oggy | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 293000,
+    "ie_key": "Youtube",
+    "id": "v5Sz_zwuBgM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=v5Sz_zwuBgM"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Verrückt nach Fahrrädern! | Ganze Folge in HD",
+    "duration": 2465,
+    "view_count": 9900,
+    "ie_key": "Youtube",
+    "id": "28OR8tBuPYA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=28OR8tBuPYA"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Party | Ganze Folge in HD",
+    "duration": 2427,
+    "view_count": 152000,
+    "ie_key": "Youtube",
+    "id": "Gbbzv-zDlYo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Gbbzv-zDlYo"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Teezeit mit Oggy | Ganze Folge in HD",
+    "duration": 2400,
+    "view_count": 22000,
+    "ie_key": "Youtube",
+    "id": "QDxLzhWccLg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=QDxLzhWccLg"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy hat nicht gut geschlafen | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 27000,
+    "ie_key": "Youtube",
+    "id": "OP-DoP2UOiA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=OP-DoP2UOiA"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | In Oggys Traum | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 42000,
+    "ie_key": "Youtube",
+    "id": "iBWHvpDtXzU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=iBWHvpDtXzU"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der geheimnisvolle Würfel | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 23000,
+    "ie_key": "Youtube",
+    "id": "1TzLlQ5ns3E",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=1TzLlQ5ns3E"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der Überraschungsgast! | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 16000,
+    "ie_key": "Youtube",
+    "id": "sOMhbxxpoT0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=sOMhbxxpoT0"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Vorsicht vor dem Riesen! | Ganze Folge in HD",
+    "duration": 1997,
+    "view_count": 59000,
+    "ie_key": "Youtube",
+    "id": "bU3-EhGNDYs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=bU3-EhGNDYs"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggys Autowerkstatt | Ganze Folge in HD",
+    "duration": 2401,
+    "view_count": 123000,
+    "ie_key": "Youtube",
+    "id": "FlrYE-OkpA8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=FlrYE-OkpA8"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Der Mister Cat-Wettbewerb | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 84000,
+    "ie_key": "Youtube",
+    "id": "BTN-8YYgcjQ",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=BTN-8YYgcjQ"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy verliert die Nerven! | Ganze Folge in HD",
+    "duration": 1998,
+    "view_count": 12000,
+    "ie_key": "Youtube",
+    "id": "q8tuzCL5IXc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=q8tuzCL5IXc"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy, der Tourist | Ganze Folge in HD",
+    "duration": 2962,
+    "view_count": 12000,
+    "ie_key": "Youtube",
+    "id": "0WbIBQReVoE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=0WbIBQReVoE"
+   },
+   {
+    "title": "Oggy und die Kakerlaken | Oggy, Der Unfassbare | Ganze Folge in HD",
+    "duration": 1999,
+    "view_count": 11000,
+    "ie_key": "Youtube",
+    "id": "zHOQDLb0wuw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=zHOQDLb0wuw"
+   }
+  ],
+  "extractor_key": "YoutubeTab",
+  "extractor": "youtube:tab",
+  "webpage_url": "https://www.youtube.com/channel/UCwEuCjq11jl47RS_EjqzTMw/videos",
+  "original_url": "https://www.youtube.com/channel/UCwEuCjq11jl47RS_EjqzTMw/videos",
+  "webpage_url_basename": "videos",
+  "webpage_url_domain": "youtube.com"
+ }
+}

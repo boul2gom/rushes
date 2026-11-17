@@ -1,0 +1,524 @@
+{
+ "request": {
+  "url": "https://www.youtube.com/channel/UCGnJ9rpBoEaRQXxhAbDi4Xw/videos",
+  "flat": true,
+  "platform": "youtube",
+  "comments": 0,
+  "playlist_items": "1:50"
+ },
+ "info": {
+  "id": "UCGnJ9rpBoEaRQXxhAbDi4Xw",
+  "channel": "Ogy",
+  "channel_id": "UCGnJ9rpBoEaRQXxhAbDi4Xw",
+  "title": "Ogy - Videos",
+  "availability": "public",
+  "channel_follower_count": 338000,
+  "description": "Na cestě na vrchol👑 Dej ODBĚR, ať jsi u toho.\n\nspolupráce: spoluprace@ogyshop.cz\nmerch & sociální sítě: https://linktr.ee/theogycz\n",
+  "tags": [
+   "ogy",
+   "ogy reakce",
+   "český youtuber",
+   "cz youtube",
+   "zábava",
+   "lifestyle",
+   "vlog",
+   "výzvy",
+   "recenze",
+   "reakce",
+   "český content",
+   "trendy cz",
+   "česky",
+   "český humor",
+   "real life",
+   "originální obsah",
+   "český influencer",
+   "recenze jídla",
+   "ochutnávka",
+   "street food cz",
+   "fast food test",
+   "česká kuchyně",
+   "jídlo česky",
+   "food review",
+   "food vlog",
+   "nejlepší jídlo",
+   "cestování",
+   "český cestovatel",
+   "travel cz",
+   "výlet",
+   "neznámá místa čr",
+   "challenge",
+   "upřímná recenze",
+   "práce",
+   "24 hodin",
+   "50 hodin",
+   "nejluxusnější",
+   "experiment",
+   "přespávačka",
+   "experience"
+  ],
+  "uploader_id": "@OGY",
+  "uploader_url": "https://www.youtube.com/@OGY",
+  "channel_is_verified": true,
+  "uploader": "Ogy",
+  "channel_url": "https://www.youtube.com/channel/UCGnJ9rpBoEaRQXxhAbDi4Xw",
+  "_type": "playlist",
+  "entries": [
+   {
+    "title": "NEJLUXUSNĚJŠÍ PALAČINKA V ČESKU (ochutnávka)",
+    "duration": 2507,
+    "view_count": 173000,
+    "ie_key": "Youtube",
+    "id": "cN6sqsGk0_w",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=cN6sqsGk0_w"
+   },
+   {
+    "title": "24 HODIN SLEPÝ (challenge)",
+    "duration": 3258,
+    "view_count": 331000,
+    "ie_key": "Youtube",
+    "id": "Ie8ytHAEojs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Ie8ytHAEojs"
+   },
+   {
+    "title": "Sbohem, Octávko🕊️ (nové auto)",
+    "duration": 1325,
+    "view_count": 474000,
+    "ie_key": "Youtube",
+    "id": "1aI8vdkYm5w",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=1aI8vdkYm5w"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ: MOST & CHÁNOV SPECIÁL (přespávačka)",
+    "duration": 2331,
+    "view_count": 435000,
+    "ie_key": "Youtube",
+    "id": "bIvnnDIRYrg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=bIvnnDIRYrg"
+   },
+   {
+    "title": "NEJHŮŘ HODNOCENÁ RESTAURACE V ČESKU (upřímná recenze)",
+    "duration": 1496,
+    "view_count": 336000,
+    "ie_key": "Youtube",
+    "id": "af-mGwqpLsY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=af-mGwqpLsY"
+   },
+   {
+    "title": "NEJVĚTŠÍ KEBAB V EVROPĚ (challenge)",
+    "duration": 1844,
+    "view_count": 363000,
+    "ie_key": "Youtube",
+    "id": "hLzhLwa8qhc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=hLzhLwa8qhc"
+   },
+   {
+    "title": "20,000 KALORIÍ ZA 24 HODIN (challenge)",
+    "duration": 2578,
+    "view_count": 476000,
+    "ie_key": "Youtube",
+    "id": "M-blcffEgVs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=M-blcffEgVs"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ SMAŽÁK V ČESKU (ochutnávka)",
+    "duration": 2196,
+    "view_count": 378000,
+    "ie_key": "Youtube",
+    "id": "weU_T7G8tWc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=weU_T7G8tWc"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ: HRADEC KRÁLOVÉ (přespávačka)",
+    "duration": 2370,
+    "view_count": 329000,
+    "ie_key": "Youtube",
+    "id": "37sQV4P0CQg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=37sQV4P0CQg"
+   },
+   {
+    "title": "WENDY'S - NOVÝ FAST FOOD V ČESKU? (upřímná recenze)",
+    "duration": 2069,
+    "view_count": 309000,
+    "ie_key": "Youtube",
+    "id": "-GYQAz8IhXA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=-GYQAz8IhXA"
+   },
+   {
+    "title": "NEJVĚTŠÍ BURGER V EVROPĚ (challenge)",
+    "duration": 2313,
+    "view_count": 569000,
+    "ie_key": "Youtube",
+    "id": "u7hDC9f1ULc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=u7hDC9f1ULc"
+   },
+   {
+    "title": "FIVE GUYS - NOVÝ FAST FOOD V ČESKU (upřímná recenze)",
+    "duration": 1546,
+    "view_count": 267000,
+    "ie_key": "Youtube",
+    "id": "YKe1vwOyGjk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=YKe1vwOyGjk"
+   },
+   {
+    "title": "NEJVĚTŠÍ PIZZA V ČESKU (challenge)",
+    "duration": 1484,
+    "view_count": 442000,
+    "ie_key": "Youtube",
+    "id": "CmgAcxfrA-s",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=CmgAcxfrA-s"
+   },
+   {
+    "title": "100 PANÁKŮ ZA 100 MINUT (2026)",
+    "duration": 1483,
+    "view_count": 305000,
+    "ie_key": "Youtube",
+    "id": "GF_uCT5RvPs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GF_uCT5RvPs"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ: OLOMOUC EDITION (přespávačka)",
+    "duration": 2541,
+    "view_count": 455000,
+    "ie_key": "Youtube",
+    "id": "kruh83lf7v0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=kruh83lf7v0"
+   },
+   {
+    "title": "24 HODIN NA SLOVENSKU w/ Morry & Bige",
+    "duration": 1428,
+    "view_count": 275000,
+    "ie_key": "Youtube",
+    "id": "N--OT0go8CM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=N--OT0go8CM"
+   },
+   {
+    "title": "SNÍDANĚ ČESKÝCH FAST FOODŮ (upřímná recenze)",
+    "duration": 1636,
+    "view_count": 566000,
+    "ie_key": "Youtube",
+    "id": "0ZhRSEpBqxY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=0ZhRSEpBqxY"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ BAGETA V ČESKU (ochutnávka)",
+    "duration": 1647,
+    "view_count": 353000,
+    "ie_key": "Youtube",
+    "id": "IfdwokzE6LM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=IfdwokzE6LM"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ: BRNO (přespávačka)",
+    "duration": 1660,
+    "view_count": 345000,
+    "ie_key": "Youtube",
+    "id": "BLt7AqyILIY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=BLt7AqyILIY"
+   },
+   {
+    "title": "24 HODIN PRODÁVÁM TRDELNÍKY (p*áce)",
+    "duration": 1407,
+    "view_count": 314000,
+    "ie_key": "Youtube",
+    "id": "GiuEM1cW7I4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GiuEM1cW7I4"
+   },
+   {
+    "title": "24 HODIN BARBEREM (p*áce)",
+    "duration": 1931,
+    "view_count": 301000,
+    "ie_key": "Youtube",
+    "id": "FZzJSzPc6_0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=FZzJSzPc6_0"
+   },
+   {
+    "title": "SURSTRÖMMING vs. YouTubeři (challenge)",
+    "duration": 1561,
+    "view_count": 371000,
+    "ie_key": "Youtube",
+    "id": "MUZaxQBwCmI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=MUZaxQBwCmI"
+   },
+   {
+    "title": "24 HODIN KOMENTÁTOREM (p*áce)",
+    "duration": 1510,
+    "view_count": 284000,
+    "ie_key": "Youtube",
+    "id": "feOwbYIKmmA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=feOwbYIKmmA"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ: ÚSTÍ EDITION (přespávačka)",
+    "duration": 1877,
+    "view_count": 574000,
+    "ie_key": "Youtube",
+    "id": "sDMei_ffw_s",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=sDMei_ffw_s"
+   },
+   {
+    "title": "ORIGINÁLNÍ DUBAJSKÁ ČOKOLÁDA (upřímná recenze)",
+    "duration": 1271,
+    "view_count": 456000,
+    "ie_key": "Youtube",
+    "id": "Ldph45tkrQo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Ldph45tkrQo"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ KEBAB V ČESKU (ochutnávka)",
+    "duration": 1718,
+    "view_count": 619000,
+    "ie_key": "Youtube",
+    "id": "TaiLYSxpziE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=TaiLYSxpziE"
+   },
+   {
+    "title": "YOUTUBE REWIND 2024.",
+    "duration": 1649,
+    "view_count": 117000,
+    "ie_key": "Youtube",
+    "id": "tb7oJpORdn0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=tb7oJpORdn0"
+   },
+   {
+    "title": "50 HODIN DŮCHODCEM (challenge)",
+    "duration": 1300,
+    "view_count": 394000,
+    "ie_key": "Youtube",
+    "id": "duHs89O5HIA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=duHs89O5HIA"
+   },
+   {
+    "title": "NEJPÁLIVĚJŠÍ CHIPS NA SVĚTĚ (challenge)",
+    "duration": 1427,
+    "view_count": 425000,
+    "ie_key": "Youtube",
+    "id": "RCUPw2CCM8A",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=RCUPw2CCM8A"
+   },
+   {
+    "title": "NĚCO KONČÍ, JINÉ ZAČÍNÁ.",
+    "duration": 1305,
+    "view_count": 177000,
+    "ie_key": "Youtube",
+    "id": "goAb9Rq567g",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=goAb9Rq567g"
+   },
+   {
+    "title": "PŘESPÁNÍ V LESE ZA 100 KČ VS 10.000 KČ (challenge)",
+    "duration": 1378,
+    "view_count": 421000,
+    "ie_key": "Youtube",
+    "id": "qP36y79F22s",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=qP36y79F22s"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ ZMRZLINA V ČESKU (ochutnávka)",
+    "duration": 1604,
+    "view_count": 446000,
+    "ie_key": "Youtube",
+    "id": "5aX-vP5eyKM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=5aX-vP5eyKM"
+   },
+   {
+    "title": "24 HODIN BEZDOMOVCEM (challenge)",
+    "duration": 1761,
+    "view_count": 627000,
+    "ie_key": "Youtube",
+    "id": "Tzh6CI_fzwY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Tzh6CI_fzwY"
+   },
+   {
+    "title": "MOJE POPRVÉ VE VRTULNÍKU (experience)",
+    "duration": 831,
+    "view_count": 133000,
+    "ie_key": "Youtube",
+    "id": "_qXmQpPfI6c",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=_qXmQpPfI6c"
+   },
+   {
+    "title": "NEJTAJNĚJŠÍ MENU ČESKÝCH FAST FOODŮ (experiment)",
+    "duration": 945,
+    "view_count": 490000,
+    "ie_key": "Youtube",
+    "id": "djlk-KVKORw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=djlk-KVKORw"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ BURGER V ČESKU (ochutnávka)",
+    "duration": 1387,
+    "view_count": 465000,
+    "ie_key": "Youtube",
+    "id": "TL81A0OHuSc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=TL81A0OHuSc"
+   },
+   {
+    "title": "24 HODIN VOZÍČKÁŘEM (challenge)",
+    "duration": 1106,
+    "view_count": 479000,
+    "ie_key": "Youtube",
+    "id": "bK6YyFfFjik",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=bK6YyFfFjik"
+   },
+   {
+    "title": "NEJHORŠÍ UBYTOVÁNÍ OSTRAVY (přespávačka)",
+    "duration": 1247,
+    "view_count": 452000,
+    "ie_key": "Youtube",
+    "id": "mkejDTIBM8Y",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=mkejDTIBM8Y"
+   },
+   {
+    "title": "JAK NA 100% UDĚLAT AUTOŠKOLU? (práce)",
+    "duration": 1204,
+    "view_count": 388000,
+    "ie_key": "Youtube",
+    "id": "XNzVzVQVUPE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=XNzVzVQVUPE"
+   },
+   {
+    "title": "NEJLEVNĚJŠÍ RESTAURACE V ČESKU (upřímná recenze)",
+    "duration": 636,
+    "view_count": 743000,
+    "ie_key": "Youtube",
+    "id": "GmpFZcZgl7g",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GmpFZcZgl7g"
+   },
+   {
+    "title": "24 HODIN V POUTECH (challenge)",
+    "duration": 962,
+    "view_count": 252000,
+    "ie_key": "Youtube",
+    "id": "dIfzyrizzBU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=dIfzyrizzBU"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ SUSHI V ČESKU (ochutnávka)",
+    "duration": 1363,
+    "view_count": 677000,
+    "ie_key": "Youtube",
+    "id": "m_4vVyDQUz4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=m_4vVyDQUz4"
+   },
+   {
+    "title": "100 HODIN BEZ JÍDLA (challenge)",
+    "duration": 1326,
+    "view_count": 468000,
+    "ie_key": "Youtube",
+    "id": "F2_JQl2eoaw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=F2_JQl2eoaw"
+   },
+   {
+    "title": "24 HODIN PŘEŽÍVÁM S NEJDELŠÍMI NEHTY (challenge)",
+    "duration": 1237,
+    "view_count": 398000,
+    "ie_key": "Youtube",
+    "id": "TO_LAHYQvOE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=TO_LAHYQvOE"
+   },
+   {
+    "title": "24 HODIN ZÁVISLÝ NA AUTOMATECH (challenge)",
+    "duration": 1157,
+    "view_count": 553000,
+    "ie_key": "Youtube",
+    "id": "pX94MUg-IYE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=pX94MUg-IYE"
+   },
+   {
+    "title": "NEJSILNĚJŠÍ ALKOHOL NA SVĚTĚ",
+    "duration": 1311,
+    "view_count": 764000,
+    "ie_key": "Youtube",
+    "id": "bKo07d400y0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=bKo07d400y0"
+   },
+   {
+    "title": "POPEYES - NOVÝ FAST FOOD V ČESKU (upřímná recenze)",
+    "duration": 862,
+    "view_count": 412000,
+    "ie_key": "Youtube",
+    "id": "SoL1qipUsUA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=SoL1qipUsUA"
+   },
+   {
+    "title": "NEJLUXUSNĚJŠÍ PIZZA V ČESKU (ochutnávka)",
+    "duration": 1138,
+    "view_count": 591000,
+    "ie_key": "Youtube",
+    "id": "lTSKGdKxgwg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=lTSKGdKxgwg"
+   },
+   {
+    "title": "NEJHŮŘ HODNOCENEJ HOTEL ČESKA (přespávačka)",
+    "duration": 1253,
+    "view_count": 404000,
+    "ie_key": "Youtube",
+    "id": "y4X4OrtG4vw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=y4X4OrtG4vw"
+   },
+   {
+    "title": "50 HODIN BEZ SPÁNKU",
+    "duration": 1205,
+    "view_count": 532000,
+    "ie_key": "Youtube",
+    "id": "VZUFy8O-uC8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=VZUFy8O-uC8"
+   }
+  ],
+  "extractor_key": "YoutubeTab",
+  "extractor": "youtube:tab",
+  "webpage_url": "https://www.youtube.com/channel/UCGnJ9rpBoEaRQXxhAbDi4Xw/videos",
+  "original_url": "https://www.youtube.com/channel/UCGnJ9rpBoEaRQXxhAbDi4Xw/videos",
+  "webpage_url_basename": "videos",
+  "webpage_url_domain": "youtube.com"
+ }
+}

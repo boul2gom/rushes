@@ -8,6 +8,7 @@ from rushes.approve.approve import ApproveStep
 from rushes.assign.assign import AssignStep
 from rushes.clean.clean import CleanStep
 from rushes.cut.parts import CutStep
+from rushes.discover.discover import DiscoverYoutubeStep
 from rushes.ingest.ingest import IngestStep
 from rushes.meta.meta import MetaStep
 from rushes.package.outbox import PackageStep
@@ -15,6 +16,7 @@ from rushes.render.render import RenderStep
 from rushes.runner import Step
 
 STEPS: dict[str, Callable[[], Step[Any]]] = {
+    "discover_youtube": DiscoverYoutubeStep,
     "ingest": IngestStep,
     "clean": CleanStep,
     "analyze": AnalyzeStep,
@@ -26,6 +28,7 @@ STEPS: dict[str, Callable[[], Step[Any]]] = {
     "package": PackageStep,
 }
 RUN_ORDER: tuple[str, ...] = (
+    "discover_youtube",
     "ingest",
     "clean",
     "analyze",

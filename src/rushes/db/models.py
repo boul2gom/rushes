@@ -5,6 +5,7 @@ from sqlalchemy import (
     CheckConstraint,
     Float,
     ForeignKey,
+    Index,
     Integer,
     MetaData,
     Text,
@@ -40,6 +41,11 @@ SUBJECT_KINDS = ("series", "creator")
 RIGHTS_STATUSES = ("to_request", "requested", "granted", "refused")
 AUDIO = ("nonverbal", "dialogue_en")
 SOURCE_KINDS = ("official", "community")
+SOURCE_STATUSES = ("found", "retained", "downloaded", "rejected", "failed")
+DISCOVERED_VIA = ("popular", "search", "channel", "rss", "backfill")
+SIGNAL_KINDS = ("heatmap", "comment_ts", "sponsor_highlight", "laughter", "quote", "community")
+CHANNEL_STATUSES = ("candidate", "followed", "authorized", "rejected")
+COMPILATION_STATUSES = ("proposed", "approved", "needs_review", "rejected")
 PROVENANCES = ("official", "community", "local")
 EPISODE_STATUSES = ("imported", "split", "cleaned", "analyzed")
 CORNERS = ("tl", "tr", "bl", "br")
@@ -111,13 +117,17 @@ class SourceVideo(Base):
     __tablename__ = "source_videos"
     __table_args__ = (
         CheckConstraint(_in("kind", SOURCE_KINDS), name="kind"),
+        CheckConstraint(_in("discovered_via", DISCOVERED_VIA), name="discovered_via"),
+        CheckConstraint(_in("status", SOURCE_STATUSES), name="status"),
         {"sqlite_autoincrement": True},
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     platform: Mapped[str] = mapped_column(Text)
     url: Mapped[str] = mapped_column(Text, unique=True)
+    title: Mapped[str | None] = mapped_column(Text)
     channel_id: Mapped[str | None] = mapped_column(Text)
+    channel_handle: Mapped[str | None] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(Text)
     series_id: Mapped[str | None] = mapped_column(ForeignKey("series.id"))
     creator_id: Mapped[str | None] = mapped_column(ForeignKey("creators.id"))
@@ -130,6 +140,42 @@ class SourceVideo(Base):
     sponsorblock_json: Mapped[str | None] = mapped_column(Text)
     score: Mapped[float | None] = mapped_column(Float)
     status: Mapped[str] = mapped_column(Text)
+    discovered_via: Mapped[str | None] = mapped_column(Text)
+    extracted_at: Mapped[str | None] = mapped_column(Text)  # last full extraction (UTC ISO)
+
+
+class VideoSignal(Base):
+    """A strong moment of a source video, in the time of the SOURCE video (not clean.mp4)."""
+
+    __tablename__ = "video_signals"
+    __table_args__ = (
+        CheckConstraint(_in("kind", SIGNAL_KINDS), name="kind"),
+        Index("ix_video_signals_source_video_id_kind", "source_video_id", "kind"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    source_video_id: Mapped[int] = mapped_column(ForeignKey("source_videos.id"))
+    kind: Mapped[str] = mapped_column(Text)
+    t_ms: Mapped[int] = mapped_column(Integer)
+    weight: Mapped[float] = mapped_column(Float)
+    collected_at: Mapped[str] = mapped_column(Text)
+
+
+class Channel(Base):
+    __tablename__ = "channels"
+    __table_args__ = (
+        CheckConstraint(_in("status", CHANNEL_STATUSES), name="status"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    creator_id: Mapped[str | None] = mapped_column(ForeignKey("creators.id"))
+    platform_channel_id: Mapped[str] = mapped_column(Text, unique=True)
+    country: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="candidate")
+    momentum_score: Mapped[float | None] = mapped_column(Float)
+    discovered_via: Mapped[str | None] = mapped_column(Text)
 
 
 class Episode(Base):
@@ -214,6 +260,7 @@ class Compilation(Base):
     __tablename__ = "compilations"
     __table_args__ = (
         CheckConstraint(_in("kind", COMPILATION_KINDS), name="kind"),
+        CheckConstraint(_in("status", COMPILATION_STATUSES), name="status"),
         {"sqlite_autoincrement": True},
     )
 

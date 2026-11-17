@@ -1,11 +1,12 @@
-"""Display identifiers and file names: e_000045 (episode), s_000007 (segment), p_000123 (post)."""
+"""Display identifiers and file names: e_000045 (episode), s_000007 (segment), p_000123 (post),
+v_000012 (source video)."""
 
 import re
 from typing import Literal
 
-Kind = Literal["e", "s", "p"]
+Kind = Literal["e", "s", "p", "v"]
 
-_KEY = re.compile(r"([esp])_(\d{6,})")
+_KEY = re.compile(r"([espv])_(\d{6,})")
 
 
 def _key(kind: Kind, value: int) -> str:
@@ -26,9 +27,15 @@ def post_key(post_id: int) -> str:
     return _key("p", post_id)
 
 
+def source_key(source_video_id: int) -> str:
+    return _key("v", source_video_id)
+
+
 def parse_key(key: str) -> tuple[Kind, int]:
     match = _KEY.fullmatch(key)
     if not match:
-        raise ValueError(f"identifiant invalide : {key!r} (attendu e_000045, s_000007 ou p_000123)")
-    kind: Kind = "e" if match.group(1) == "e" else "s" if match.group(1) == "s" else "p"
-    return kind, int(match.group(2))
+        raise ValueError(
+            f"identifiant invalide : {key!r} (attendu e_000045, s_000007, p_000123 ou v_000012)"
+        )
+    kinds: dict[str, Kind] = {"e": "e", "s": "s", "p": "p", "v": "v"}
+    return kinds[match.group(1)], int(match.group(2))

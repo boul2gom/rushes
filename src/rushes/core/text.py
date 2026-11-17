@@ -13,6 +13,11 @@ def _fold(text: str) -> str:
     return "".join(ch for ch in decomposed if not unicodedata.combining(ch)).lower()
 
 
+def fold_text(text: str) -> str:
+    """Lowercase ASCII-folded words separated by single spaces ('Tom & Jérry' → 'tom jerry')."""
+    return " ".join(re.sub(r"[^\w]+", " ", _fold(text)).split())
+
+
 def hashtag_from_name(name: str) -> str:
     """'Tom and Jerry' → '#tomandjerry': accents folded, only [a-z0-9] kept."""
     return "#" + _NOT_ALNUM.sub("", _fold(name))

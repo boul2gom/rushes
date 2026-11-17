@@ -1,0 +1,517 @@
+{
+ "request": {
+  "url": "https://www.youtube.com/channel/UCNEKMkg_DG8eAyR1BNWsSvw/videos",
+  "flat": true,
+  "platform": "youtube",
+  "comments": 0,
+  "playlist_items": "1:50"
+ },
+ "info": {
+  "id": "UCNEKMkg_DG8eAyR1BNWsSvw",
+  "channel": "OGGY",
+  "channel_id": "UCNEKMkg_DG8eAyR1BNWsSvw",
+  "title": "OGGY - Videos",
+  "availability": "public",
+  "channel_follower_count": 14000000,
+  "description": "Welcome to the official Oggy Youtube channel!\n\nSubscribe and get new episodes of Oggy and the Cockroaches every week! Watch tons of gags and discover lots of exclusive material: assortment of episodes sorted by theme, a grab-bag of wacky excerpts, making-of, behind-the-scenes videos… and a lot more! Join Oggy channel and boost your fun with Oggy, Joey, Dee Dee and Marky!!\n\nOggy and the cockroaches, a worldwide hit that kids and parents alike love watching together!\nHe’s blue, he’s a good guy and he wouldn’t hurt a fly. Here is OGGY, the only cat the word « feline » can’t apply to. He would be the happiest of cats if three hideous cockroaches hadn’t decided to settle inside his comfortable home: JOEY, DEEDEE, and MARKY. They are ugly, stupid, nasty and determined to make Oggy’s life a misery. \nIt’s fast, it’s crazy and it’s hilarious… it’s OGGY AND THE COCKROACHES!",
+  "tags": [
+   "Oggy",
+   "Oggy and the Cockroaches",
+   "Oggy et les cafards",
+   "ogy",
+   "oggi",
+   "ogi",
+   "oggy oggy",
+   "oggy tv",
+   "tv cartoon (TV Genre)",
+   "Oggy (TV Genre)",
+   "Oggy and the Cockroaches (TV Genre)",
+   "Cockroaches",
+   "cafards",
+   "french cartoon",
+   "new cartoon",
+   "cartoon",
+   "popular",
+   "new episode",
+   "compilation",
+   "compil",
+   "best cartoon",
+   "funny cartoon",
+   "cartoons",
+   "new cartoons",
+   "cartoon for kids",
+   "animation",
+   "anime",
+   "new",
+   "animated movie",
+   "animals",
+   "kids",
+   "video for kids",
+   "animated cartoon (TV Genre)",
+   "Oggy und die Kakerlaken"
+  ],
+  "uploader_id": "@oggy",
+  "uploader_url": "https://www.youtube.com/@oggy",
+  "channel_is_verified": true,
+  "uploader": "OGGY",
+  "channel_url": "https://www.youtube.com/channel/UCNEKMkg_DG8eAyR1BNWsSvw",
+  "_type": "playlist",
+  "entries": [
+   {
+    "title": "Oggy and the Cockroaches - Oggy VS Jack! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4064,
+    "view_count": 94000,
+    "ie_key": "Youtube",
+    "id": "kEKPBVIjOh8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=kEKPBVIjOh8"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy Starts Painting! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 127000,
+    "ie_key": "Youtube",
+    "id": "Xjr34_E5npE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Xjr34_E5npE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy’s Favorite Show! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1199,
+    "view_count": 91000,
+    "ie_key": "Youtube",
+    "id": "Yu0R1M8UzuY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Yu0R1M8UzuY"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Witch’s Curse! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1597,
+    "view_count": 111000,
+    "ie_key": "Youtube",
+    "id": "jMkjNyGo37U",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=jMkjNyGo37U"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Into the Wild | Best Cartoon Collection | New Episodes in HD",
+    "duration": 4064,
+    "view_count": 206000,
+    "ie_key": "Youtube",
+    "id": "7-hHwfIeiQo",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=7-hHwfIeiQo"
+   },
+   {
+    "title": "Oggy and the Cockroaches - A Real Monster! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1203,
+    "view_count": 74000,
+    "ie_key": "Youtube",
+    "id": "i6P0mdN4Zcs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=i6P0mdN4Zcs"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Invincible | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1200,
+    "view_count": 631000,
+    "ie_key": "Youtube",
+    "id": "QeuDASpWorg",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=QeuDASpWorg"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy the Knight! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3980,
+    "view_count": 110000,
+    "ie_key": "Youtube",
+    "id": "riFazZJ_RBQ",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=riFazZJ_RBQ"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Cold Is Back! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 197000,
+    "ie_key": "Youtube",
+    "id": "Z74qtrYW9J8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Z74qtrYW9J8"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Golden eggs | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1199,
+    "view_count": 159000,
+    "ie_key": "Youtube",
+    "id": "-lCA2oCRNr4",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=-lCA2oCRNr4"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Not Another Roach! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 469000,
+    "ie_key": "Youtube",
+    "id": "D1Z52uh9HcM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=D1Z52uh9HcM"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Sudden Chill! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 268000,
+    "ie_key": "Youtube",
+    "id": "xUp_uT0F5OI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=xUp_uT0F5OI"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy Makes a Scene! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1199,
+    "view_count": 137000,
+    "ie_key": "Youtube",
+    "id": "CzvFXb2MuLk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=CzvFXb2MuLk"
+   },
+   {
+    "title": "Oggy and the Cockroaches - A new Oggy? | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4027,
+    "view_count": 223000,
+    "ie_key": "Youtube",
+    "id": "Fc5UQDLDAL8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Fc5UQDLDAL8"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Roommate Wanted! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4062,
+    "view_count": 144000,
+    "ie_key": "Youtube",
+    "id": "mdYQpDDEQgc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=mdYQpDDEQgc"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Troublemakers | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4027,
+    "view_count": 214000,
+    "ie_key": "Youtube",
+    "id": "l9CveYiyA8o",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=l9CveYiyA8o"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy’s Parents Visit! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 277000,
+    "ie_key": "Youtube",
+    "id": "HqguGMh0MB0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=HqguGMh0MB0"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Mission Impossible | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3598,
+    "view_count": 192000,
+    "ie_key": "Youtube",
+    "id": "SjXKLMecSi8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=SjXKLMecSi8"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy on the Run! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3596,
+    "view_count": 1300000,
+    "ie_key": "Youtube",
+    "id": "HxFAcsQGww8",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=HxFAcsQGww8"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy on the Run! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4027,
+    "view_count": 453000,
+    "ie_key": "Youtube",
+    "id": "i_CaJZrbDNE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=i_CaJZrbDNE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy and the Magic Shoes  | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 245000,
+    "ie_key": "Youtube",
+    "id": "ff1opsKkN94",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=ff1opsKkN94"
+   },
+   {
+    "title": "Oggy and the Cockroaches - What Happened to Oggy? | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4027,
+    "view_count": 112000,
+    "ie_key": "Youtube",
+    "id": "npftSWs2oSM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=npftSWs2oSM"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Hold On, Oggy! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 229000,
+    "ie_key": "Youtube",
+    "id": "UV7cOrbFziM",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=UV7cOrbFziM"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Can Winter Come Back? | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3598,
+    "view_count": 112000,
+    "ie_key": "Youtube",
+    "id": "u69v42ffFQY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=u69v42ffFQY"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy’s Lost Shadow! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 278000,
+    "ie_key": "Youtube",
+    "id": "TQ1WiFIM1vA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=TQ1WiFIM1vA"
+   },
+   {
+    "title": "Oggy and the Cockroaches -  Jack's Nephew | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4074,
+    "view_count": 507000,
+    "ie_key": "Youtube",
+    "id": "r4lpRhx0lTk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=r4lpRhx0lTk"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The burglary | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4095,
+    "view_count": 517000,
+    "ie_key": "Youtube",
+    "id": "qYT-gmnKl2Y",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=qYT-gmnKl2Y"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Jack Takes It Easy | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3598,
+    "view_count": 245000,
+    "ie_key": "Youtube",
+    "id": "j-teyICZYkE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=j-teyICZYkE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Farmer for a Day | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4064,
+    "view_count": 534000,
+    "ie_key": "Youtube",
+    "id": "8YtEGW8gMvk",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=8YtEGW8gMvk"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Great Race | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3596,
+    "view_count": 380000,
+    "ie_key": "Youtube",
+    "id": "GBPoy-4udDU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GBPoy-4udDU"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Strange Guests | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4062,
+    "view_count": 722000,
+    "ie_key": "Youtube",
+    "id": "fTQRMEefI1o",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=fTQRMEefI1o"
+   },
+   {
+    "title": "Oggy and the Cockroaches -  Laundry Day | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3577,
+    "view_count": 203000,
+    "ie_key": "Youtube",
+    "id": "SrtxN_whGJs",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=SrtxN_whGJs"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Invisible Cat | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4094,
+    "view_count": 752000,
+    "ie_key": "Youtube",
+    "id": "c_PmLfS7TAI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=c_PmLfS7TAI"
+   },
+   {
+    "title": "Discover Toon Box | Our 100% safe streaming platform for kids aged 3 to 10",
+    "duration": 31,
+    "ie_key": "Youtube",
+    "id": "1beyEHmyYQ0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=1beyEHmyYQ0"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Costume Shop | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3596,
+    "view_count": 544000,
+    "ie_key": "Youtube",
+    "id": "3U8EvJbyaXE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=3U8EvJbyaXE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy and the Shark | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 66000,
+    "ie_key": "Youtube",
+    "id": "tIqIAXMcrXE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=tIqIAXMcrXE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy feels lonely | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3598,
+    "view_count": 188000,
+    "ie_key": "Youtube",
+    "id": "BXmZVF1WctA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=BXmZVF1WctA"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Easter Egg Hunt | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 1992,
+    "view_count": 380000,
+    "ie_key": "Youtube",
+    "id": "GAkWZZqyETc",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=GAkWZZqyETc"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Little Thieves | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3596,
+    "view_count": 395000,
+    "ie_key": "Youtube",
+    "id": "twzHNrV8pA0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=twzHNrV8pA0"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Is that really Oggy? | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 161000,
+    "ie_key": "Youtube",
+    "id": "ouoEDujG4IA",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=ouoEDujG4IA"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Joey the boss | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4096,
+    "view_count": 964000,
+    "ie_key": "Youtube",
+    "id": "xrZif6XNjdw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=xrZif6XNjdw"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Cockroaches Tease | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3597,
+    "view_count": 623000,
+    "ie_key": "Youtube",
+    "id": "Vl2riHVAmD0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Vl2riHVAmD0"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Oggy on Vacation | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4559,
+    "view_count": 1700000,
+    "ie_key": "Youtube",
+    "id": "Q1MaYD4bpYw",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Q1MaYD4bpYw"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Catch Me If You Can | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3577,
+    "view_count": 161000,
+    "ie_key": "Youtube",
+    "id": "0AWO9FfSAqI",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=0AWO9FfSAqI"
+   },
+   {
+    "title": "Oggy and the Cockroaches - No Laughing at Joey! | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 3598,
+    "view_count": 372000,
+    "ie_key": "Youtube",
+    "id": "018RvK9ZKgE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=018RvK9ZKgE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Lost in the jungle | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 2397,
+    "view_count": 248000,
+    "ie_key": "Youtube",
+    "id": "yaa3hEJ3UcU",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=yaa3hEJ3UcU"
+   },
+   {
+    "title": "Oggy and the Cockroaches - Jack is afraid of heights | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 5664,
+    "view_count": 340000,
+    "ie_key": "Youtube",
+    "id": "6FZxMQuac8Q",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=6FZxMQuac8Q"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Cockroaches are making a mess | BEST CARTOON COLLECTION | HD",
+    "duration": 2397,
+    "view_count": 241000,
+    "ie_key": "Youtube",
+    "id": "Q5ZiDWpnSK0",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=Q5ZiDWpnSK0"
+   },
+   {
+    "title": "Oggy and the Cockroaches - A new friend | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 4397,
+    "view_count": 797000,
+    "ie_key": "Youtube",
+    "id": "FihmxWfF2fE",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=FihmxWfF2fE"
+   },
+   {
+    "title": "Oggy and the Cockroaches - The Million Dollar Match | BEST CARTOON COLLECTION | New Episodes in HD",
+    "duration": 5261,
+    "view_count": 465000,
+    "ie_key": "Youtube",
+    "id": "PTB3i0slqPY",
+    "_type": "url",
+    "url": "https://www.youtube.com/watch?v=PTB3i0slqPY"
+   }
+  ],
+  "extractor_key": "YoutubeTab",
+  "extractor": "youtube:tab",
+  "webpage_url": "https://www.youtube.com/channel/UCNEKMkg_DG8eAyR1BNWsSvw/videos",
+  "original_url": "https://www.youtube.com/channel/UCNEKMkg_DG8eAyR1BNWsSvw/videos",
+  "webpage_url_basename": "videos",
+  "webpage_url_domain": "youtube.com"
+ }
+}

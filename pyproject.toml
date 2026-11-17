@@ -102,5 +102,9 @@ module = ["scipy", "scipy.*"]
 ignore_missing_imports = true  # no stubs (scipy-stubs is not a dependency)
 
 [[tool.mypy.overrides]]
+module = ["yt_dlp", "yt_dlp.*"]
+ignore_missing_imports = true  # no stubs shipped (types-yt-dlp is not a dependency)
+
+[[tool.mypy.overrides]]
 module = ["scenedetect", "scenedetect.*", "silero_vad", "silero_vad.*"]
 ignore_missing_imports = true  # no stubs and no py.typed marker

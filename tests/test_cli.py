@@ -31,7 +31,6 @@ def _reset_cli_state(monkeypatch: pytest.MonkeyPatch) -> None:
 # command -> task that implements it (a string: tasks have suffixes such as "8a").
 # A task that implements a command moves it from PENDING to IMPLEMENTED.
 PENDING: dict[str, str] = {
-    "discover youtube": "10a",
     "discover series": "38",
     "rights list": "38",
     "serve": "36",
@@ -65,6 +64,7 @@ IMPLEMENTED: tuple[str, ...] = (
     "run",
     "models fetch",
     "models check",
+    "discover youtube",
 )
 
 
@@ -368,7 +368,7 @@ def test_ingest_command_with_an_unknown_folder_exits_0_with_a_warning(
 
 def test_steps_registry_has_ingest_and_clean() -> None:
     assert {"ingest", "clean"} <= set(steps.STEPS)
-    assert steps.RUN_ORDER[:2] == ("ingest", "clean")
+    assert steps.RUN_ORDER[1:3] == ("ingest", "clean")
 
 
 # --- task 5: analyze ----------------------------------------------------------------------------
@@ -492,9 +492,10 @@ def _settled(ctx: Context, post_id: int, delivery: Path) -> None:
 # --- task 8b: package, run ----------------------------------------------------------------------
 
 
-def test_run_order_ends_with_package() -> None:
+def test_run_order_starts_with_discovery_and_ends_with_package() -> None:
     assert steps.RUN_ORDER == (
-        "ingest", "clean", "analyze", "cut", "approve", "assign", "render", "meta", "package",
+        "discover_youtube", "ingest", "clean", "analyze", "cut", "approve", "assign", "render",
+        "meta", "package",
     )  # fmt: skip
     assert steps.STEPS["package"].name == "package"
 
@@ -522,8 +523,11 @@ def test_run_command_chains_the_steps_and_names_the_index(
     delivery: Path,
     config_dir: Path,
     edit_yaml: Callable[..., None],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from helpers import packable_post
+
+    monkeypatch.setitem(steps.STEPS, "discover_youtube", lambda: FakeStep(items=()))  # no network
 
     # a post that is not a test needs a licensed series (R14): the packer checks it again
     edit_yaml(config_dir / "series" / "tom_and_jerry.yaml", lambda d: d.update(licensed=True))
@@ -544,9 +548,11 @@ def test_run_command_chains_the_steps_and_names_the_index(
 
 
 def test_run_summary_names_the_test_index_when_only_showcase_posts_exist(
-    cli_env: CliRunner, ctx: Context, delivery: Path
+    cli_env: CliRunner, ctx: Context, delivery: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from helpers import packable_post
+
+    monkeypatch.setitem(steps.STEPS, "discover_youtube", lambda: FakeStep(items=()))  # no network
 
     post_id = packable_post(ctx, delivery, test=True)
     _settled(ctx, post_id, delivery)
@@ -673,3 +679,20 @@ def test_models_fetch_network_failure_is_a_clean_error(
     result = cli_env.invoke(app, ["models", "fetch"])
     assert result.exit_code == 5  # SourceUnavailable
     assert "échec de la connexion" in result.output and "Traceback" not in result.output
+
+
+# --- task 10a: discover youtube ----------------------------------------------------------------
+
+
+def test_discover_youtube_command_runs_its_step(
+    cli_env: CliRunner, monkeypatch: pytest.MonkeyPatch, data_dir: Path
+) -> None:
+    monkeypatch.setitem(steps.STEPS, "discover_youtube", FakeStep)
+    result = cli_env.invoke(app, ["--json", "discover", "youtube", "--series", "oggy", "--force"])
+    assert result.exit_code == 0, result.output
+    assert '"step": "fake"' in result.output
+    con = sqlite3.connect(data_dir / "rushes.db")
+    assert con.execute("SELECT command, exit_code FROM runs").fetchall() == [
+        ("discover youtube", 0)
+    ]
+    con.close()

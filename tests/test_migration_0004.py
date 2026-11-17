@@ -33,7 +33,7 @@ def test_migration_0004_adds_split_columns_and_keeps_rows(tmp_path: Path) -> Non
     db = tmp_path / "rushes.db"
     upgrade(db, "0003")
     _seed(db)
-    upgrade(db)
+    upgrade(db, "0004")
     assert current_revision(db) == "0004"
     con = sqlite3.connect(db)
     con.execute("PRAGMA foreign_keys=ON")
@@ -58,7 +58,7 @@ def test_migration_0004_constraints(tmp_path: Path) -> None:
     db = tmp_path / "rushes.db"
     upgrade(db, "0003")
     _seed(db)
-    upgrade(db)
+    upgrade(db, "0004")
     con = sqlite3.connect(db)
     con.execute("PRAGMA foreign_keys=ON")
     _insert(con, "parent:1", "split")  # the new status
@@ -78,6 +78,6 @@ def test_migration_0004_constraints(tmp_path: Path) -> None:
 
 def test_r16_migration_0004_again_changes_nothing(tmp_path: Path) -> None:
     db = tmp_path / "rushes.db"
-    upgrade(db)
-    upgrade(db)
+    upgrade(db, "0004")
+    upgrade(db, "0004")
     assert current_revision(db) == "0004"
