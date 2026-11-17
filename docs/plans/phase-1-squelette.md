@@ -1424,11 +1424,11 @@ deux vrais épisodes déposés par Louis dans `data/import/tom_and_jerry/` et `d
 
 ## Porte de sortie de la phase 1
 
-- [ ] `rushes run` produit un `outbox_test/` complet (vidéo conforme R7, couverture, légende, `upload.json`,
+- [x] `rushes run` produit un `outbox_test/` complet (vidéo conforme R7, couverture, légende, `upload.json`,
   `INDEX.html`) sur la vidéo synthétique **et** sur 2 vrais épisodes, sur le serveur, dans l'image.
-- [ ] Relancer `rushes run` ne change rien (R16).
-- [ ] Rapport de mesures consigné dans `docs/decisions.md`.
-- [ ] `tests/rules_pending.toml` ne contient plus R12, R19, R20, R22, R27, R39, R40, R41 (règles closes pendant la
+- [x] Relancer `rushes run` ne change rien (R16).
+- [x] Rapport de mesures consigné dans `docs/decisions.md`.
+- [x] `tests/rules_pending.toml` ne contient plus R12, R19, R20, R22, R27, R39, R40, R41 (règles closes pendant la
   phase 1). Les autres restent jusqu'à leur dernière tâche, selon la matrice du plan maître (par exemple R1 et R14
   (40a), R2 (17), R3 (32), R5 (13), R7 (35), R13 (40a), R17 (24)) : C48 et C49.
-- [ ] Suite rapide verte sur le Mac ; suite `slow` verte dans l'image sur le serveur ; ruff et mypy propres.
+- [x] Suite rapide verte sur le Mac ; suite `slow` verte dans l'image sur le serveur ; ruff et mypy propres.
