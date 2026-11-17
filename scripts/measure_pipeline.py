@@ -14,12 +14,21 @@ that ingest just created (first pass only, never `--force`); it exits 1 when ing
 skipped): steps already done are skipped by the pipeline (R16) and show about 0 s, so this is only
 meaningful to finish an episode whose run failed or was interrupted.
 
+`run --episode` of a compilation only runs `clean`, which splits it into child episodes; the
+children are separate episodes. So each `run --episode` is followed by one run per child (read from
+the database, depth-first, each episode once), and the report keeps `parent` and `steps_done` per
+entry. Steps are not separable inside a command: the memory of a command covers all the steps run
+for that episode. The aggregated `steps` only count the entries that really did the step (items
+done or warned). Measuring only a child gives `video_minutes` 0.0 (top-level sources only); its
+minutes appear in `children_video_minutes`.
+
 Seconds per step come from the `runs` table (`summary_json`), per-item times from the command's
 `--json` stream (the same events as `logs/<date>.jsonl`). Memory: `peak_rss_mb` is the `ru_maxrss`
 of the command's process (the maximum over that process and the children it waited for, not their
 sum). `cgroup_peak_mib` is `memory.peak` of the container's cgroup v2 (all processes, e.g. Python
-plus ffmpeg), read after each command and CUMULATIVE since the container started; it counts the
-page cache (a model read with mmap, the videos), so it is an upper bound of the memory used.
+plus ffmpeg), read after each command and CUMULATIVE since the container started (only its
+maximum over the commands is meaningful); it counts the page cache (a model read with mmap, the
+videos), so it is an upper bound of the memory used.
 `cgroup_anon_mib` is `anon` of `memory.stat`: the processes' own memory at the moment of reading,
 after the command, not a peak. Both are null when the files are absent (cgroup v1, macOS).
 A command running longer than RUN_TIMEOUT_S is killed (its whole process group) and reported as
@@ -113,16 +122,45 @@ def parse_events(text: str) -> list[dict[str, Any]]:
     return events
 
 
+def _report_items(summary: str | None) -> list[Any]:
+    """The `reports` of one `summary_json`; empty when it is missing or malformed."""
+    try:
+        reports = json.loads(summary or "")["reports"]
+    except ValueError, KeyError, TypeError:
+        return []
+    return reports if isinstance(reports, list) else []
+
+
 def step_seconds(summaries: Iterable[str | None]) -> dict[str, float]:
-    """Seconds per step, summed over the `summary_json` of the given runs."""
+    """Seconds per step, summed over the `summary_json` of the given runs.
+
+    A malformed report item is skipped.
+    """
     totals: dict[str, float] = {}
     for summary in summaries:
-        try:
-            reports = json.loads(summary or "")["reports"]
-        except ValueError, KeyError, TypeError:
-            continue
-        for item in reports:
-            totals[item["step"]] = totals.get(item["step"], 0.0) + item["duration_ms"] / 1000
+        for item in _report_items(summary):
+            try:
+                step, seconds = item["step"], item["duration_ms"] / 1000
+            except KeyError, TypeError:
+                continue
+            totals[step] = totals.get(step, 0.0) + seconds
+    return totals
+
+
+def step_done(summaries: Iterable[str | None]) -> dict[str, int]:
+    """Items really done per step (`done` + `warned`), summed over the `summary_json` of the runs.
+
+    `warned` counts: meta and approve return it after doing their work. A malformed item is
+    skipped.
+    """
+    totals: dict[str, int] = {}
+    for summary in summaries:
+        for item in _report_items(summary):
+            try:
+                step, count = item["step"], int(item.get("done", 0)) + int(item.get("warned", 0))
+            except KeyError, TypeError, ValueError, AttributeError:
+                continue
+            totals[step] = totals.get(step, 0) + count
     return totals
 
 
@@ -198,6 +236,22 @@ def new_episodes(db: Path, *, after: int) -> list[tuple[int, int]]:
     return [(int(row[0]), int(row[1])) for row in rows]
 
 
+def children_of(db: Path, parent_id: int) -> list[tuple[int, int]]:
+    """(id, duration_ms) of the child episodes of `parent_id`, by id."""
+    rows = _query(
+        db,
+        "SELECT id, duration_ms FROM episodes WHERE parent_episode_id = ? ORDER BY id",
+        (parent_id,),
+    )
+    return [(int(row[0]), int(row[1])) for row in rows]
+
+
+def parent_of(db: Path, episode_id: int) -> int | None:
+    """`parent_episode_id` of the episode; None for a top-level episode or an unknown id."""
+    rows = _query(db, "SELECT parent_episode_id FROM episodes WHERE id = ?", (episode_id,))
+    return int(rows[0][0]) if rows and rows[0][0] is not None else None
+
+
 # --- the measurement -------------------------------------------------------------------------
 
 
@@ -266,7 +320,8 @@ def _record(
     mark = max_run_id(paths.db)
     result = runner(args)
     runs = read_runs(paths.db, after=mark)
-    seconds = step_seconds(run["summary_json"] for run in runs)
+    summaries = [run["summary_json"] for run in runs]
+    seconds = step_seconds(summaries)
     record = {
         "command": " ".join(args),
         "exit_code": result["returncode"],
@@ -278,8 +333,20 @@ def _record(
         "run_ids": [run["id"] for run in runs],
         "step_seconds": {step: round(value, 3) for step, value in seconds.items()},
         "seconds_per_video_minute": per_video_minute(seconds, video_ms=video_ms),
+        "steps_done": step_done(summaries),
     }
     return record, result["events"]
+
+
+def _has_listed_ancestor(db: Path, episode_id: int, listed: set[int]) -> bool:
+    seen = {episode_id}
+    parent = parent_of(db, episode_id)
+    while parent is not None and parent not in seen:
+        if parent in listed:
+            return True
+        seen.add(parent)
+        parent = parent_of(db, parent)
+    return False
 
 
 def measure(
@@ -287,6 +354,7 @@ def measure(
 ) -> dict[str, Any]:
     """Ingest what was dropped, then run the pipeline once per new episode (never `--force`).
 
+    Each episode is followed by its children (depth-first, each episode once).
     With `episodes`, ingest is skipped and those already-ingested episodes are measured.
     """
     note = ""
@@ -312,23 +380,40 @@ def measure(
         if missing:
             note = f"épisode(s) introuvable(s) dans la base : {', '.join(missing)}"
             created = []
-    total_ms = sum(duration for _, duration in created)
+
+    # a listed episode whose ancestor is also listed is measured under that ancestor
+    listed = {episode_id for episode_id, _ in created}
+    roots = [item for item in created if not _has_listed_ancestor(paths.db, item[0], listed)]
 
     measured: list[dict[str, Any]] = []
     all_events: list[dict[str, Any]] = []
-    for episode_id, duration_ms in created:
+    pending = list(reversed(roots))  # stack: the next episode to measure is the last item
+    seen: set[int] = set()
+    while pending:
+        episode_id, duration_ms = pending.pop()
+        if episode_id in seen:
+            continue
+        seen.add(episode_id)
         key = episode_key(episode_id)
         record, events = _record(paths, runner, ["run", "--episode", key], video_ms=duration_ms)
         all_events.extend(events)
-        measured.append({"episode": key, "video_s": duration_ms / 1000, **record})
+        parent_id = parent_of(paths.db, episode_id)
+        parent = episode_key(parent_id) if parent_id is not None else None
+        measured.append({"episode": key, "parent": parent, "video_s": duration_ms / 1000, **record})
+        children = [child for child in children_of(paths.db, episode_id) if child[0] not in seen]
+        pending.extend(reversed(children))
+    top_ms = sum(round(e["video_s"] * 1000) for e in measured if e["parent"] is None)
+    children_ms = sum(round(e["video_s"] * 1000) for e in measured if e["parent"] is not None)
 
     steps: dict[str, dict[str, Any]] = {}
-    for step in dict.fromkeys(s for e in measured for s in e["seconds_per_video_minute"]):
+    for step in dict.fromkeys(s for e in measured for s, n in e["steps_done"].items() if n > 0):
         values = [
             e["seconds_per_video_minute"][step]
             for e in measured
-            if step in e["seconds_per_video_minute"]
+            if e["steps_done"].get(step, 0) > 0 and step in e["seconds_per_video_minute"]
         ]
+        if not values:
+            continue
         steps[step] = {
             "episodes": len(values),
             "seconds_per_video_minute_mean": round(statistics.fmean(values), 3),
@@ -342,7 +427,8 @@ def measure(
         "platform": sys.platform,
         "ok": bool(created) and not failed and not note,
         "note": note,
-        "video_minutes": round(total_ms / 60_000, 3),
+        "video_minutes": round(top_ms / 60_000, 3),
+        "children_video_minutes": round(children_ms / 60_000, 3),
         "ingest": ingest,
         "episodes": measured,
         "steps": steps,
