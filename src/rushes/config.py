@@ -155,7 +155,17 @@ class ServeSettings(_Model):
 
 class ModelSettings(_Model):
     whisper: Literal["base", "small"] = "small"
-    clip_pretrained: str = "datacomp_xl_s13b_b90k"
+    clip_pretrained: Literal["datacomp_xl_s13b_b90k"] = "datacomp_xl_s13b_b90k"  # the manifest's
+
+    @field_validator("clip_pretrained", mode="before")
+    @classmethod
+    def _clip_in_french(cls, value: Any) -> Any:
+        if value != "datacomp_xl_s13b_b90k":
+            raise ValueError(
+                "clip_pretrained: seuls les poids du manifeste sont disponibles "
+                "(datacomp_xl_s13b_b90k)"
+            )
+        return value
 
 
 class NtfySettings(_Model):
@@ -315,6 +325,15 @@ class IngestSettings(_Model):
     max_height: int = Field(1080, ge=1)  # tallest video downloaded
 
 
+class AnalyzeSettings(_Model):
+    """Vision (task 12a): CLIP tags and characters; every value is a starting point."""
+
+    tag_min_cos: float = Field(0.24, ge=-1, le=1)  # image-to-prompt cosine that gives a tag
+    tag_top: int = Field(3, ge=1)  # tags kept per scene
+    character_min_cos: float = Field(0.82, ge=-1, le=1)  # image-to-reference cosine: present
+    clip_batch: int = Field(32, ge=1)  # key images encoded at once
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -330,6 +349,7 @@ class Settings(_Model):
     clean: CleanSettings = CleanSettings()
     discover: DiscoverSettings = DiscoverSettings()
     ingest: IngestSettings = IngestSettings()
+    analyze: AnalyzeSettings = AnalyzeSettings()
     ntfy: NtfySettings | None = None
 
 

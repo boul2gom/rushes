@@ -17,7 +17,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from fakes.clock import FakeClock
-from fakes.models import FakeVad
+from fakes.models import FakeImageEncoder, FakeVad
 from fakes.net import FakeHttp, FakeYtDlp
 from rushes.clean.clean import CleanStep
 from rushes.config import load_config
@@ -74,7 +74,8 @@ def make_context(
         engine=engine,
         ui=ui,
         clock=clock,
-        models=hub or ModelHub(paths, config.settings, factories={"vad": FakeVad}),
+        models=hub
+        or ModelHub(paths, config.settings, factories={"vad": FakeVad, "clip": FakeImageEncoder}),
         net=net or NetClients(ytdlp=FakeYtDlp(), http=FakeHttp()),
     )
 

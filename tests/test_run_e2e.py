@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
-from fakes.models import FakeVad
+from fakes.models import FakeImageEncoder, FakeVad
 from fixtures.generator import Synth, SynthSpec
 from helpers import snapshot
 from rushes.cli import app
@@ -41,6 +41,7 @@ def episode_run(
     The cheapest settings: ultrafast encode, a fake speech detector, every account on the base
     originality (the advanced module is task 35) and no network."""
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "vad", FakeVad)
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", FakeImageEncoder)
     edit_yaml(
         config_dir / "settings.yaml", lambda d: d.update(render={"preset": "ultrafast", "crf": 30})
     )
@@ -91,6 +92,7 @@ def test_run_e2e_synthetic_episode(episode_run: Callable[[], Any], ctx: Context)
         "ingest",
         "clean",
         "analyze",
+        "vision",
         "cut",
         "approve",
         "assign",

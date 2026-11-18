@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     Text,
     UniqueConstraint,
@@ -382,3 +383,37 @@ class DerivedValueHistory(Base):
     source: Mapped[str] = mapped_column(Text)
     confidence: Mapped[float] = mapped_column(Float)
     computed_at: Mapped[str] = mapped_column(Text)
+
+
+class SceneVector(Base):
+    """CLIP vector of a scene's key image (task 12a); deleted with its scene (ON DELETE CASCADE).
+
+    One row per scene: vision replaces the rows of an episode together when the model changes.
+    """
+
+    __tablename__ = "scene_vectors"
+
+    scene_id: Mapped[int] = mapped_column(
+        ForeignKey("scenes.id", ondelete="CASCADE"), primary_key=True, autoincrement=False
+    )
+    model: Mapped[str] = mapped_column(Text)  # "ViT-B-32/<pretrained>"
+    dim: Mapped[int] = mapped_column(Integer)
+    embedding: Mapped[bytes] = mapped_column(LargeBinary)  # float32, little endian
+
+
+class Word(Base):
+    """A transcribed word of an episode, in clean.mp4 time (filled by task 12c)."""
+
+    __tablename__ = "words"
+    __table_args__ = (
+        Index("ix_words_episode_id_start_ms", "episode_id", "start_ms"),
+        {"sqlite_autoincrement": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    episode_id: Mapped[int] = mapped_column(ForeignKey("episodes.id"))
+    start_ms: Mapped[int] = mapped_column(Integer)
+    end_ms: Mapped[int] = mapped_column(Integer)
+    word: Mapped[str] = mapped_column(Text)
+    prob: Mapped[float] = mapped_column(Float)
+    sentence_id: Mapped[int | None] = mapped_column(Integer)

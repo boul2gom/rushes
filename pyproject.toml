@@ -106,5 +106,5 @@ module = ["yt_dlp", "yt_dlp.*"]
 ignore_missing_imports = true  # no stubs shipped (types-yt-dlp is not a dependency)
 
 [[tool.mypy.overrides]]
-module = ["scenedetect", "scenedetect.*", "silero_vad", "silero_vad.*"]
+module = ["scenedetect", "scenedetect.*", "silero_vad", "silero_vad.*", "open_clip", "open_clip.*"]
 ignore_missing_imports = true  # no stubs and no py.typed marker

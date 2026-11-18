@@ -35,4 +35,6 @@ serve: {host: 0.0.0.0, port: 8080, public_origin: "https://rushes.<domaine>"}   
 # ingest:                           # téléchargement YouTube : valeurs de départ, décommenter pour forcer
 #   {max_downloads_per_run: 6, stock_days_target: 14, est_post_s: 90,
 #    community_max_per_series: 5, max_height: 1080}
+# analyze:                          # vision (CLIP) : valeurs de départ, décommenter pour forcer
+#   {tag_min_cos: 0.24, tag_top: 3, character_min_cos: 0.82, clip_batch: 32}
 ntfy: {url: "https://ntfy.<domaine>", topic_env: NTFY_TOPIC, token_env: NTFY_TOKEN}

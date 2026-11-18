@@ -6,20 +6,26 @@ from collections.abc import Callable, Sequence
 from typing import Annotated, Any, NoReturn
 
 import typer
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from typer.exceptions import TyperException
 
 from rushes import steps
+from rushes.analyze.index import search_scenes
 from rushes.config import ConfigError, load_config
 from rushes.context import Context, Filters, app_version, build_context
+from rushes.db.models import Scene, SceneVector
 from rushes.errors import EXIT_ERROR, EXIT_INVALID_CONFIG, RushesError
-from rushes.ids import parse_key
+from rushes.ids import episode_key, parse_key
+from rushes.lock import heavy_lock
 from rushes.models import fetch as model_fetch
+from rushes.models.clip import MODEL_ID
 from rushes.net.base import Http
 from rushes.net.http import UrllibHttp
 from rushes.paths import Paths
 from rushes.runner import Step, run_pipeline
 from rushes.status import collect_status
-from rushes.ui import Emitter, Message, Table, emit_trace, make_emitter
+from rushes.ui import Emitter, Message, Table, emit_trace, format_duration, make_emitter
 
 EXIT_NOT_IMPLEMENTED = EXIT_ERROR
 
@@ -288,7 +294,7 @@ app.command("clean", help="Retire génériques, cartons, noirs et silences en bo
     _pipeline_command("clean", ("clean",))
 )
 app.command("analyze", help="Plans, audio, parole et index des scènes.")(
-    _pipeline_command("analyze", ("analyze",))
+    _pipeline_command("analyze", ("analyze", "vision"))
 )
 app.command("cut", help="Découpe en parties et best-of.")(_pipeline_command("cut", ("cut",)))
 app.command("approve", help="Approbation automatique des passages.")(
@@ -315,6 +321,61 @@ discover.command("youtube", help="Métadonnées, heatmap, commentaires et score.
 discover.command("series", help="Séries en tendance et chaînes officielles.")(_plain_stub("38"))
 
 models = _group("models", "Modèles locaux.")
+
+scenes = _group("scenes", "Scènes indexées.")
+
+
+@scenes.command("search", help="Retrouve des scènes par une description libre (en anglais).")
+@_guarded
+def scenes_search(
+    query: Annotated[str, typer.Argument(help='Description, ex. "a banana".')],
+    series: Annotated[str | None, typer.Option("--series", help="Limiter à une série.")] = None,
+    account: Annotated[str | None, typer.Option("--account", help="Limiter à un compte.")] = None,
+) -> None:
+    ctx = _open()
+    with heavy_lock(ctx.paths, wait=False):  # CLIP is heavy (R19)
+        with Session(ctx.engine) as session:  # short: closed before the model loads
+            anything = session.scalar(select(SceneVector.scene_id).limit(1)) is not None
+            current = (
+                session.scalar(
+                    select(SceneVector.scene_id).where(SceneVector.model == MODEL_ID).limit(1)
+                )
+                is not None
+            )
+        if not anything or not current:
+            what = (
+                "Aucune scène indexée."
+                if not anything
+                else f"Aucune scène indexée avec le modèle actuel ({MODEL_ID})."
+            )
+            hint = "Lance `rushes analyze` : l'étape vision indexe les scènes (ou les refait)."
+            ctx.ui.emit(Message("info", what, hint=hint))
+            return
+        encoder = ctx.models.clip()
+        with Session(ctx.engine) as session:
+            found = search_scenes(session, encoder, query, account_id=account, series_id=series)
+            places = {
+                row.id: (row.episode_id, row.start_ms)
+                for row in session.execute(
+                    select(Scene.id, Scene.episode_id, Scene.start_ms).where(
+                        Scene.id.in_([scene_id for scene_id, _ in found])
+                    )
+                )
+            }
+    if not found:
+        ctx.ui.emit(Message("info", "Aucune scène ne correspond à ces filtres."))
+        return
+    rows = [
+        [
+            str(scene_id),
+            episode_key(places[scene_id][0]),
+            format_duration(places[scene_id][1]),
+            f"{cosine:.3f}",
+        ]
+        for scene_id, cosine in found
+    ]
+    ctx.ui.emit(Table("Scènes", ["Scène", "Épisode", "Début", "Cosinus"], rows))
+
 
 rights = _group("rights", "Suivi des licences.")
 rights.command("list", help="Tableau des licences et de leur priorité.")(_plain_stub("38"))

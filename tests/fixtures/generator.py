@@ -4,6 +4,12 @@ Only filters that every FFmpeg build has: color, testsrc2, sine, anoisesrc, draw
 volume, amix (no drawtext: C36). Levels, so that the doubles recognize them: background tone
 `sine` at 0.1, beeps = 1000 Hz sine at 0.9, speech-like = white `anoisesrc` at 0.5; each source is
 muted while a louder one plays, silence and black are exact (to a millisecond / a frame).
+
+`shot_labels` marks a shot with a word without any text: a magenta square holding a 4x4 grid of
+black and white cells whose bits are the first 16 bits of sha256(WORD) (`label_code`). The model
+doubles read it back (tests/fakes/models.py); a real model cannot read it. The square is centred
+and scales with the frame (half of its short side at most: 90 px at 320x180), it is not a fixed
+size.
 """
 
 import hashlib
@@ -25,6 +31,9 @@ from rushes.media.ffmpeg import run_ffmpeg
 # unstable picture-hash bits, a textured one (different for each shot) hashes alike for a whole shot
 _PALETTE = ("0x2b5d9b", "0x9b2b3c", "0x2b9b4f", "0x9b8a2b", "0x6b2b9b", "0x2b9b94")
 _BOXES = 12
+LABEL_GRID = 4  # cells per side of the code
+LABEL_CELLS = LABEL_GRID + 2  # the code plus a one-cell marker ring
+LABEL_MARKER = "0xff00ff"
 _RATE = 48_000
 THEME_RATE = 16_000
 THEME_MS = 6000
@@ -66,9 +75,29 @@ class SynthSpec:
     audio: bool = True
     theme_ms: Sequence[int] = ()  # instants where the series theme (make_theme) plays, alone
     generics: Sequence[Generic] = ()  # generics that differ from the reference (other eras)
+    shot_labels: Sequence[
+        str
+    ] = ()  # a word per shot (see the module doc); fewer than shots is fine
 
 
 Synth = Callable[[SynthSpec], Path]
+
+
+def label_code(word: str) -> int:
+    """The 16-bit code of a label (case does not matter): first 2 bytes of sha256(WORD)."""
+    return int.from_bytes(hashlib.sha256(word.upper().encode()).digest()[:2], "big")
+
+
+def label_bits(code: int) -> list[bool]:
+    """The 16 cells of a code, row by row, most significant bit first."""
+    return [bool(code >> (LABEL_GRID * LABEL_GRID - 1 - i) & 1) for i in range(LABEL_GRID**2)]
+
+
+def label_square(width: int, height: int) -> tuple[int, int, int]:
+    """(x, y, cell) in pixels of the label square, centred; it spans at most half the short side."""
+    cell = max(min(width, height) // (2 * LABEL_CELLS), 1)
+    side = cell * LABEL_CELLS
+    return (width - side) // 2, (height - side) // 2, cell
 
 
 def _s(ms: int) -> str:
@@ -94,6 +123,22 @@ def _path_expr(points: Sequence[tuple[int, int]]) -> str:
     return f"if(lt(t,{_s(points[0][0])}),{points[0][1]},{expr})" if len(points) > 1 else expr
 
 
+def _label_steps(word: str, window: str, width: int, height: int) -> list[str]:
+    """drawbox filters of one shot's label: marker ring, black code area, then the white cells."""
+    x0, y0, cell = label_square(width, height)
+    side = cell * LABEL_CELLS
+    steps = [
+        _fill(LABEL_MARKER, window, str(x0), str(y0), str(side), str(side)),
+        _fill("black", window, str(x0 + cell), str(y0 + cell), *[str(cell * LABEL_GRID)] * 2),
+    ]
+    for i, on in enumerate(label_bits(label_code(word))):
+        if on:
+            row, col = divmod(i, LABEL_GRID)
+            x, y = x0 + cell * (col + 1), y0 + cell * (row + 1)
+            steps.append(_fill("white", window, str(x), str(y), str(cell), str(cell)))
+    return steps
+
+
 def _video_graph(spec: SynthSpec, extra_inputs: dict[str, int]) -> str:
     width, height = spec.size
     end = spec.duration_ms
@@ -117,6 +162,8 @@ def _video_graph(spec: SynthSpec, extra_inputs: dict[str, int]) -> str:
                     f"ih*{h:.3f}",
                 )
             )
+        if index < len(spec.shot_labels):
+            steps.extend(_label_steps(spec.shot_labels[index], window, width, height))
     graph = [",".join(steps) + "[base]"]
     last = "base"
     # moving test pattern in the lower strip (motion for the shot and freeze detectors)
@@ -271,6 +318,8 @@ def _theme_graph(spec: SynthSpec, index: int) -> str:
 
 
 def make_video(spec: SynthSpec, out: Path) -> Path:
+    if len(spec.shot_labels) > len(spec.shots_ms) + 1:
+        raise ValueError("shot_labels: plus d'étiquettes que de plans")
     with tempfile.TemporaryDirectory(prefix="theme-") as folder:
         root = Path(folder)
         generics = [

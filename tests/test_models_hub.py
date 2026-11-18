@@ -10,6 +10,7 @@ from fakes.models import FakeVad
 from helpers import FakeStep
 from rushes.config import load_config
 from rushes.context import Context, Filters
+from rushes.errors import RushesError
 from rushes.models import hub as hub_module
 from rushes.models.hub import ModelHub
 from rushes.paths import Paths
@@ -82,7 +83,6 @@ def test_release_drops_heavy_model(tmp_path: Path, config_dir: Path) -> None:
     [
         ("transcriber", "12c"),
         ("sounds", "12b"),
-        ("clip", "12a"),
         ("faces", "34"),
         ("llm", "14"),
         ("tts", "35"),
@@ -106,10 +106,68 @@ def test_vad_defaults_to_silero_without_importing_it_early(
     assert hub.loads() == {"vad": 1}
 
 
+def test_clip_defaults_to_open_clip_on_the_manifest_weights(
+    tmp_path: Path, config_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, Any] = {}
+
+    class Recorder:
+        def __init__(self, weights: Path, *, threads: int = 4, batch: int = 32) -> None:
+            seen.update(weights=weights, batch=batch)
+
+    monkeypatch.setattr("rushes.models.clip.OpenClipEncoder", Recorder)
+    hub = _hub(tmp_path, config_dir)
+    weights = hub.paths.cache_models / "clip" / "open_clip_model.safetensors"
+    weights.parent.mkdir(parents=True)
+    weights.write_bytes(b"weights")
+    assert isinstance(hub.clip(), Recorder)
+    assert seen == {"weights": weights, "batch": hub.settings.analyze.clip_batch}
+    assert hub.loads() == {"clip": 1}
+
+
+def test_clip_without_its_weights_says_how_to_fetch_them(tmp_path: Path, config_dir: Path) -> None:
+    hub = _hub(tmp_path, config_dir)
+    with pytest.raises(RushesError, match="clip") as caught:
+        hub.clip()
+    assert "models fetch --only clip" in (caught.value.hint or "")
+    assert hub.loads() == {}
+
+
+def test_a_given_clip_factory_wins_over_the_default(tmp_path: Path, config_dir: Path) -> None:
+    hub = _hub(tmp_path, config_dir, clip=Dummy)
+    assert isinstance(hub.clip(), Dummy)  # no weights needed
+
+
 def test_importing_the_hub_does_not_import_torch() -> None:
     code = (
-        "import sys, rushes.cli, rushes.context, rushes.models.hub, rushes.steps; "
-        "sys.exit(any(m in sys.modules for m in ('torch', 'onnxruntime', 'silero_vad')))"
+        "import sys, rushes.cli, rushes.context, rushes.models.hub, rushes.models.clip, "
+        "rushes.steps; "
+        "sys.exit(any(m in sys.modules for m in "
+        "('torch', 'onnxruntime', 'silero_vad', 'open_clip')))"
     )
     done = subprocess.run([sys.executable, "-I", "-c", code], check=False, capture_output=True)
     assert done.returncode == 0, done.stderr.decode()
+
+
+def test_clip_refuses_a_pretrained_name_that_is_not_the_manifest_weights(
+    tmp_path: Path, config_dir: Path
+) -> None:
+    """The `model` column must name what is loaded: the weights are the manifest's only `clip`."""
+    hub = _hub(tmp_path, config_dir)
+    # the config refuses it at load: update the settings unvalidated to reach the guard
+    models = hub.settings.models.model_copy(update={"clip_pretrained": "other"})
+    hub.settings = hub.settings.model_copy(update={"models": models})
+    weights = hub.paths.cache_models / "clip" / "open_clip_model.safetensors"
+    weights.parent.mkdir(parents=True)
+    weights.write_bytes(b"weights")
+    with pytest.raises(RushesError, match="clip_pretrained") as caught:
+        hub.clip()
+    assert "datacomp_xl_s13b_b90k" in (caught.value.hint or "")
+    assert hub.loads() == {}
+
+
+def test_open_clip_encoder_names_the_model_it_loads() -> None:
+    from rushes.models.clip import MODEL_ID, OpenClipEncoder
+
+    assert OpenClipEncoder.model_name == MODEL_ID == "ViT-B-32/datacomp_xl_s13b_b90k"
+    assert OpenClipEncoder.dim == 512

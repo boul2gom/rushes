@@ -2,15 +2,18 @@
 
 Models load on first use and stay loaded until `release` (R19: once per step, never per item).
 Heavy ones (transcriber, clip, llm) never coexist: loading one drops the previous one. The factory
-of a model comes from `factories` (tests) or `DEFAULT_FACTORIES`; a model whose task has not
-landed yet raises NotImplementedError naming it.
+of a model comes from `factories` (tests), `DEFAULT_FACTORIES` or `BOUND_FACTORIES` (real models
+that need the hub's paths and settings); a model whose task has not landed yet raises
+NotImplementedError naming it.
 """
 
 import gc
 from collections.abc import Callable, Mapping
+from functools import partial
 from typing import cast
 
 from rushes.config import Settings
+from rushes.errors import RushesError
 from rushes.models.base import (
     FaceDetector,
     ImageEncoder,
@@ -31,8 +34,31 @@ def _silero() -> object:
     return SileroVad()
 
 
+def _clip(paths: Paths, settings: Settings) -> object:
+    """OpenCLIP on the weights of the manifest (`rushes models fetch --only clip`)."""
+    from rushes.models.clip import PRETRAINED, OpenClipEncoder
+    from rushes.models.fetch import load_manifest
+
+    if settings.models.clip_pretrained != PRETRAINED:  # the weights are the manifest's only entry
+        raise RushesError(
+            f"models.clip_pretrained = {settings.models.clip_pretrained!r} : "
+            "le manifeste ne fournit pas ces poids",
+            hint=f"Utilise {PRETRAINED!r} (ou ajoute d'abord ces poids au manifeste).",
+        )
+    entry = next(e for e in load_manifest() if e.name == "clip")
+    weights = paths.cache_models / entry.file
+    if not weights.is_file():
+        raise RushesError(
+            f"poids du modèle clip absents ({entry.file})",
+            hint="Lance `rushes models fetch --only clip`.",
+        )
+    return OpenClipEncoder(weights, batch=settings.analyze.clip_batch)
+
+
 # name -> factory of the real model; filled by the task that brings each model
 DEFAULT_FACTORIES: dict[str, Callable[[], object]] = {"vad": _silero}
+# same, for a model that needs the hub's paths and settings (built with them, see `_factory`)
+BOUND_FACTORIES: dict[str, Callable[[Paths, Settings], object]] = {"clip": _clip}
 
 
 class ModelHub:
@@ -50,7 +76,10 @@ class ModelHub:
         self._loads: dict[str, int] = {}
 
     def _factory(self, name: str) -> Callable[[], object] | None:
-        return self._factories.get(name) or DEFAULT_FACTORIES.get(name)
+        factory = self._factories.get(name) or DEFAULT_FACTORIES.get(name)
+        if factory is None and name in BOUND_FACTORIES:
+            return partial(BOUND_FACTORIES[name], self.paths, self.settings)
+        return factory
 
     def get(self, name: str) -> object:
         """The model `name`, loaded on first use (R19: once until released)."""

@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 import typer
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from fixtures.generator import Synth, SynthSpec
@@ -65,6 +66,7 @@ IMPLEMENTED: tuple[str, ...] = (
     "models fetch",
     "models check",
     "discover youtube",
+    "scenes search",
 )
 
 
@@ -377,10 +379,11 @@ def test_steps_registry_has_ingest_and_clean() -> None:
 def test_analyze_command_runs_the_step_and_is_idempotent(
     cli_env: CliRunner, data_dir: Path, synth: Synth, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from fakes.models import FakeVad
+    from fakes.models import FakeImageEncoder, FakeVad
     from rushes.models import hub
 
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "vad", FakeVad)  # no real model in tests
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", FakeImageEncoder)
     folder = data_dir / "import" / "tom_and_jerry"
     folder.mkdir(parents=True)
     video = synth(SynthSpec(duration_ms=3000, size=(64, 36), fps=10))
@@ -393,6 +396,14 @@ def test_analyze_command_runs_the_step_and_is_idempotent(
     assert analyze.exit_code == 0, analyze.output
     assert '"step": "analyze"' in analyze.output
     assert list((data_dir / "episodes").glob("e_*/scenes.json"))
+    # spec step 5: `analyze` also produces the scene vectors (the vision step follows the shots)
+    assert '"step": "vision"' in analyze.output
+    con = sqlite3.connect(data_dir / "rushes.db")
+    scenes, vectors = con.execute(
+        "SELECT (SELECT count(*) FROM scenes), (SELECT count(*) FROM scene_vectors)"
+    ).fetchone()
+    con.close()
+    assert scenes >= 1 and vectors == scenes
 
     again = cli_env.invoke(app, ["--json", "analyze"])  # R16 through the CLI
     assert again.exit_code == 0 and '"event": "step"' not in again.output
@@ -494,8 +505,8 @@ def _settled(ctx: Context, post_id: int, delivery: Path) -> None:
 
 def test_run_order_starts_with_discovery_and_ends_with_package() -> None:
     assert steps.RUN_ORDER == (
-        "discover_youtube", "ingest", "clean", "analyze", "cut", "approve", "assign", "render",
-        "meta", "package",
+        "discover_youtube", "ingest", "clean", "analyze", "vision", "cut", "approve", "assign",
+        "render", "meta", "package",
     )  # fmt: skip
     assert steps.STEPS["package"].name == "package"
 
@@ -696,3 +707,155 @@ def test_discover_youtube_command_runs_its_step(
         ("discover youtube", 0)
     ]
     con.close()
+
+
+# --- task 12a: scenes search --------------------------------------------------------------------
+
+
+def _indexed_scene(session: Any, episode: Any, word: str, start_ms: int = 0) -> int:
+    """A scene whose vector is the one the double gives a shot labelled `word`."""
+    from fakes.models import FakeImageEncoder
+    from rushes.analyze.index import vector_blob
+    from rushes.db.models import Scene, SceneVector
+
+    scene = Scene(episode_id=episode.id, start_ms=start_ms, end_ms=start_ms + 1000)
+    session.add(scene)
+    session.flush()
+    vector = FakeImageEncoder().encode_texts([word])[0]
+    session.add(
+        SceneVector(
+            scene_id=scene.id,
+            model=FakeImageEncoder.model_name,
+            dim=FakeImageEncoder.dim,
+            embedding=vector_blob(vector),
+        )
+    )
+    return int(scene.id)
+
+
+@pytest.fixture
+def indexed(ctx: Context, monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
+    """Two episodes (two accounts, two series), three indexed scenes; CLIP is the double."""
+    from fakes.models import FakeImageEncoder
+    from helpers import ACCOUNT, ACCOUNT_OTHER_BRAND, make_episode
+    from rushes.models import hub
+
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", FakeImageEncoder)
+    with Session(ctx.engine) as session:
+        tom = make_episode(session, owner=ACCOUNT, series_id="tom_and_jerry")
+        oggy = make_episode(session, owner=ACCOUNT_OTHER_BRAND, series_id="oggy")
+        ids = {
+            "tom_rocket": _indexed_scene(session, tom, "rocket", 5000),
+            "tom_banana": _indexed_scene(session, tom, "banana"),
+            "oggy_rocket": _indexed_scene(session, oggy, "rocket", 12_000),
+        }
+        session.commit()
+    return ids
+
+
+def test_scenes_search_lists_the_best_scenes(cli_env: CliRunner, indexed: dict[str, int]) -> None:
+    result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 0, result.output
+    lines = result.output.splitlines()
+    assert lines[1].split() == ["Scène", "Épisode", "Début", "Cosinus"]
+    rows = [line.split() for line in lines[2:] if line.strip()]
+    assert [row[:2] for row in rows] == [
+        [str(indexed["tom_rocket"]), "e_000001"],
+        [str(indexed["oggy_rocket"]), "e_000002"],
+        [str(indexed["tom_banana"]), "e_000001"],
+    ]
+    assert rows[0][2:] == ["5,0", "s", "1.000"]
+    assert rows[1][2:] == ["12,0", "s", "1.000"]
+    assert rows[2][-1] == "0.000"
+
+
+def test_scenes_search_filters_by_series_and_account(
+    cli_env: CliRunner, indexed: dict[str, int]
+) -> None:
+    by_series = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket", "--series", "oggy"])
+    assert by_series.exit_code == 0, by_series.output
+    assert "e_000002" in by_series.output and "e_000001" not in by_series.output
+    by_account = cli_env.invoke(
+        app, ["--plain", "scenes", "search", "a rocket", "--account", "st_tt"]
+    )
+    assert by_account.exit_code == 0, by_account.output
+    assert "e_000001" in by_account.output and "e_000002" not in by_account.output
+    none = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket", "--account", "nobody"])
+    assert none.exit_code == 0 and "Aucune scène" in none.output
+
+
+def test_scenes_search_on_an_empty_index_says_so(cli_env: CliRunner, ctx: Context) -> None:
+    result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 0, result.output
+    assert "Aucune scène indexée" in result.output
+
+
+def test_scenes_search_tells_when_only_another_model_is_indexed(
+    cli_env: CliRunner, ctx: Context, indexed: dict[str, int]
+) -> None:
+    with ctx.engine.begin() as conn:
+        conn.execute(text("UPDATE scene_vectors SET model='ViT-B-32/old'"))
+    result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 0, result.output
+    assert "modèle actuel" in result.output and "ViT-B-32/datacomp_xl_s13b_b90k" in result.output
+    assert "rushes analyze" in result.output and "e_00000" not in result.output
+
+
+def test_scenes_search_holds_no_database_transaction_while_clip_works(
+    cli_env: CliRunner, indexed: dict[str, int], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fakes.models import FakeImageEncoder
+    from rushes.models import hub
+
+    opened: list[Session] = []
+
+    class Tracked(Session):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            super().__init__(*args, **kwargs)
+            opened.append(self)
+
+    def idle() -> bool:
+        return not any(session.in_transaction() for session in opened)
+
+    seen: list[str] = []
+
+    class Probe(FakeImageEncoder):
+        def __init__(self) -> None:  # the model load
+            seen.append(f"load:{idle()}")
+            super().__init__()
+
+        def encode_texts(self, texts: Any) -> Any:
+            seen.append(f"encode:{idle()}")
+            return super().encode_texts(texts)
+
+    monkeypatch.setattr(cli, "Session", Tracked)
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", Probe)
+    result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 0, result.output
+    assert seen == ["load:True", "encode:True"]
+
+
+def test_scenes_search_without_the_weights_says_how_to_fetch_them(
+    cli_env: CliRunner, indexed: dict[str, int], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from rushes.models import hub
+
+    monkeypatch.delitem(hub.DEFAULT_FACTORIES, "clip")  # the real encoder, whose file is absent
+    result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 1
+    assert "models fetch --only clip" in result.output and "Traceback" not in result.output
+
+
+def test_scenes_search_exits_3_when_the_heavy_lock_is_taken(
+    cli_env: CliRunner, ctx: Context, indexed: dict[str, int]
+) -> None:
+    from rushes.lock import heavy_lock
+
+    with heavy_lock(ctx.paths, wait=False):
+        result = cli_env.invoke(app, ["--plain", "scenes", "search", "a rocket"])
+    assert result.exit_code == 3  # LockBusy: CLIP is a heavy model (R19)
+
+
+def test_vision_runs_right_after_analyze() -> None:
+    assert "vision" in steps.STEPS
+    assert steps.RUN_ORDER.index("vision") == steps.RUN_ORDER.index("analyze") + 1

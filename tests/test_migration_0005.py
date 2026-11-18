@@ -30,7 +30,7 @@ def db(tmp_path: Path) -> Path:
     path = tmp_path / "rushes.db"
     upgrade(path, "0004")
     _seed(path)
-    upgrade(path)
+    upgrade(path, "0005")  # pinned: later revisions have their own tests
     return path
 
 
@@ -129,5 +129,5 @@ def test_migration_0005_channels(db: Path) -> None:
 
 
 def test_r16_migration_0005_again_changes_nothing(db: Path) -> None:
-    upgrade(db)
+    upgrade(db, "0005")
     assert current_revision(db) == "0005"
