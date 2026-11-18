@@ -423,3 +423,10 @@ def test_cassette_key_stable_and_sanitize_drops_media_urls() -> None:
     assert "formats" not in clean["entries"][0] and "url" not in clean
     assert "__x_forwarded_for_ip" not in clean["entries"][0]
     assert "formats" in info and "url" in info  # the input is not modified
+
+
+def test_r20_the_real_yt_dlp_is_refused_in_tests() -> None:
+    import yt_dlp
+
+    with pytest.raises(RuntimeError, match="R20"):
+        yt_dlp.YoutubeDL({})

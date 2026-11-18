@@ -294,7 +294,7 @@ app.command("clean", help="Retire génériques, cartons, noirs et silences en bo
     _pipeline_command("clean", ("clean",))
 )
 app.command("analyze", help="Plans, audio, parole et index des scènes.")(
-    _pipeline_command("analyze", ("analyze", "vision"))
+    _pipeline_command("analyze", ("analyze", "vision", "sounds"))
 )
 app.command("cut", help="Découpe en parties et best-of.")(_pipeline_command("cut", ("cut",)))
 app.command("approve", help="Approbation automatique des passages.")(

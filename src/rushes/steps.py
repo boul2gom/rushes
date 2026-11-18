@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from rushes.analyze.analyze import AnalyzeStep
+from rushes.analyze.sounds import SoundsStep
 from rushes.analyze.vision import VisionStep
 from rushes.approve.approve import ApproveStep
 from rushes.assign.assign import AssignStep
@@ -22,6 +23,7 @@ STEPS: dict[str, Callable[[], Step[Any]]] = {
     "clean": CleanStep,
     "analyze": AnalyzeStep,
     "vision": VisionStep,
+    "sounds": SoundsStep,
     "cut": CutStep,
     "approve": ApproveStep,
     "assign": AssignStep,
@@ -35,6 +37,7 @@ RUN_ORDER: tuple[str, ...] = (
     "clean",
     "analyze",
     "vision",
+    "sounds",
     "cut",
     "approve",
     "assign",

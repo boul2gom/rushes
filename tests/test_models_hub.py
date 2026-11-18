@@ -1,6 +1,8 @@
+import csv
 import subprocess
 import sys
 import weakref
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +10,7 @@ import pytest
 
 from fakes.models import FakeVad
 from helpers import FakeStep
+from rushes.analyze.sounds import AUDIOSET_GROUPS
 from rushes.config import load_config
 from rushes.context import Context, Filters
 from rushes.errors import RushesError
@@ -82,7 +85,6 @@ def test_release_drops_heavy_model(tmp_path: Path, config_dir: Path) -> None:
     ("accessor", "task"),
     [
         ("transcriber", "12c"),
-        ("sounds", "12b"),
         ("faces", "34"),
         ("llm", "14"),
         ("tts", "35"),
@@ -133,6 +135,92 @@ def test_clip_without_its_weights_says_how_to_fetch_them(tmp_path: Path, config_
     assert hub.loads() == {}
 
 
+def _ced_files(hub: ModelHub, names: Iterable[str]) -> Path:
+    """The manifest's ced files in the cache: a model stand-in and a labels CSV of `names`."""
+    folder = hub.paths.cache_models / "ced"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "model.int8.onnx").write_bytes(b"x")
+    with (folder / "class_labels_indices.csv").open("w", encoding="utf-8", newline="") as handle:
+        handle.write("index,mid,display_name\n")  # the real file quotes every name, like this
+        writer = csv.writer(handle, quoting=csv.QUOTE_ALL)
+        writer.writerows((str(i), f"/m/{i}", name) for i, name in enumerate(names))
+    return folder
+
+
+def test_ced_manifest_files_are_the_ones_the_tagger_opens() -> None:
+    from rushes.models.ced import LABELS_FILE, MODEL_FILE
+    from rushes.models.fetch import load_manifest
+
+    entries = [e for e in load_manifest() if e.name == "ced"]
+    assert {Path(e.file).name for e in entries} == {MODEL_FILE, LABELS_FILE}
+    assert len({Path(e.file).parent for e in entries}) == 1  # one folder: the tagger's model_dir
+
+
+def test_sounds_default_to_ced_on_the_manifest_files(
+    tmp_path: Path, config_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, Any] = {}
+
+    class Recorder:
+        def __init__(self, model_dir: Path) -> None:
+            seen.update(model_dir=model_dir)
+
+    monkeypatch.setattr("rushes.models.ced.CedTagger", Recorder)
+    hub = _hub(tmp_path, config_dir)
+    folder = _ced_files(hub, AUDIOSET_GROUPS)
+    assert isinstance(hub.sounds(), Recorder)
+    assert seen == {"model_dir": folder}
+    assert hub.loads() == {"sounds": 1}
+
+
+def test_sounds_without_their_files_say_how_to_fetch_them(tmp_path: Path, config_dir: Path) -> None:
+    hub = _hub(tmp_path, config_dir)
+    folder = hub.paths.cache_models / "ced"
+    folder.mkdir(parents=True)
+    (folder / "model.int8.onnx").write_bytes(b"x")  # the labels are missing
+    with pytest.raises(RushesError, match=r"class_labels_indices\.csv") as caught:
+        hub.sounds()
+    assert "models fetch --only ced" in (caught.value.hint or "")
+    assert hub.loads() == {}
+
+
+def test_sounds_refuse_a_labels_file_that_lacks_a_grouped_name(
+    tmp_path: Path, config_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Recorder:
+        def __init__(self, model_dir: Path) -> None: ...
+
+    monkeypatch.setattr("rushes.models.ced.CedTagger", Recorder)
+    hub = _hub(tmp_path, config_dir)
+    _ced_files(hub, [n for n in AUDIOSET_GROUPS if n != "Knock"])
+    with pytest.raises(RushesError, match="Knock") as caught:
+        hub.sounds()
+    assert "models fetch --only ced" in (caught.value.hint or "")
+    assert hub.loads() == {}
+    _ced_files(hub, [*AUDIOSET_GROUPS, "Speech"])  # a complete file, other labels too: loads
+    assert isinstance(hub.sounds(), Recorder)
+    assert hub.loads() == {"sounds": 1}
+
+
+def test_sounds_refuse_a_labels_file_without_display_names(
+    tmp_path: Path, config_dir: Path
+) -> None:
+    hub = _hub(tmp_path, config_dir)
+    folder = _ced_files(hub, [])
+    (folder / "class_labels_indices.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+    with pytest.raises(RushesError, match="Bang"):
+        hub.sounds()
+
+
+def test_the_sound_tagger_is_not_heavy_and_does_not_evict_clip(
+    tmp_path: Path, config_dir: Path
+) -> None:
+    hub = _hub(tmp_path, config_dir, clip=Dummy, sounds=Dummy)
+    clip = hub.clip()
+    hub.sounds()
+    assert hub.clip() is clip and hub.loads() == {"clip": 1, "sounds": 1}
+
+
 def test_a_given_clip_factory_wins_over_the_default(tmp_path: Path, config_dir: Path) -> None:
     hub = _hub(tmp_path, config_dir, clip=Dummy)
     assert isinstance(hub.clip(), Dummy)  # no weights needed
@@ -141,9 +229,9 @@ def test_a_given_clip_factory_wins_over_the_default(tmp_path: Path, config_dir: 
 def test_importing_the_hub_does_not_import_torch() -> None:
     code = (
         "import sys, rushes.cli, rushes.context, rushes.models.hub, rushes.models.clip, "
-        "rushes.steps; "
+        "rushes.models.ced, rushes.analyze.sounds, rushes.steps; "
         "sys.exit(any(m in sys.modules for m in "
-        "('torch', 'onnxruntime', 'silero_vad', 'open_clip')))"
+        "('torch', 'onnxruntime', 'silero_vad', 'open_clip', 'sherpa_onnx')))"
     )
     done = subprocess.run([sys.executable, "-I", "-c", code], check=False, capture_output=True)
     assert done.returncode == 0, done.stderr.decode()

@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 
 from fixtures.generator import LABEL_CELLS, LABEL_GRID, label_bits, label_code, label_square
 from rushes.core.intervals import Span
+from rushes.core.types import SoundEvent
 from rushes.models.clip import MODEL_ID
 
 SAMPLE_RATE = 16_000
@@ -184,3 +185,39 @@ class FakeImageEncoder:
             norm = float(np.linalg.norm(total))
             rows.append(total / norm if norm else _unit(NO_LABEL))
         return np.stack(rows)
+
+
+# --- sound tagger double (task 12b) -------------------------------------------------------------
+
+BEEP_WINDOW_MS = 100
+BEEP_MIN_RMS = 0.3  # the generator's beeps are 1000 Hz at 0.9 (RMS 0.64); its noise stays under 0.2
+
+
+class FakeSoundTagger:
+    """CED double: one `impact` event over each run of loud 100 ms windows (the generator's beeps).
+
+    The background tone (RMS 0.07) and the speech-like noise (RMS 0.16) are not loud enough.
+    `calls` records the length (in samples) of each audio it was given.
+    """
+
+    def __init__(self) -> None:
+        self.calls: list[int] = []
+
+    def tag(self, pcm16k: NDArray[np.float32]) -> list[SoundEvent]:
+        self.calls.append(len(pcm16k))
+        size = SAMPLE_RATE * BEEP_WINDOW_MS // 1000
+        events: list[SoundEvent] = []
+        run_start: int | None = None
+        count = len(pcm16k) // size
+        for index in range(count + 1):
+            loud = False
+            if index < count:
+                window = pcm16k[index * size : (index + 1) * size].astype(np.float64)
+                loud = float(np.sqrt(np.mean(window**2))) > BEEP_MIN_RMS
+            if loud and run_start is None:
+                run_start = index
+            elif not loud and run_start is not None:
+                start, end = run_start * BEEP_WINDOW_MS, index * BEEP_WINDOW_MS
+                events.append(SoundEvent(start, end, "impact", 0.9))
+                run_start = None
+        return events

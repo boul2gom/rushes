@@ -7,6 +7,7 @@ that need the hub's paths and settings); a model whose task has not landed yet r
 NotImplementedError naming it.
 """
 
+import csv
 import gc
 from collections.abc import Callable, Mapping
 from functools import partial
@@ -55,10 +56,43 @@ def _clip(paths: Paths, settings: Settings) -> object:
     return OpenClipEncoder(weights, batch=settings.analyze.clip_batch)
 
 
+def _ced(paths: Paths, settings: Settings) -> object:
+    """CED-mini on the files of the manifest (`rushes models fetch --only ced`).
+
+    The labels file must name every AudioSet label the project groups: sherpa-onnx returns the
+    names as the file spells them, and a name that does not match would silently give no event.
+    """
+    from rushes.analyze.sounds import AUDIOSET_GROUPS
+    from rushes.models.ced import CedTagger
+    from rushes.models.fetch import load_manifest
+
+    entries = [e for e in load_manifest() if e.name == "ced"]
+    files = [paths.cache_models / e.file for e in entries]
+    fetch = "Lance `rushes models fetch --only ced`."
+    missing = [e.file for e, path in zip(entries, files, strict=True) if not path.is_file()]
+    if missing:
+        raise RushesError(f"fichiers du modèle ced absents ({', '.join(missing)})", hint=fetch)
+    labels = next((path for path in files if path.suffix == ".csv"), None)
+    names: set[str] = set()
+    if labels is not None:
+        try:
+            with labels.open(encoding="utf-8", newline="") as handle:
+                names = {row["display_name"] for row in csv.DictReader(handle)}
+        except OSError, UnicodeDecodeError, KeyError, csv.Error:
+            pass  # reported below as missing labels
+    absent = sorted(set(AUDIOSET_GROUPS) - names)
+    if absent:
+        raise RushesError(
+            f"étiquettes absentes du fichier de labels ced : {', '.join(absent)}",
+            hint="Le fichier est inattendu : relance `rushes models fetch --only ced`.",
+        )
+    return CedTagger(files[0].parent)
+
+
 # name -> factory of the real model; filled by the task that brings each model
 DEFAULT_FACTORIES: dict[str, Callable[[], object]] = {"vad": _silero}
 # same, for a model that needs the hub's paths and settings (built with them, see `_factory`)
-BOUND_FACTORIES: dict[str, Callable[[Paths, Settings], object]] = {"clip": _clip}
+BOUND_FACTORIES: dict[str, Callable[[Paths, Settings], object]] = {"clip": _clip, "sounds": _ced}
 
 
 class ModelHub:

@@ -11,9 +11,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
-from fakes.models import FakeImageEncoder, FakeVad
+from fakes.models import FakeImageEncoder, FakeSoundTagger, FakeVad
+from fakes.net import FakeHttp, FakeYtDlp
 from fixtures.generator import Synth, SynthSpec
-from helpers import snapshot
+from helpers import FakeStep, snapshot
+from rushes import steps
 from rushes.cli import app
 from rushes.context import Context
 from rushes.media.verify import check_delivery
@@ -40,8 +42,13 @@ def episode_run(
 
     The cheapest settings: ultrafast encode, a fake speech detector, every account on the base
     originality (the advanced module is task 35) and no network."""
+    # `run` builds the real context: its yt-dlp and Http would reach YouTube (no network in tests)
+    monkeypatch.setattr("rushes.context.YtDlpClient", lambda *args, **kwargs: FakeYtDlp())
+    monkeypatch.setattr("rushes.context.UrllibHttp", lambda *args, **kwargs: FakeHttp())
+    monkeypatch.setitem(steps.STEPS, "discover_youtube", lambda: FakeStep(items=()))  # no sources
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "vad", FakeVad)
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", FakeImageEncoder)
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "sounds", FakeSoundTagger)
     edit_yaml(
         config_dir / "settings.yaml", lambda d: d.update(render={"preset": "ultrafast", "crf": 30})
     )
@@ -93,6 +100,7 @@ def test_run_e2e_synthetic_episode(episode_run: Callable[[], Any], ctx: Context)
         "clean",
         "analyze",
         "vision",
+        "sounds",
         "cut",
         "approve",
         "assign",

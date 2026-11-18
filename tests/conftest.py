@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 import yaml
+import yt_dlp
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
@@ -31,6 +32,16 @@ def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "sendto", blocked)
     monkeypatch.setattr(socket, "create_connection", blocked)
     monkeypatch.setattr(socket, "getaddrinfo", blocked)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_ytdlp(monkeypatch: pytest.MonkeyPatch) -> None:
+    """R20: the socket block above does not stop yt-dlp's own clients: refuse the real thing."""
+
+    def refused(self: object, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("the real yt-dlp is forbidden in tests (R20): use a double")
+
+    monkeypatch.setattr(yt_dlp.YoutubeDL, "__init__", refused)
 
 
 @pytest.fixture(autouse=True)

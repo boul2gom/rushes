@@ -379,11 +379,12 @@ def test_steps_registry_has_ingest_and_clean() -> None:
 def test_analyze_command_runs_the_step_and_is_idempotent(
     cli_env: CliRunner, data_dir: Path, synth: Synth, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from fakes.models import FakeImageEncoder, FakeVad
+    from fakes.models import FakeImageEncoder, FakeSoundTagger, FakeVad
     from rushes.models import hub
 
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "vad", FakeVad)  # no real model in tests
     monkeypatch.setitem(hub.DEFAULT_FACTORIES, "clip", FakeImageEncoder)
+    monkeypatch.setitem(hub.DEFAULT_FACTORIES, "sounds", FakeSoundTagger)
     folder = data_dir / "import" / "tom_and_jerry"
     folder.mkdir(parents=True)
     video = synth(SynthSpec(duration_ms=3000, size=(64, 36), fps=10))
@@ -398,12 +399,16 @@ def test_analyze_command_runs_the_step_and_is_idempotent(
     assert list((data_dir / "episodes").glob("e_*/scenes.json"))
     # spec step 5: `analyze` also produces the scene vectors (the vision step follows the shots)
     assert '"step": "vision"' in analyze.output
+    assert '"step": "sounds"' in analyze.output  # ... and the sound events (task 12b)
     con = sqlite3.connect(data_dir / "rushes.db")
-    scenes, vectors = con.execute(
-        "SELECT (SELECT count(*) FROM scenes), (SELECT count(*) FROM scene_vectors)"
+    scenes, vectors, counted = con.execute(
+        "SELECT (SELECT count(*) FROM scenes), (SELECT count(*) FROM scene_vectors), "
+        "(SELECT count(*) FROM scenes WHERE sound_events_json IS NOT NULL)"
     ).fetchone()
     con.close()
-    assert scenes >= 1 and vectors == scenes
+    assert scenes >= 1 and vectors == scenes and counted == scenes
+    (audio,) = (data_dir / "episodes").glob("e_*/audio.json")
+    assert json.loads(audio.read_text(encoding="utf-8"))["events"] is not None
 
     again = cli_env.invoke(app, ["--json", "analyze"])  # R16 through the CLI
     assert again.exit_code == 0 and '"event": "step"' not in again.output
@@ -505,8 +510,8 @@ def _settled(ctx: Context, post_id: int, delivery: Path) -> None:
 
 def test_run_order_starts_with_discovery_and_ends_with_package() -> None:
     assert steps.RUN_ORDER == (
-        "discover_youtube", "ingest", "clean", "analyze", "vision", "cut", "approve", "assign",
-        "render", "meta", "package",
+        "discover_youtube", "ingest", "clean", "analyze", "vision", "sounds", "cut", "approve",
+        "assign", "render", "meta", "package",
     )  # fmt: skip
     assert steps.STEPS["package"].name == "package"
 
@@ -528,6 +533,25 @@ def test_package_command_runs_the_step_and_is_idempotent(
     assert again.exit_code == 0 and '"event": "step"' not in again.output
 
 
+def _sounds_done(ctx: Context) -> None:
+    """Mark the sounds facet of every episode done (an empty list of events in audio.json)."""
+    from rushes.ids import episode_key
+    from rushes.schemas import AudioFile, write_json
+
+    with ctx.engine.connect() as conn:
+        ids = list(conn.execute(text("SELECT id FROM episodes")).scalars())
+    for episode_id in ids:
+        audio = AudioFile(
+            version=1,
+            episode_id=episode_id,
+            integrated_lufs=-20.0,
+            loudness=[],
+            speech=[],
+            events=[],
+        )
+        write_json(audio, ctx.paths.episode_dir(episode_key(episode_id)) / "audio.json")
+
+
 def test_run_command_chains_the_steps_and_names_the_index(
     cli_env: CliRunner,
     ctx: Context,
@@ -545,6 +569,7 @@ def test_run_command_chains_the_steps_and_names_the_index(
 
     post_id = packable_post(ctx, delivery)  # a post with its files already: only package has work
     _settled(ctx, post_id, delivery)
+    _sounds_done(ctx)  # its episode is analyzed on paper: the sounds step has nothing to do either
     result = cli_env.invoke(app, ["--json", "run"])
     assert result.exit_code == 0, result.output
     events = [json.loads(line) for line in result.output.splitlines() if line.startswith("{")]
@@ -859,3 +884,8 @@ def test_scenes_search_exits_3_when_the_heavy_lock_is_taken(
 def test_vision_runs_right_after_analyze() -> None:
     assert "vision" in steps.STEPS
     assert steps.RUN_ORDER.index("vision") == steps.RUN_ORDER.index("analyze") + 1
+
+
+def test_sounds_runs_right_after_vision() -> None:
+    assert steps.STEPS["sounds"].name == "sounds"
+    assert steps.RUN_ORDER.index("sounds") == steps.RUN_ORDER.index("vision") + 1
