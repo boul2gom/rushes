@@ -256,22 +256,30 @@ def test_owner_tie_goes_to_the_smallest_id(ctx: Context, session: Session) -> No
     assert owner == min(ACCOUNT, ACCOUNT_SAME_BRAND)
 
 
-def test_owner_stock_counts_only_episodes_in_progress(ctx: Context, session: Session) -> None:
-    # ACCOUNT: one episode, all its posts published -> not in progress
+def test_owner_stock_counts_unpublished_posts_and_uncut_episodes(
+    ctx: Context, session: Session
+) -> None:
+    # ACCOUNT: one cut episode, all its posts published -> no stock
     done = make_episode(session, owner=ACCOUNT)
     segment = make_segment(session, done, "part", 0, 70_000)
     session.add(Post(account_id=ACCOUNT, segment_id=segment.id, status="published"))
-    # ACCOUNT_SAME_BRAND: one episode without any post -> in progress
+    # ACCOUNT_SAME_BRAND: one episode not cut yet: 600 s / 90 s = 6.7 posts, 11 days at 0.6 a day
     make_episode(session, owner=ACCOUNT_SAME_BRAND)
     session.flush()
     owner = choose_owner(session, ctx.config, series_id=SERIES, creator_id=None, today=TODAY)
     assert owner == ACCOUNT
-    # one more post that is not published: the first episode is in progress again, 1 each, so
-    # the tie goes to the smallest id
+    # one unpublished post: 1 day of stock for ACCOUNT, still under the 11 days of the other
     session.add(Post(account_id=ACCOUNT, segment_id=segment.id, status="ready"))
     session.flush()
     owner = choose_owner(session, ctx.config, series_id=SERIES, creator_id=None, today=TODAY)
-    assert owner == min(ACCOUNT, ACCOUNT_SAME_BRAND)
+    assert owner == ACCOUNT
+    # twelve more: 13 days, the other account now has the smaller stock
+    session.add_all(
+        Post(account_id=ACCOUNT, segment_id=segment.id, status="planned") for _ in range(12)
+    )
+    session.flush()
+    owner = choose_owner(session, ctx.config, series_id=SERIES, creator_id=None, today=TODAY)
+    assert owner == ACCOUNT_SAME_BRAND
 
 
 def test_owner_of_a_creator_episode_comes_from_creators_by_brand(

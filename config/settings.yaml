@@ -32,4 +32,7 @@ serve: {host: 0.0.0.0, port: 8080, public_origin: "https://rushes.<domaine>"}   
 #    keep_community: 5, min_score: 0.0, official_min_followers: 100000,
 #    official_min_name_sim: 80, official_min_content_share: 0.6,
 #    weights: {views_per_day: 0.5, overperformance: 0.3, engagement: 0.2}}
+# ingest:                           # téléchargement YouTube : valeurs de départ, décommenter pour forcer
+#   {max_downloads_per_run: 6, stock_days_target: 14, est_post_s: 90,
+#    community_max_per_series: 5, max_height: 1080}
 ntfy: {url: "https://ntfy.<domaine>", topic_env: NTFY_TOPIC, token_env: NTFY_TOKEN}

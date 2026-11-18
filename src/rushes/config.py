@@ -305,6 +305,16 @@ class DiscoverSettings(_Model):
         return self
 
 
+class IngestSettings(_Model):
+    """YouTube ingestion (task 10b); every value is a starting point."""
+
+    max_downloads_per_run: int = Field(6, ge=0)  # videos downloaded per run (L32)
+    stock_days_target: int = Field(14, ge=0)  # days of posts to keep ready per account
+    est_post_s: int = Field(90, ge=1)  # source seconds that make one post (stock estimate)
+    community_max_per_series: int = Field(5, ge=0)  # community episodes kept per series (signals)
+    max_height: int = Field(1080, ge=1)  # tallest video downloaded
+
+
 class Settings(_Model):
     rate_limit_s: float = Field(gt=0)
     approval_threshold: Threshold | None = None  # None: 0.7 per vertical, recalibrated
@@ -319,6 +329,7 @@ class Settings(_Model):
     render: RenderSettings = RenderSettings()
     clean: CleanSettings = CleanSettings()
     discover: DiscoverSettings = DiscoverSettings()
+    ingest: IngestSettings = IngestSettings()
     ntfy: NtfySettings | None = None
 
 

@@ -1,16 +1,21 @@
-"""yt-dlp client: metadata only, rate-limited, cookies only as a last resort (R18, R47).
+"""yt-dlp client: rate-limited, cookies only as a last resort (R18, R47).
+
+`extract` reads metadata; `download` fetches a chosen video (task 10b, L32).
 
 Cookies never leave `data/cookies/youtube.txt`: a 0600 copy in a temporary folder is given to
-yt-dlp (it rewrites the file when it closes) and deleted afterwards. Only a call that passes
-`cookies_allowed=True` (the YouTube discovery step) may use them, as the settings allow.
+yt-dlp (it rewrites the file when it closes) and deleted afterwards. Only the YouTube discovery
+(`extract(cookies_allowed=True)`) and the download of a retained video may use them, as the
+settings allow.
 """
 
 import hashlib
 import json
 import os
 import re
+import shutil
 import tempfile
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -141,6 +146,17 @@ def _register_cookie_secrets(text: str) -> None:
         register_secret(line.split("\t")[-1])
 
 
+def _empty(folder: Path) -> None:
+    """Remove what is inside `folder` (partial files of a refused download), keep the folder."""
+    if not folder.is_dir():
+        return
+    for entry in folder.iterdir():
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry, ignore_errors=True)
+        else:
+            entry.unlink(missing_ok=True)
+
+
 def _short(text: str) -> str:
     one_line = re.sub(r"\s+", " ", redact(text)).strip()
     return one_line[:_MESSAGE_LIMIT]
@@ -162,6 +178,7 @@ class YtDlpClient:
         self._factory = ydl_factory
         self._limiter = limiter or RateLimiter(settings.rate_limit_s)
         self._signin_announced = False  # one `youtube_signin` alert per client (per command)
+        self._cookies_refused = False  # cookies found expired: no more attempt, no more alert
 
     def options(
         self,
@@ -199,6 +216,30 @@ class YtDlpClient:
             opts["cookiefile"] = str(cookies)
         return opts
 
+    def download_options(
+        self, out_dir: Path, *, max_height: int, cookies: Path | None
+    ) -> dict[str, Any]:
+        """Options of a download: not those of the collection (the media is fetched, one video)."""
+        h = max_height
+        opts: dict[str, Any] = {
+            "quiet": True,
+            "no_warnings": True,
+            "logger": _SilentLogger(),
+            "format": (
+                f"bv*[height<={h}][vcodec^=avc1]+ba[ext=m4a]/bv*[height<={h}]+ba/b[height<={h}]"
+            ),
+            "merge_output_format": "mp4",
+            "outtmpl": {"default": str(out_dir / "%(id)s.%(ext)s")},
+            "noplaylist": True,
+            "concurrent_fragment_downloads": 1,
+            "sleep_interval_requests": self._settings.rate_limit_s,
+            "extractor_retries": 2,
+            "js_runtimes": {"deno": {}},
+        }
+        if cookies is not None:
+            opts["cookiefile"] = str(cookies)
+        return opts
+
     def extract(
         self,
         url: str,
@@ -215,29 +256,45 @@ class YtDlpClient:
             "comments": comments,
             "playlist_items": playlist_items,
         }
-        mode = self._settings.youtube.cookies
-        may_use_cookies = cookies_allowed and platform == "youtube" and mode != "never"
-        if may_use_cookies and mode == "always":
-            return self._with_cookies(url, request, reason="always")
-        try:
-            return self._request(url, cookies=None, **request)
-        except ExtractError as exc:
-            if not (exc.signin and may_use_cookies):
-                raise  # no allowance, mode "never" or another error: no retry, no cookies
-        return self._with_cookies(url, request, reason="fallback")
+        return self._guarded(
+            lambda cookies: self._request(url, cookies=cookies, **request),
+            allowed=cookies_allowed and platform == "youtube",
+        )
 
     def download(self, url: str, out_dir: Path, *, max_height: int) -> Path:
-        raise NotImplementedError("YtDlpClient.download arrive avec la tâche 10b")
+        """Download one YouTube video into `out_dir` (an empty folder) and return the mp4.
+
+        The cookies fallback of the discovery applies (R18 extended, L32): a login wall gives one
+        more attempt with the cookies and a `youtube_signin` alert; a refusal with them gives
+        `cookies_expired`; with `youtube.cookies: never` it is an ExtractError (retried next run).
+        """
+
+        def attempt(cookies: Path | None) -> Path:
+            _empty(out_dir)  # whatever a refused attempt left behind
+            return self._fetch(url, out_dir, max_height=max_height, cookies=cookies)
+
+        return self._guarded(attempt, allowed=True)
 
     # --- internals -----------------------------------------------------------------------------
 
-    def _request(self, url: str, *, cookies: Path | None, **request: Any) -> dict[str, Any]:
-        self._limiter.wait()
+    def _guarded[T](self, call: Callable[[Path | None], T], *, allowed: bool) -> T:
+        """`call` bare, then with cookies after a login wall only, if the settings allow (R18)."""
+        mode = self._settings.youtube.cookies
+        may_use_cookies = allowed and mode != "never" and not self._cookies_refused
+        if may_use_cookies and mode == "always":
+            return self._with_cookies(call, reason="always")
         try:
-            with self._factory(self.options(cookies=cookies, **request)) as ydl:
-                info = ydl.extract_info(url, download=False)
-                # a flat playlist is lazy: read it (and its pages) before the session closes
-                cleaned = sanitize(info) if isinstance(info, dict) and info else None
+            return call(None)
+        except ExtractError as exc:
+            if not (exc.signin and may_use_cookies):
+                raise  # no allowance, mode "never" or another error: no retry, no cookies
+        return self._with_cookies(call, reason="fallback")
+
+    @contextmanager
+    def _translated(self) -> Iterator[None]:
+        """yt-dlp errors as ExtractError: masked (R47), a login wall flagged."""
+        try:
+            yield
         except CookieLoadError:
             self._cookies_expired("fichier refusé par yt-dlp")
             raise ExtractError(
@@ -252,11 +309,29 @@ class YtDlpClient:
                     hint="Les cookies ne servent qu'en secours (réglage youtube.cookies).",
                 ) from None
             raise ExtractError(f"Extraction impossible : {_short(text)}") from None
+
+    def _request(self, url: str, *, cookies: Path | None, **request: Any) -> dict[str, Any]:
+        self._limiter.wait()
+        with self._translated(), self._factory(self.options(cookies=cookies, **request)) as ydl:
+            info = ydl.extract_info(url, download=False)
+            # a flat playlist is lazy: read it (and its pages) before the session closes
+            cleaned = sanitize(info) if isinstance(info, dict) and info else None
         if cleaned is None:
             raise ExtractError("Réponse vide de YouTube")
         return cleaned
 
-    def _with_cookies(self, url: str, request: Mapping[str, Any], *, reason: str) -> dict[str, Any]:
+    def _fetch(self, url: str, out_dir: Path, *, max_height: int, cookies: Path | None) -> Path:
+        self._limiter.wait()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        opts = self.download_options(out_dir, max_height=max_height, cookies=cookies)
+        with self._translated(), self._factory(opts) as ydl:
+            ydl.extract_info(url, download=True)
+        files = sorted(p for p in out_dir.glob("*.mp4") if p.is_file())
+        if len(files) != 1:
+            raise ExtractError("Téléchargement sans fichier exploitable")
+        return files[0]
+
+    def _with_cookies[T](self, call: Callable[[Path | None], T], *, reason: str) -> T:
         source = self._paths.cookies_youtube
         if not source.is_file():
             self._cookies_expired("fichier absent")
@@ -277,7 +352,7 @@ class YtDlpClient:
             with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
                 handle.write(text)
             try:
-                return self._request(url, cookies=copy, **request)
+                return call(copy)
             except ExtractError as exc:
                 if exc.signin and not exc.alerted:
                     self._cookies_expired("connexion toujours exigée")
@@ -301,6 +376,9 @@ class YtDlpClient:
         )
 
     def _cookies_expired(self, detail: str) -> None:
+        if self._cookies_refused:
+            return  # alerted once; the cookies are not tried again by this client
+        self._cookies_refused = True
         self._ui.emit(
             Message(
                 "warn",

@@ -19,9 +19,21 @@ EXPRESS = "express.lock"
 _POLL_S = 0.05
 
 
-def _open(paths: Paths, name: str) -> int:
+def open_lock(paths: Paths, name: str) -> int:
+    """File descriptor of the lock file `name` (created if needed); the caller takes the flock."""
     paths.locks.mkdir(parents=True, exist_ok=True)
     return os.open(paths.locks / name, os.O_RDWR | os.O_CREAT | os.O_CLOEXEC, 0o644)
+
+
+def try_lock(paths: Paths, name: str) -> int | None:
+    """Take the lock `name` without waiting: its descriptor (close it to release), None if busy."""
+    fd = open_lock(paths, name)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    return fd
 
 
 def _acquire(fd: int, *, wait: bool, timeout_s: float | None) -> None:
@@ -65,7 +77,7 @@ class HeavyLock:
         `before_yield` (ctx.models.release) runs before the lock is given away. Returns True when
         the lock changed hands.
         """
-        express = _open(self._paths, EXPRESS)
+        express = open_lock(self._paths, EXPRESS)
         try:
             try:
                 fcntl.flock(express, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -85,7 +97,7 @@ class HeavyLock:
 @contextmanager
 def heavy_lock(paths: Paths, *, wait: bool, timeout_s: float | None = None) -> Iterator[HeavyLock]:
     """Take the heavy lock. `wait=False` (or an expired `timeout_s`) raises LockBusy (code 3)."""
-    fd = _open(paths, HEAVY)
+    fd = open_lock(paths, HEAVY)
     try:
         _acquire(fd, wait=wait, timeout_s=timeout_s)
         try:
@@ -99,7 +111,7 @@ def heavy_lock(paths: Paths, *, wait: bool, timeout_s: float | None = None) -> I
 @contextmanager
 def express_intent(paths: Paths) -> Iterator[None]:
     """The express lane announces that it waits for (then holds) the heavy lock."""
-    fd = _open(paths, EXPRESS)
+    fd = open_lock(paths, EXPRESS)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         try:

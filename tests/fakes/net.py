@@ -1,7 +1,9 @@
 """Network doubles: record calls, return what the test configured, never touch the network."""
 
 import copy
+import hashlib
 import json
+import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Literal
@@ -43,15 +45,18 @@ class CassetteYtDlp:
 
     `overrides` answer first, by `(url, playlist_items)` or by `url` (a dict, or an exception to
     raise): for the cases no recording can show (a failing channel, a short video).
+    `downloads` maps a video url to a synthetic file that `download` copies (or an exception).
     """
 
     def __init__(
         self,
         directory: Path = CASSETTES,
         overrides: Mapping[Any, dict[str, Any] | Exception] | None = None,
+        downloads: Mapping[str, Path | Exception] | None = None,
     ) -> None:
         self.directory = directory
         self.overrides = dict(overrides or {})
+        self.downloads: dict[str, Path | Exception] = dict(downloads or {})
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
     def extract(
@@ -97,7 +102,15 @@ class CassetteYtDlp:
 
     def download(self, url: str, out_dir: Path, *, max_height: int) -> Path:
         self.calls.append((url, {"download": True, "max_height": max_height}))
-        raise NotImplementedError("CassetteYtDlp.download: configure a subclass in the test")
+        answer = self.downloads.get(url)
+        if answer is None:
+            raise CassetteMissing(f"aucun fichier enregistré pour le téléchargement de {url}")
+        if isinstance(answer, Exception):
+            raise answer
+        out_dir.mkdir(parents=True, exist_ok=True)
+        target = out_dir / f"{hashlib.sha1(url.encode()).hexdigest()[:11]}.mp4"
+        shutil.copy2(answer, target)
+        return target
 
 
 class FakeHttp:

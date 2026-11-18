@@ -1,35 +1,12 @@
-"""Owner account of a new episode (R4, R44): a candidate account with the least stock."""
+"""Owner account of a new episode (R4, R44): a candidate account with the smallest stock."""
 
 from datetime import date
 
-from sqlalchemy import bindparam, text
 from sqlalchemy.orm import Session
 
 from rushes.config import Config, RotationPeriod
 from rushes.errors import RushesError
-
-# An episode is "in progress" when it has no post at all, or at least one post that is not
-# published (a post reaches an episode through its segment or its compilation). A `split` parent
-# is not an episode of the stock: its children are (task 11).
-_STOCK = text(
-    """
-    SELECT e.owner_account_id, count(*) FROM episodes e
-    WHERE e.owner_account_id IN :accounts AND e.status <> 'split' AND (
-        NOT EXISTS (
-            SELECT 1 FROM posts p
-            LEFT JOIN segments s ON s.id = p.segment_id
-            LEFT JOIN compilations c ON c.id = p.compilation_id
-            WHERE COALESCE(s.episode_id, c.episode_id) = e.id
-        ) OR EXISTS (
-            SELECT 1 FROM posts p
-            LEFT JOIN segments s ON s.id = p.segment_id
-            LEFT JOIN compilations c ON c.id = p.compilation_id
-            WHERE COALESCE(s.episode_id, c.episode_id) = e.id AND p.status <> 'published'
-        )
-    )
-    GROUP BY e.owner_account_id
-    """
-).bindparams(bindparam("accounts", expanding=True))
+from rushes.ingest.stock import stock_days
 
 
 def _covering(period: RotationPeriod, today: date) -> bool:
@@ -70,15 +47,10 @@ def _creator_brands(config: Config, creator_id: str) -> list[str]:
     )
 
 
-def choose_owner(
-    session: Session,
-    config: Config,
-    *,
-    series_id: str | None,
-    creator_id: str | None,
-    today: date,
-) -> str:
-    """The candidate account with the fewest episodes in progress; a tie goes to the smallest id."""
+def candidate_accounts(
+    config: Config, *, series_id: str | None, creator_id: str | None, today: date
+) -> list[str]:
+    """Accounts that may own an episode of the series or creator (R4), sorted by id."""
     if (series_id is None) == (creator_id is None):
         raise ValueError("une série ou un créateur, pas les deux ni aucun")
     if series_id is not None:
@@ -92,6 +64,17 @@ def choose_owner(
             f"aucun compte candidat pour {subject}",
             hint="Lister le créateur dans creators_by_brand (accounts.yaml).",
         )
-    rows = session.execute(_STOCK, {"accounts": accounts}).all()
-    stock = {str(account): int(count) for account, count in rows}
-    return min(accounts, key=lambda account: (stock.get(account, 0), account))
+    return accounts
+
+
+def choose_owner(
+    session: Session,
+    config: Config,
+    *,
+    series_id: str | None,
+    creator_id: str | None,
+    today: date,
+) -> str:
+    """The candidate account with the smallest `stock_days`; a tie goes to the smallest id."""
+    accounts = candidate_accounts(config, series_id=series_id, creator_id=creator_id, today=today)
+    return min(accounts, key=lambda account: (stock_days(session, config, account), account))

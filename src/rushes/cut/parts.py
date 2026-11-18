@@ -160,8 +160,15 @@ class CutStep(BaseStep):
         return episode_key(item)
 
     def select(self, ctx: Context, filters: Filters) -> list[int]:
-        """Analyzed episodes without a part; with --force the ones with parts too."""
-        query = select(Episode.id).where(Episode.status == "analyzed").order_by(Episode.id)
+        """Analyzed episodes without a part; with --force the ones with parts too.
+
+        A community episode is only a signal (R15): never cut.
+        """
+        query = (
+            select(Episode.id)
+            .where(Episode.status == "analyzed", Episode.provenance != "community")
+            .order_by(Episode.id)
+        )
         if not filters.force:
             has_part = exists().where(Segment.episode_id == Episode.id, Segment.kind == "part")
             query = query.where(~has_part)

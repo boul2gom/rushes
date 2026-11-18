@@ -236,6 +236,16 @@ def test_r18_always_mode_sends_cookies_from_the_first_request(make_rig: Any) -> 
     assert "youtube_signin" in [m["alert"] for m in rig.messages()]
 
 
+def test_r18_always_mode_stops_sending_cookies_once_they_are_refused(make_rig: Any) -> None:
+    rig = make_rig([DownloadError(SIGNIN), DownloadError(SIGNIN)], cookies="always", has_file=True)
+    for _ in range(2):  # two requests of one client: the cookies are dead after the first
+        with pytest.raises(ExtractError) as info:
+            _extract(rig, allowed=True)
+        assert info.value.signin is True
+    assert rig.script.cookie_modes == [0o600, None]
+    assert [m["alert"] for m in rig.messages()].count("cookies_expired") == 1
+
+
 def test_r18_cookies_never_mode_raises_source_unavailable(make_rig: Any) -> None:
     rig = make_rig([DownloadError(SIGNIN), {"id": "never"}], cookies="never", has_file=True)
     with pytest.raises(SourceUnavailable) as info:
@@ -315,12 +325,6 @@ def test_unreadable_answer_is_an_extract_error(make_rig: Any) -> None:
 
 def test_signin_markers_cover_both_texts() -> None:
     assert SIGNIN_MARKERS == ("Sign in to confirm", "confirm you're not a bot")
-
-
-def test_download_waits_for_task_10b(make_rig: Any, tmp_path: Path) -> None:
-    rig = make_rig([], has_file=False)
-    with pytest.raises(NotImplementedError, match="10b"):
-        rig.client.download("https://www.youtube.com/watch?v=x", tmp_path, max_height=720)
 
 
 def test_r18_every_request_goes_through_the_rate_limiter(tmp_path: Path, config_dir: Path) -> None:
